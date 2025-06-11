@@ -122,43 +122,48 @@ public class UserController {
             List<Team> participatingTeams = teamService.getTeamsByParticipant(userId);
             participatingTeams.removeAll(hostingTeams);
 
-            hostingTeams.sort(getTeamComparator());
-            participatingTeams.sort(getTeamComparator());
-
             // 참여한 모든 모임 조회 (승인된 참여자 및 상태 무관)
             List<Team> allTeams = teamService.getAllTeams(userId);
+
+            hostingTeams.sort(getTeamComparator());
+            participatingTeams.sort(getTeamComparator());
             allTeams.sort(getTeamComparator());
 
-            // 팀 페이지네이션
-            int totalTeams = allTeams.size();
-            int totalTeamPages = (int) Math.ceil((double) totalTeams / teamSize);
-            int teamStart = teamPage * teamSize;
-            int teamEnd = Math.min(teamStart + teamSize, totalTeams);
-
-            List<Team> paginatedAllTeams =
-                teamStart < totalTeams
-                    ? allTeams.subList(teamStart, teamEnd)
-                    : Collections.emptyList();
-
-            int hostTotal = hostingTeams.size();
-            int hostStart = teamPage * teamSize;
-            int hostEnd = Math.min(hostStart + teamSize, hostTotal);
-            List<Team> paginatedHostingTeams = hostStart < hostTotal
-                ? hostingTeams.subList(hostStart, hostEnd)
-                : Collections.emptyList();
-
+            int allTotal = allTeams.size();
+            int hostingTotal = hostingTeams.size();
             int partTotal = participatingTeams.size();
+
+            int allPages = (int)Math.ceil((double)allTotal / teamSize);
+            int hostingPages = (int)Math.ceil((double)hostingTotal / teamSize);
+            int partPages = (int)Math.ceil((double)partTotal / teamSize);
+
+            int allStart = teamPage * teamSize;
+            int allEnd = Math.min(allStart + teamSize, allTotal);
+            int hostStart = teamPage * teamSize;
+            int hostEnd = Math.min(hostStart + teamSize, hostingTotal);
             int partStart = teamPage * teamSize;
             int partEnd = Math.min(partStart + teamSize, partTotal);
-            List<Team> paginatedParticipatingTeams = partStart < partTotal
+
+            List<Team> paginatedAll  = allStart < allTotal
+                ? allTeams.subList(allStart, allEnd)
+                : Collections.emptyList();
+            List<Team> paginatedHost = hostStart < hostingTotal
+                ? hostingTeams.subList(hostStart, hostEnd)
+                : Collections.emptyList();
+            List<Team> paginatedPart = partStart < partTotal
                 ? participatingTeams.subList(partStart, partEnd)
                 : Collections.emptyList();
 
-            model.addAttribute("hostingTeams", paginatedHostingTeams);
-            model.addAttribute("participatingTeams", paginatedParticipatingTeams);
-            model.addAttribute("all", paginatedAllTeams);
+            model.addAttribute("allTeams", paginatedAll);
+            model.addAttribute("allPages", allPages);
+
+            model.addAttribute("hostingTeams", paginatedHost);
+            model.addAttribute("hostingPages", hostingPages);
+
+            model.addAttribute("participatingTeams", paginatedPart);
+            model.addAttribute("participatingPages", partPages);
+
             model.addAttribute("teamCurrentPage", teamPage);
-            model.addAttribute("teamTotalPages", totalTeamPages);
             model.addAttribute("teamSize", teamSize);
             model.addAttribute("userMaps", new ArrayList<>());
 
