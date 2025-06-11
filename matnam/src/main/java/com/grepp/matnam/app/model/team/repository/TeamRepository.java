@@ -11,7 +11,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface TeamRepository extends JpaRepository<Team, Long>, TeamRepositoryCustom {
 
-    // 사용자 ID로 팀 조회 (주최자)
     List<Team> findTeamsByUser_UserIdAndActivatedTrue(String userId);
 
     Optional<Team> findByTeamIdAndActivatedTrue(Long teamId);

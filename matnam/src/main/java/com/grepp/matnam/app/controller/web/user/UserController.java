@@ -12,6 +12,7 @@ import com.grepp.matnam.infra.auth.CookieUtils;
 import com.grepp.matnam.infra.auth.jwt.JwtProvider;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.util.Collections;
 import java.util.Comparator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -121,42 +122,41 @@ public class UserController {
             List<Team> participatingTeams = teamService.getTeamsByParticipant(userId);
             participatingTeams.removeAll(hostingTeams);
 
+            hostingTeams.sort(getTeamComparator());
+            participatingTeams.sort(getTeamComparator());
+
             // 참여한 모든 모임 조회 (승인된 참여자 및 상태 무관)
-//            List<Team> allTeamsForUser = teamService.getAllTeamsForUser(userId);
-            List<Team> allTeams = new ArrayList<>();
-            allTeams.addAll(hostingTeams);
-            allTeams.addAll(participatingTeams);
+            List<Team> allTeams = teamService.getAllTeams(userId);
             allTeams.sort(getTeamComparator());
 
             // 팀 페이지네이션
             int totalTeams = allTeams.size();
             int totalTeamPages = (int) Math.ceil((double) totalTeams / teamSize);
-
             int teamStart = teamPage * teamSize;
             int teamEnd = Math.min(teamStart + teamSize, totalTeams);
 
-            List<Team> paginatedHostingTeams = new ArrayList<>();
-            List<Team> paginatedParticipatingTeams = new ArrayList<>();
+            List<Team> paginatedAllTeams =
+                teamStart < totalTeams
+                    ? allTeams.subList(teamStart, teamEnd)
+                    : Collections.emptyList();
 
-            List<Team> paginatedAllTeams = new ArrayList<>();
+            int hostTotal = hostingTeams.size();
+            int hostStart = teamPage * teamSize;
+            int hostEnd = Math.min(hostStart + teamSize, hostTotal);
+            List<Team> paginatedHostingTeams = hostStart < hostTotal
+                ? hostingTeams.subList(hostStart, hostEnd)
+                : Collections.emptyList();
 
-            if (teamStart < totalTeams) {
-                paginatedAllTeams = allTeams.subList(teamStart, teamEnd);
+            int partTotal = participatingTeams.size();
+            int partStart = teamPage * teamSize;
+            int partEnd = Math.min(partStart + teamSize, partTotal);
+            List<Team> paginatedParticipatingTeams = partStart < partTotal
+                ? participatingTeams.subList(partStart, partEnd)
+                : Collections.emptyList();
 
-                // 호스트/참여 분류
-                for (Team team : paginatedAllTeams) {
-                    if (team.getUser().getUserId().equals(userId)) {
-                        paginatedHostingTeams.add(team);
-                    } else {
-                        paginatedParticipatingTeams.add(team);
-                    }
-                }
-            }
-
-            model.addAttribute("all", paginatedAllTeams);
             model.addAttribute("hostingTeams", paginatedHostingTeams);
             model.addAttribute("participatingTeams", paginatedParticipatingTeams);
-//            model.addAttribute("allTeamsForUser", allTeamsForUser);
+            model.addAttribute("all", paginatedAllTeams);
             model.addAttribute("teamCurrentPage", teamPage);
             model.addAttribute("teamTotalPages", totalTeamPages);
             model.addAttribute("teamSize", teamSize);

@@ -642,20 +642,28 @@
     <div class="main-section team-section">
       <h2>내 모임 목록</h2>
       <div class="tabs">
-        <button class="active"
-                id="all-tab"
-                data-tab="all"
-                onclick="switchTab('all')">전체
+        <button
+            th:classappend="${tab=='all'} ? 'active'"
+            id="all-tab"
+            th:data-tab="all"
+            onclick="switchTab('all')">
+          전체
         </button>
 
-        <button id="hosting-tab"
-                data-tab="hosting"
-                onclick="switchTab('hosting')">주최 중
+        <button
+            th:classappend="${tab=='hosting'} ? 'active'"
+            id="hosting-tab"
+            th:data-tab="hosting"
+            onclick="switchTab('hosting')">
+          주최 중
         </button>
 
-        <button id="participating-tab"
-                data-tab="participating"
-                onclick="switchTab('participating')">참여 중
+        <button
+            th:classappend="${tab=='participating'} ? 'active'"
+            id="participating-tab"
+            th:data-tab="participating"
+            onclick="switchTab('participating')">
+          참여 중
         </button>
 
         <button class="create-meeting"
@@ -664,10 +672,10 @@
       </div>
 
       <div id="meetings-container">
-        <div id="all-meetings" class="meetings-section">
+        <div id="all-meetings"
+             class="meetings-section">
           <h3>전체 모임</h3>
-          <div th:if="${#lists.isEmpty(hostingTeams) and #lists.isEmpty(participatingTeams)}"
-               class="empty-state">
+          <div th:if="${#lists.isEmpty(all)}" class="empty-state">
             <p>아직 참여하거나 주최한 모임이 없습니다.</p>
             <p>모임을 만들거나 다른 사용자의 모임에 참여해보세요!</p>
           </div>
@@ -745,23 +753,26 @@
           <div class="teamPaging-container" th:if="${teamTotalPages > 1}">
             <div class="pagination">
               <a th:if="${teamCurrentPage > 0}"
-                 th:href="@{/user/mypage(tab='all', teamPage=${teamCurrentPage - 1})}"
+                 th:href="@{/user/mypage(tab='all', teamPage=${teamCurrentPage - 1}, teamSize=${teamSize})}"
                  class="page-link">&laquo; 이전</a>
               <span th:each="i : ${#numbers.sequence(0, teamTotalPages - 1)}">
                 <a th:if="${i != teamCurrentPage}"
-                   th:href="@{/user/mypage(tab='all', teamPage=${i})}"
+                   th:href="@{/user/mypage(tab='all', teamPage=${i}, teamSize=${teamSize})}"
                    class="page-link" th:text="${i + 1}">1</a>
-                <span th:if="${i == teamCurrentPage}" class="page-link active"
+                <span th:if="${i == teamCurrentPage}"
+                      class="page-link active"
                       th:text="${i + 1}">1</span>
                 </span>
               <a th:if="${teamCurrentPage < teamTotalPages - 1}"
-                 th:href="@{/user/mypage(tab='all', teamPage=${teamCurrentPage + 1})}"
+                 th:href="@{/user/mypage(tab='all', teamPage=${teamCurrentPage + 1}, teamSize=${teamSize})}"
                  class="page-link">다음 &raquo;</a>
             </div>
           </div>
         </div>
 
-        <div id="hosting-meetings" class="meetings-section" style="display: none; padding: 0">
+        <div id="hosting-meetings"
+             class="meetings-section"
+             style="display: none; padding: 0">
           <h3>주최 중인 모임</h3>
           <div th:if="${#lists.isEmpty(hostingTeams)}" class="empty-state">
             <p>아직 주최한 모임이 없습니다.</p>
@@ -823,23 +834,25 @@
           <div class="teamPaging-container" th:if="${teamTotalPages > 1}">
             <div class="pagination">
               <a th:if="${teamCurrentPage > 0}"
-                 th:href="@{/user/mypage(tab='hosting', teamPage=${teamCurrentPage - 1})}"
+                 th:href="@{/user/mypage(tab='hosting', teamPage=${teamCurrentPage - 1}, teamSize=${teamSize})}"
                  class="page-link">&laquo; 이전</a>
               <span th:each="i : ${#numbers.sequence(0, teamTotalPages - 1)}">
                 <a th:if="${i != teamCurrentPage}"
-                   th:href="@{/user/mypage(tab='hosting', teamPage=${i})}"
+                   th:href="@{/user/mypage(tab='hosting', teamPage=${i}, teamSize=${teamSize})}"
                    class="page-link" th:text="${i + 1}">1</a>
-                <span th:if="${i == teamCurrentPage}" class="page-link active"
+                <span th:if="${i == teamCurrentPage}"
+                      class="page-link active"
                       th:text="${i + 1}">1</span>
                 </span>
               <a th:if="${teamCurrentPage < teamTotalPages - 1}"
-                 th:href="@{/user/mypage(tab='hosting', teamPage=${teamCurrentPage + 1})}"
+                 th:href="@{/user/mypage(tab='hosting', teamPage=${teamCurrentPage + 1}, teamSize=${teamSize})}"
                  class="page-link">다음 &raquo;</a>
             </div>
           </div>
         </div>
 
-        <div id="participating-meetings" class="meetings-section"
+        <div id="participating-meetings"
+             class="meetings-section"
              style="display: none; padding: 0">
           <h3>참여 중인 모임</h3>
           <div th:if="${#lists.isEmpty(participatingTeams)}" class="empty-state">
@@ -868,17 +881,17 @@
           <div class="teamPaging-container" th:if="${teamTotalPages > 1}">
             <div class="pagination">
               <a th:if="${teamCurrentPage > 0}"
-                 th:href="@{/user/mypage(tab='participating', teamPage=${teamCurrentPage - 1})}"
+                 th:href="@{/user/mypage(tab='participating', teamPage=${teamCurrentPage - 1}, teamSize=${teamSize})}"
                  class="page-link">&laquo; 이전</a>
               <span th:each="i : ${#numbers.sequence(0, teamTotalPages - 1)}">
                 <a th:if="${i != teamCurrentPage}"
-                   th:href="@{/user/mypage(tab='participating', teamPage=${i})}"
+                   th:href="@{/user/mypage(tab='participating', teamPage=${i}, teamSize=${teamSize})}"
                    class="page-link" th:text="${i + 1}">1</a>
                   <span th:if="${i == teamCurrentPage}" class="page-link active"
                         th:text="${i + 1}">1</span>
                 </span>
               <a th:if="${teamCurrentPage < teamTotalPages - 1}"
-                 th:href="@{/user/mypage(tab='participating', teamPage=${teamCurrentPage + 1})}"
+                 th:href="@{/user/mypage(tab='participating', teamPage=${teamCurrentPage + 1}, teamSize=${teamSize})}"
                  class="page-link">다음 &raquo;</a>
             </div>
           </div>
