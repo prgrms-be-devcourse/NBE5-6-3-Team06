@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{admin/layout}">
+<head>
+    <title>대시보드</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <h1>대시보드</h1>
+        <div class="stats-container">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>총 회원 수</h3>
+                    <p class="stat-number" th:text="${totalUserStats.totalUsers}"></p>
+                    <p class="stat-change"
+                       th:classappend="${#strings.startsWith(totalUserStats.totalUserGrowth, '+') ? 'positive' : 'negative'}"
+                       th:text="${totalUserStats.totalUserGrowth}">
+                    </p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-user-check"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>오늘 이용 회원</h3>
+                    <p class="stat-number" th:text="${todayLogStats.todayActiveUsers}"></p>
+                    <p class="stat-change"
+                       th:classappend="${#strings.startsWith(todayLogStats.activeUserGrowth, '+') ? 'positive' : 'negative'}"
+                       th:text="${todayLogStats.activeUserGrowth}">
+                    </p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-user-friends"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>현재 진행 중인 모임</h3>
+                    <p class="stat-number" th:text="${activeTeamStats.activeTeams}"></p>
+                    <p class="stat-change"
+                       th:text="'총 모임 수: ' + ${activeTeamStats.totalTeamCount}">
+                    </p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-user-plus"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>오늘 생성된 모임</h3>
+                    <p class="stat-number" th:text="${newTeamStats.newTeams}"></p>
+                    <p class="stat-change"
+                       th:classappend="${#strings.startsWith(newTeamStats.newTeamGrowth, '+') ? 'positive' : 'negative'}"
+                       th:text="${newTeamStats.newTeamGrowth}">
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <div class="chart">
+                <h3>사용자 활동 추이</h3>
+                <canvas id="userActivityChart"></canvas>
+            </div>
+            <div class="chart">
+                <h3>모임 성공률</h3>
+                <canvas id="meetingSuccessChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <th:block layout:fragment="script">
+        <script th:src="@{/js/dashboard.js}"></script>
+    </th:block>
+</body>
+</html>

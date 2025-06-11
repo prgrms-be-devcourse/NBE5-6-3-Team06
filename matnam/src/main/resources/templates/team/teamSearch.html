@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>맛남 | 모임 찾기</title>
+  <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+  <script th:src="@{/js/common-toast.js}"></script>
+  <style>
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #fff;
+      color: #333;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+    .search-bar {
+      display: flex;
+      align-items: center;
+      background-color: var(--light-color);
+      border-radius: var(--border-radius);
+      padding: 0.5rem 1rem;
+    }
+
+    .search-bar input {
+      border: none;
+      background: none;
+      flex: 1;
+      margin-right: 0.5rem;
+    }
+
+    .search-bar input:focus {
+      box-shadow: none;
+    }
+
+    .search-bar i {
+      color: var(--gray-color);
+      cursor: pointer;
+    }
+    .filters {
+      margin: 1rem 0;
+    }
+    .filters button {
+      padding: 0.3rem 1rem;
+      margin-right: 0.5rem;
+      border: 1px solid #ddd;
+      background-color: #fff;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .meetings-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1rem;
+    }
+    .meeting-card {
+      border: 1px solid #eee;
+      border-radius: 8px;
+      padding: 1rem;
+      background-color: #fff;
+    }
+    .meeting-card h3 {
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+    }
+    .meeting-card p {
+      font-size: 0.9rem;
+      color: #666;
+      margin-bottom: 0.3rem;
+    }
+    .meeting-card button {
+      width: 100%;
+      padding: 0.5rem;
+      border: none;
+      background-color: #000;
+      color: #fff;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .link-button {
+      display: block;
+      width: 100%;
+      padding: 0.5rem;
+      background-color: #000;
+      color: #fff;
+      text-align: center;
+      border-radius: 4px;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .link-button:hover {
+      background-color: #333;
+    }
+
+    .pagination {
+      display: flex;
+      justify-content: center;
+      margin-top: 2rem;
+    }
+
+    .pagination a, .pagination span {
+      padding: 0.5rem 1rem;
+      margin: 0 0.2rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      text-decoration: none;
+      color: #333;
+    }
+
+    .pagination a:hover {
+      background-color: #eee;
+    }
+
+    .pagination .current {
+      background-color: #000;
+      color: #fff;
+      border-color: #000;
+    }
+
+    .pagination .disabled {
+      color: #999;
+      border-color: #eee;
+      cursor: default;
+      pointer-events: none;
+    }
+  </style>
+  <link rel="stylesheet" th:href="@{/css/notification.css}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" th:href="@{/css/header.css}">
+</head>
+<body>
+<header th:replace="~{fragments/header :: siteHeader}"></header>
+
+<div class="container">
+  <h1>모임 찾기</h1>
+  <p>다양한 식사 모임을 찾아보고 참여해보세요.</p>
+
+  <div class="search-bar">
+    <input type="text" placeholder="모임 검색...">
+    <i class="fas fa-search"></i>
+  </div>
+
+  <div class="filters">
+    <button>전체</button>
+    <button>예약 열림</button>
+    <button>인기 모임</button>
+    <button>신규 모임</button>
+  </div>
+
+  <div class="meetings-grid">
+    <div class="meeting-card" th:each="team : ${teams}">
+      <h3 th:text="${team.teamTitle}"></h3>
+      <p>📅 <span th:text="${#temporals.format(team.teamDate, 'yyyy-MM-dd HH:mm')}"></span></p>
+      <p>📍 <span th:text="${team.restaurantName}"></span></p>
+      <p>👥 <span th:text="${team.nowPeople}"></span>/ <span th:text="${team.maxPeople}"></span>명 참여중</p>
+      <a class="link-button" th:href="@{/team/detail/{teamId}(teamId=${team.teamId})}">자세히 보기</a>
+    </div>
+    <div th:if="${teams.isEmpty()}">
+      <p>현재 등록된 모임이 없습니다.</p>
+    </div>
+  </div>
+
+  <div class="pagination" th:if="${page.totalPages > 0}">
+    <a th:if="${page.hasPrevious()}" th:href="@{/team/search(page=${page.number - 1}, size=${page.size})}">이전</a>
+
+    <th:block th:each="pageNumber : ${#numbers.sequence(0, page.totalPages - 1)}">
+      <span th:if="${pageNumber == page.number}" class="current" th:text="${pageNumber + 1}"></span>
+      <a th:unless="${pageNumber == page.number}" th:href="@{/team/search(page=${pageNumber}, size=${page.size})}" th:text="${pageNumber + 1}"></a>
+    </th:block>
+
+    <a th:if="${page.hasNext()}" th:href="@{/team/search(page=${page.number + 1}, size=${page.size})}">다음</a>
+  </div>
+</div>
+<script src="/js/auth.js"></script>
+<script src="/js/header.js"></script>
+<script src="/js/notification-common.js"></script>
+</body>
+</html>

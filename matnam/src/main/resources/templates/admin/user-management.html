@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{admin/layout}">
+<head>
+  <title>사용자 관리</title>
+</head>
+<body>
+<div layout:fragment="content">
+  <h1>사용자 관리</h1>
+  <div class="tab-container">
+    <div class="tabs">
+      <a th:href="@{/admin/user/list}" class="tab"
+         th:classappend="${activeTab == 'user-list'} ? 'active'"
+         data-tab="user-list">회원 목록</a>
+      <a th:href="@{/admin/user/report}" class="tab"
+         th:classappend="${activeTab == 'user-reports'} ? 'active'" data-tab="user-reports">신고
+        관리</a>
+    </div>
+
+    <div class="tab-content" id="user-list" th:classappend="${activeTab == 'user-list'} ? 'active'"
+         th:if="${activeTab == 'user-list'}">
+      <form method="get" action="/admin/user/list">
+        <div class="filter-container">
+          <div class="search-filter">
+            <input name="keyword" type="text" id="user-search" placeholder="아이디, 닉네임, 이메일로 검색"
+                   th:value="${param.keyword}">
+            <button class="search-btn" type="submit"><i class="fas fa-search"></i></button>
+          </div>
+          <div class="filter-options">
+            <select name="status" id="user-status-filter" onchange="this.form.submit()">
+              <option value="" th:selected="${status == ''}">모든 상태</option>
+              <option value="ACTIVE" th:selected="${status == 'ACTIVE'}">정상</option>
+              <option value="SUSPENDED" th:selected="${status == 'SUSPENDED'}">정지</option>
+              <option value="BANNED" th:selected="${status == 'BANNED'}">영구 정지</option>
+            </select>
+            <select name="sort" id="user-sort" onchange="this.form.submit()">
+              <option value="newest" th:selected="${sort == 'newest'}">최신순</option>
+              <option value="oldest" th:selected="${sort == 'oldest'}">오래된순</option>
+            </select>
+          </div>
+        </div>
+      </form>
+
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+          <tr>
+            <th>번호</th>
+            <th>ID</th>
+            <th>닉네임</th>
+            <th>이메일</th>
+            <th>가입일</th>
+            <th>상태</th>
+            <th>액션</th>
+          </tr>
+          </thead>
+          <tbody id="user-table-body">
+          <tr th:each="user, iterStat : ${page.content()}">
+            <td th:text="${iterStat.count + (5 * (page.currentNumber()-1))}"></td>
+            <td th:text="${user.userId}">1</td>
+            <td th:text="${user.nickname}"></td>
+            <td th:text="${user.email}"></td>
+
+            <td th:text="${#temporals.format(user.createdAt, 'yyyy-MM-dd')}"></td>
+            <td>
+              <span th:class="'status ' + ${user.status}"
+                    th:text="${user.status.koreanName}"></span>
+            </td>
+            <td>
+              <button class="action-btn edit"
+                      th:data-id="${user.userId}"
+                      th:data-nickname="${user.nickname}"
+                      th:data-email="${user.email}"
+                      th:data-status="${user.status.name()}"
+                      th:data-suspendDuration="${user.suspendDuration}"
+                      th:data-dueReason="${user.dueReason}"
+              ><i
+                  class="fas fa-edit"></i></button>
+              <button class="action-btn delete" th:data-id="${user.userId}"><i
+                  class="fas fa-trash"></i></button>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div th:replace="~{admin/fragments/pagination :: pagination}"></div>
+    </div>
+
+    <!-- 신고 관리 탭 -->
+    <div class="tab-content" id="user-reports"
+         th:classappend="${activeTab == 'user-reports'} ? 'active'"
+         th:if="${activeTab == 'user-reports'}">
+      <form method="get" action="/admin/user/report">
+        <div class="filter-container">
+          <div class="search-filter">
+            <input name="keyword" type="text" placeholder="신고자, 대상자 검색" th:value="${param.keyword}">
+            <button class="search-btn"><i class="fas fa-search"></i></button>
+          </div>
+          <div class="filter-options">
+            <select name="status" id="report-status-filter" onchange="this.form.submit()">
+              <option value="" th:selected="${status == null}">모든 상태</option>
+              <option value="true" th:selected="${status == true}">대기 중</option>
+              <option value="false" th:selected="${status == false}">처리 완료</option>
+            </select>
+            <select name="sort" id="report-sort" onchange="this.form.submit()">
+              <option value="newest" th:selected="${sort == 'newest'}">최신순</option>
+              <option value="oldest" th:selected="${sort == 'oldest'}">오래된순</option>
+            </select>
+          </div>
+        </div>
+      </form>
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+          <tr>
+            <th>번호</th>
+            <th>신고자 ID</th>
+            <th>대상자 ID</th>
+            <th>내용</th>
+            <th>날짜</th>
+            <th>상태</th>
+            <th>액션</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr th:each="report, iterStat : ${page.content()}">
+            <td th:text="${iterStat.count}"></td>
+            <td th:text="${report.userId}"></td>
+            <td th:text="${report.reportedId}"></td>
+            <td th:text="${report.reason}"></td>
+            <td th:text="${#temporals.format(report.createdAt, 'yyyy-MM-dd HH:mm')}"></td>
+            <td>
+              <span th:class="'status ' + (${report.activated} ? 'pending' : 'completed')"
+                    th:text="${report.activated} ? '대기 중' : '처리 완료'"></span>
+            </td>
+            <td>
+              <button class="action-btn view"
+                      th:data-id="${report.reportId}"
+                      th:data-user-id="${report.userId}"
+                      th:data-reported-id="${report.reportedId}"
+                      th:data-reported-nickname="${report.nickname}"
+                      th:data-reported-email="${report.email}"
+                      th:data-reported-status="${report.status.name()}"
+                      th:data-reported-suspend-duration="${report.suspendDuration}"
+                      th:data-reported-due-reason="${report.dueReason}"
+                      th:data-reason="${report.reason}"
+                      th:data-date="${report.createdAt}"
+                      th:data-activated="${report.activated}"
+                      th:data-type="${report.reportType}"
+                      th:data-chat-id="${report.chatId}"
+                      th:data-post-id="${report.teamId}">
+                <i class="fas fa-eye"></i>
+              </button>
+              <button th:if="${report.activated == true}" class="action-btn resolve"
+                      th:data-id="${report.reportId}"><i class="fas fa-check"></i></button>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+      <div th:replace="~{admin/fragments/pagination :: pagination}"></div>
+    </div>
+  </div>
+
+  <!-- 사용자 상태 수정 모달 -->
+  <div class="modal" id="userEditModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>사용자 상태 수정</h2>
+        <span class="close-modal">&times;</span>
+      </div>
+      <div class="modal-body">
+        <form id="userEditForm">
+          <input type="hidden" id="edit-user-id">
+          <div class="form-group">
+            <label for="edit-user-name">아이디</label>
+            <input type="text" id="edit-user-name" disabled>
+          </div>
+          <div class="form-group">
+            <label for="edit-user-nickname">닉네임</label>
+            <input type="text" id="edit-user-nickname" disabled>
+          </div>
+          <div class="form-group">
+            <label for="edit-user-email">이메일</label>
+            <input type="email" id="edit-user-email" disabled>
+          </div>
+          <div class="form-group">
+            <label for="edit-user-status">상태</label>
+            <select id="edit-user-status">
+              <option value="ACTIVE">정상</option>
+              <option value="SUSPENDED">정지</option>
+              <option value="BANNED">영구 정지</option>
+            </select>
+          </div>
+          <div id="suspend-options" style="display: none;">
+            <div class="form-group">
+              <label for="edit-suspend-duration">정지 기간</label>
+              <select id="edit-suspend-duration">
+                <option value="1">1일</option>
+                <option value="3">3일</option>
+                <option value="7">7일</option>
+                <option value="15">15일</option>
+                <option value="30">30일</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="edit-suspend-reason">정지 사유</label>
+              <textarea id="edit-suspend-reason" rows="3" placeholder="정지 사유를 입력하세요"></textarea>
+              <span id="error-suspend-reason" class="error-message"></span>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="secondary-btn cancel-btn">취소</button>
+        <button class="primary-btn save-btn">저장</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 신고 상세 모달 (정지 기한 설정 기능 추가) -->
+  <div class="modal" id="reportViewModal">
+    <div class="modal-content large-modal">
+      <div class="modal-header">
+        <h2>신고 상세 정보</h2>
+        <span class="close-modal">&times;</span>
+        <input type="text" id="report-detail-nickname" hidden>
+        <input type="text" id="report-detail-email" hidden>
+        <input type="text" id="report-detail-status" hidden>
+        <input type="text" id="report-detail-suspend-duration" hidden>
+        <input type="text" id="report-detail-due-reason" hidden>
+      </div>
+      <div class="modal-body">
+        <div class="report-details">
+          <div class="detail-section">
+            <h3>신고 정보</h3>
+            <div class="detail-item">
+              <span class="detail-label">신고 ID:</span>
+              <span class="detail-value" id="report-id"></span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">신고자:</span>
+              <span class="detail-value" id="report-reporter"></span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">대상자:</span>
+              <span class="detail-value" id="report-target"></span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">신고 유형:</span>
+              <span class="detail-value" id="report-type"></span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">신고 내용:</span>
+              <span class="detail-value" id="report-content"></span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">신고일:</span>
+              <span class="detail-value" id="report-date"></span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">상태:</span>
+              <span class="detail-value status pending" id="report-status"></span>
+            </div>
+          </div>
+
+          <div class="detail-section">
+            <h3>대상자 활동 내역</h3>
+            <div class="user-history">
+              <div class="history-tabs">
+                <div class="history-tab active" data-tab="report-history"></div>
+              </div>
+
+              <div class="history-content active" id="report-history">
+                <div class="report-item">
+                  <div class="report-header">
+                    <span class="report-title"></span>
+                    <span class="content-time"></span>
+                  </div>
+                  <div class="report-content">
+                    <p></p>
+                  </div>
+                  <div class="detail-btn-div">
+                    <div class="action-buttons">
+                      <button class="primary-btn detail-btn">자세히 보기</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer"  id="detail-modal-footer">
+        <div class="action-buttons">
+          <button class="warning-btn suspend-btn" id="show-suspend-options">사용자 정지</button>
+          <button class="primary-btn resolve-btn">해결 처리</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<th:block layout:fragment="script">
+  <script th:src="@{/js/user-management.js}"></script>
+</th:block>
+</body>
+</html>

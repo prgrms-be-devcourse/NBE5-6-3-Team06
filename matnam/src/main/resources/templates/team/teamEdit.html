@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>맛남 | 모임 수정</title>
+  <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+  <script th:src="@{/js/common-toast.js}"></script>
+  <style>
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #fff;
+      color: #333;
+    }
+    .container {
+      max-width: 800px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+    .title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+    .title-row h1 {
+      font-size: 1.5rem;
+      margin: 0;
+    }
+    .delete-button {
+      margin: 0;
+    }
+    .delete-button button {
+      padding: 0.4rem 1rem;
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+    .delete-button button:hover {
+      background-color: #c82333;
+      transition: background-color 0.2s ease;
+    }
+    label {
+      display: block;
+      font-weight: bold;
+      margin: 1rem 0 0.5rem;
+    }
+    input[type="text"],
+    input[type="date"],
+    input[type="time"],
+    textarea,
+    select,
+    .map-placeholder,
+    .image-upload-box {
+      width: 100%;
+      padding: 0.7rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 1rem;
+      box-sizing: border-box;
+    }
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+    .map-placeholder,
+    .image-upload-box {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #aaa;
+      background-color: #fafafa;
+      height: 150px;
+      border: 1px dashed #ccc;
+    }
+    .section {
+      margin-bottom: 2rem;
+    }
+    .btn-row {
+      display: flex;
+      justify-content: flex-end;
+      gap: 1rem;
+    }
+    .btn {
+      padding: 0.6rem 1.5rem;
+      border-radius: 4px;
+      font-size: 1rem;
+      cursor: pointer;
+      border: none;
+    }
+    .btn.cancel {
+      background-color: #f5f5f5;
+      color: #333;
+    }
+    .btn.submit {
+      background-color: #000;
+      color: #fff;
+    }
+    input[type="file"] {
+      border: none;
+      padding: 0;
+    }
+  </style>
+  <link rel="stylesheet" th:href="@{/css/notification.css}">
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" th:href="@{/css/header.css}">
+</head>
+<body>
+<header th:replace="~{fragments/header :: siteHeader}"></header>
+<div class="container">
+  <div class="title-row">
+    <h1>모임 수정</h1>
+  </div>
+  <form th:action="@{/team/edit/{teamId}(teamId=${team.teamId})}" method="post">
+    <div class="section">
+      <label>모임 제목</label>
+      <input type="text" name="title" placeholder="모임 제목을 입력하세요" th:value="${team.teamTitle}" required>
+
+      <label>모임 설명</label>
+      <textarea name="description" placeholder="간단한 모임 설명을 입력하세요" th:text="${team.teamDetails}" required></textarea>
+
+      <label>날짜</label>
+      <input type="date" name="date" th:value="${#temporals.format(team.teamDate, 'yyyy-MM-dd')}" required>
+
+      <label>시간</label>
+      <input type="time" name="time" th:value="${#temporals.format(team.teamDate, 'HH:mm')}" required>
+
+      <label>음식 카테고리</label>
+      <select th:field="*{team.category}" required>
+        <option value="">카테고리 선택</option>
+        <option value="한식" th:selected="${team.category == '한식'}">한식</option>
+        <option value="일식" th:selected="${team.category == '일식'}">일식</option>
+        <option value="중식" th:selected="${team.category == '중식'}">중식</option>
+        <option value="양식" th:selected="${team.category == '양식'}">양식</option>
+        <option value="분식" th:selected="${team.category == '분식'}">분식</option>
+        <option value="디저트" th:selected="${team.category == '디저트'}">디저트</option>
+      </select>
+
+      <label>최대 인원</label>
+      <select th:field="*{team.maxPeople}" required>
+        <option th:each="i : ${#numbers.sequence(1,10)}"
+                th:value="${i}" th:text="${i + '명'}"
+                th:selected="${team.maxPeople == i}">
+        </option>
+      </select>
+    </div>
+
+    <div class="section">
+      <h2>식당 정보</h2>
+      <label>식당 이름</label>
+      <input type="text" name="restaurantName" placeholder="식당 이름을 입력하세요" th:value="${team.restaurantName}" required>
+
+      <label>주소</label>
+      <input type="text" name="restaurantAddress" placeholder="식당 주소를 입력하세요" th:value="${team.restaurantAddress}" required>
+
+      <label>위치 선택</label>
+      <div id="map-placeholder" style="width:100%; height:300px; border:1px solid #ccc;"></div>
+    </div>
+
+    <div class="section">
+      <h2>모임 이미지</h2>
+      <div class="image-upload-box">
+        클릭하여 업로드 또는 드래그 앤 드롭 (JPG, PNG, JPEG 파일 / 최대 10MB)
+        <img th:if="${team.imageUrl}" th:src="${team.imageUrl}" style="max-width: 100px; max-height: 100px;">
+      </div>
+      <input type="file" name="image" accept="image/*">
+    </div>
+
+    <div class="btn-row">
+      <button type="button" class="btn cancel" onclick="history.back()">취소</button>
+      <button type="submit" class="btn submit">모임 수정하기</button>
+    </div>
+  </form>
+</div>
+<footer>
+  © 2025 맛남. 모든 권리 보유.
+</footer>
+<script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=9e9f7116c9bee853591bfa6e12c7fa5f&libraries=services"></script>
+
+<script>
+    kakao.maps.load(function() {
+    const container = document.getElementById('map-placeholder');
+    const options = {
+    center: new kakao.maps.LatLng(37.5665, 126.9780),
+    level: 4
+  };
+    new kakao.maps.Map(container, options);
+  });
+</script>
+<script src="/js/auth.js"></script>
+<script src="/js/header.js"></script>
+<script src="/js/notification-common.js"></script>
+</body>
+</html>

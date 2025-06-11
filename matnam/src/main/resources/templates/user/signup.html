@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>회원가입 | 맛남</title>
+  <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+  <script th:src="@{/js/common-toast.js}"></script>
+  <script th:src="@{/js/auth.js}"></script>
+  <style>
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #fff;
+      color: #333;
+    }
+
+    .btn-primary {
+      background-color: #000;
+      color: white;
+      padding: 0.4rem 0.8rem;
+      border: none;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+    main {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 4rem;
+    }
+    .signup-box {
+      width: 600px;
+      border: 1px solid #eee;
+      border-radius: 8px;
+      padding: 2rem;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    .signup-box h2 {
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }
+    .signup-box p {
+      text-align: center;
+      font-size: 0.85rem;
+      color: #666;
+      margin-bottom: 1rem;
+    }
+    .tab-buttons button {
+      flex: 1;
+      padding: 0.5rem;
+      border: none;
+      background: #f5f5f5;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+    .tab-buttons button.active {
+      background: #fff;
+      border-bottom: 2px solid #000;
+      font-weight: bold;
+    }
+    .divider {
+      display: flex;
+      align-items: center;
+      text-align: center;
+      margin: 1rem 0;
+    }
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      border-bottom: 1px solid #eee;
+    }
+    .divider span {
+      padding: 0 12px;
+      font-size: 0.8rem;
+      color: #aaa;
+    }
+    .google-btn {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      height: 40px;
+      background-color: white;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+      box-shadow: 0 2px 4px 0 rgba(0,0,0,0.05);
+      cursor: pointer;
+      text-decoration: none;
+      transition: background-color 0.3s, box-shadow 0.3s;
+      overflow: hidden;
+    }
+    .google-btn:hover {
+      background-color: #f8f8f8;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+    }
+    .google-icon {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 40px;
+      height: 40px;
+      background: #4285F4;
+      color: white;
+      font-weight: bold;
+      font-size: 16px;
+    }
+    .btn-text {
+      margin: 0;
+      color: #333;
+      font-size: 0.9rem;
+      text-align: center;
+      flex-grow: 1;
+    }
+    .signup-form .form-group {
+      margin-bottom: 1.2rem;
+    }
+    .signup-form label {
+      font-size: 0.85rem;
+      margin-bottom: 0.3rem;
+      display: block;
+      font-weight: 500;
+    }
+    .signup-form input,
+    .signup-form select {
+      width: 100%;
+      padding: 0.7rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      box-sizing: border-box;
+    }
+    .signup-form select {
+      background: white;
+    }
+    .error-message {
+      color: #ff4444;
+      font-size: 0.8rem;
+      margin-top: 0.3rem;
+    }
+    .signup-form button {
+      width: 100%;
+      padding: 0.8rem;
+      background: #000;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      margin-top: 1rem;
+    }
+    .signup-form button:hover {
+      background: #333;
+    }
+    .signup-footer {
+      text-align: center;
+      font-size: 0.8rem;
+      margin-top: 1.5rem;
+    }
+    footer {
+      margin-top: 5rem;
+      text-align: center;
+      font-size: 0.8rem;
+      color: #999;
+      padding: 1rem 0;
+      border-top: 1px solid #eee;
+    }
+    .password-info {
+      font-size: 0.75rem;
+      color: #666;
+      margin-top: 0.3rem;
+    }
+  </style>
+  <link rel="stylesheet" th:href="@{/css/notification.css}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" th:href="@{/css/header.css}">
+</head>
+<body>
+
+<!-- Header -->
+<header th:replace="~{fragments/header :: siteHeader}"></header>
+
+<!-- Main Signup Box -->
+<main>
+  <div class="signup-box">
+    <h2>회원가입</h2>
+    <p>맛남에 오신 것을 환영합니다! 계정을 만들어 다양한 모임에 참여해보세요.</p>
+
+    <div class="social-signup">
+      <a href="/oauth2/authorization/google" class="google-btn">
+        <span class="google-icon">G</span>
+        <span class="btn-text">Google로 회원가입</span>
+      </a>
+    </div>
+    <div class="divider">
+      <span>또는 직접 입력</span>
+    </div>
+
+    <form class="signup-form" id="signupForm">
+      <div class="form-group">
+        <label for="userId">아이디</label>
+        <input type="text" id="userId" name="userId" placeholder="아이디를 입력하세요" required>
+        <div class="error-message" id="userIdError"></div>
+      </div>
+
+      <div class="form-group">
+        <label for="password">비밀번호</label>
+        <input type="password" id="password" name="password" placeholder="********" required>
+        <div class="password-info">비밀번호는 8~20자의 영문 대/소문자, 숫자, 특수문자를 포함해야 합니다.</div>
+        <div class="error-message" id="passwordError"></div>
+      </div>
+
+      <div class="form-group">
+        <label for="confirmPassword">비밀번호 확인</label>
+        <input type="password" id="confirmPassword" name="confirmPassword" placeholder="********" required>
+        <div class="error-message" id="confirmPasswordError"></div>
+      </div>
+
+      <div class="form-group">
+        <label for="email">이메일</label>
+        <input type="email" id="email" name="email" placeholder="name@example.com" required>
+        <div class="error-message" id="emailError"></div>
+      </div>
+
+      <div class="form-group">
+        <label for="nickname">닉네임</label>
+        <input type="text" id="nickname" name="nickname" placeholder="사용할 닉네임을 입력하세요" required>
+        <div class="error-message" id="nicknameError"></div>
+      </div>
+
+      <div class="form-group">
+        <label for="address">주소</label>
+        <input type="text" id="address" name="address" placeholder="서울시 강남구" required>
+        <div class="error-message" id="addressError"></div>
+      </div>
+
+      <div class="form-group">
+        <label for="age">나이</label>
+        <input type="number" id="age" name="age" placeholder="나이를 입력하세요" min="14" max="120" required>
+        <div class="error-message" id="ageError"></div>
+      </div>
+
+      <div class="form-group">
+        <label for="gender">성별</label>
+        <select id="gender" name="gender" required>
+          <option value="">성별을 선택하세요</option>
+          <option value="MAN">남성</option>
+          <option value="WOMAN">여성</option>
+        </select>
+        <div class="error-message" id="genderError"></div>
+      </div>
+
+      <button type="submit">가입하기</button>
+    </form>
+
+    <div class="signup-footer">
+      이미 계정이 있으신가요? <a th:href="@{/user/signin}" style="text-decoration: underline;">로그인</a>
+    </div>
+  </div>
+</main>
+
+<!-- Footer -->
+<footer>
+  © 2025 맛남. 모든 권리 보유.
+</footer>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('signupForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      document.querySelectorAll('.error-message').forEach(el => el.textContent = '');
+
+      const formData = new FormData(this);
+      const password = formData.get('password');
+      const confirmPassword = formData.get('confirmPassword');
+
+      if (password !== confirmPassword) {
+        document.getElementById('confirmPasswordError').textContent = '비밀번호가 일치하지 않습니다.';
+        return;
+      }
+
+      const passwordPattern = /^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=!])(?=\S+$).{8,20}$/;
+      if (!passwordPattern.test(password)) {
+        document.getElementById('passwordError').textContent = '비밀번호는 8~20자의 영문 대/소문자, 숫자, 특수문자를 포함해야 합니다.';
+        return;
+      }
+
+      const signupData = {
+        userId: formData.get('userId'),
+        password: password,
+        email: formData.get('email'),
+        nickname: formData.get('nickname'),
+        address: formData.get('address'),
+        age: parseInt(formData.get('age')),
+        gender: formData.get('gender')
+      };
+
+      try {
+        console.log('회원가입 시도:', signupData);
+        const response = await fetch('/api/user/signup', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(signupData)
+        });
+
+        console.log('응답 상태:', response.status);
+        const result = await response.json();
+        console.log('응답 데이터:', result);
+
+        if (response.ok) {
+          redirectWithSessionToast('/user/preference', '회원가입이 완료되었습니다!', 'success');
+        } else {
+          if (result.data) {
+            if (typeof result.data === 'string') {
+              if (result.data.includes('이메일')) {
+                document.getElementById('emailError').textContent = result.data;
+              } else if (result.data.includes('아이디')) {
+                document.getElementById('userIdError').textContent = result.data;
+              } else if (result.data.includes('비밀번호')) {
+                document.getElementById('passwordError').textContent = result.data;
+              } else {
+                showToastNow(result.data || '회원가입 중 오류가 발생했습니다.', 'error');
+              }
+            } else if (typeof result.data === 'object') {
+              for (const field in result.data) {
+                const errorElement = document.getElementById(`${field}Error`);
+                if (errorElement) {
+                  errorElement.textContent = result.data[field];
+                }
+              }
+            }
+          } else if (result.message) {
+            if (result.message.includes('이메일')) {
+              document.getElementById('emailError').textContent = result.message;
+            } else if (result.message.includes('아이디')) {
+              document.getElementById('userIdError').textContent = result.message;
+            } else if (result.message.includes('비밀번호')) {
+              document.getElementById('passwordError').textContent = result.message;
+            } else {
+              showToastNow(result.message || '회원가입 중 오류가 발생했습니다.', 'error');
+            }
+          } else {
+            showToastNow('회원가입 중 오류가 발생했습니다.', 'error');
+          }
+        }
+      } catch (error) {
+        console.error('회원가입 오류 상세:', error);
+        showToastNow('서버와 통신 중 오류가 발생했습니다. 다시 시도해주세요.', 'error');
+      }
+    });
+  });
+</script>
+<script src="/js/header.js"></script>
+<script src="/js/notification-common.js"></script>
+
+</body>
+</html>

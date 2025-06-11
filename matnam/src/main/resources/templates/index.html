@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>모임 서비스</title>
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <script th:src="@{/js/common-toast.js}"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/header.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+        body {
+            background-color: #fff;
+            color: #333;
+        }
+        section {
+            margin: 0 auto 4rem auto;
+            max-width: 1200px;
+            padding: 0 1rem;
+        }
+        #header-anonymous, #header-login {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #eee;
+        }
+        .logo {
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+        nav {
+            display: flex;
+            gap: 1.5rem;
+        }
+        nav a {
+            text-decoration: none;
+            color: #333;
+        }
+        .header-buttons {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            border: none;
+        }
+        .btn-primary {
+            background-color: #000;
+            color: white;
+        }
+        .btn-outline {
+            background-color: white;
+            border: 1px solid #ddd;
+        }
+        .main-banner {
+            padding: 2rem;
+            background-color: #fff;
+        }
+        .main-banner h1 {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+        }
+        .main-banner p {
+            color: #666;
+            margin-bottom: 1.5rem;
+        }
+        .banner-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .search-section {
+            padding: 2rem;
+            text-align: center;
+            background-color: #fff;
+        }
+        .search-section h2 {
+            font-size: 1.4rem;
+            margin-bottom: 0.5rem;
+        }
+        .search-section p {
+            color: #666;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+        .search-button {
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        .meetings-section {
+            padding: 2rem;
+        }
+        .meetings-section h2 {
+            font-size: 1.4rem;
+            margin-bottom: 0.5rem;
+        }
+        .meetings-section p {
+            color: #666;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+        .meetings-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+        .meeting-card {
+            border: 1px solid #eee;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .meeting-image {
+            height: 150px;
+            background-color: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .meeting-details {
+            padding: 1rem;
+        }
+        .meeting-title {
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        .meeting-date, .meeting-location {
+            font-size: 0.8rem;
+            color: #666;
+            margin-bottom: 0.5rem;
+        }
+        .features-section {
+            padding: 2rem;
+            background-color: #f9f9f9;
+        }
+        .features-section h2 {
+            font-size: 1.4rem;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+        }
+        .feature {
+            text-align: center;
+        }
+        .feature h3 {
+            margin: 1rem 0 0.5rem;
+            font-size: 1.1rem;
+        }
+        .feature p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        footer {
+            text-align: center;
+            padding: 1rem 2rem;
+            font-size: 0.8rem;
+            color: #999;
+            border-top: 1px solid #eee;
+            background-color: #fff;
+        }
+        .ranking-section {
+            padding: 2rem;
+            background-color: #fff;
+            margin-bottom: 2rem;
+        }
+        .ranking-section h2 {
+            font-size: 1.4rem;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            font-weight: bold;
+        }
+        .ranking-section p {
+            text-align: center;
+            color: #666;
+            margin-bottom: 2rem;
+            font-size: 0.95rem;
+        }
+        .ranking-list {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .ranking-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            background-color: #fcfcfc;
+            transition: transform 0.2s ease;
+        }
+        .ranking-item:hover {
+            transform: translateY(-3px);
+        }
+        .ranking-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #000;
+            margin-right: 1.5rem;
+            min-width: 2rem;
+            text-align: center;
+        }
+        .ranking-content {
+            flex: 1;
+        }
+        .item-name {
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+        .item-description {
+            color: #666;
+            font-size: 0.9rem;
+        }
+    </style>
+    <link rel="stylesheet" th:href="@{/css/notification.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+<header th:replace="~{fragments/header :: siteHeader}"></header>
+
+<message>
+    <div id="messageBox" style="display: none;
+                           background-color: #4CAF50;
+                           color: white;
+                           text-align: center;
+                           padding: 15px;
+                           margin-bottom: 20px;
+                           border-radius: 4px;">
+        회원 탈퇴가 완료되었습니다.
+    </div>
+</message>
+
+<!-- 메인 배너 -->
+<section class="main-banner" style="display: flex; align-items: center; justify-content: space-between;">
+    <div style="max-width: 50%;">
+        <h1 style="font-size: 2.5rem; font-weight: bold; margin-bottom: 1rem;">맛있는 식사와 새로운 만남</h1>
+        <p style="color: #666; margin-bottom: 1.5rem;">맛남에서 다양한 사람들과 함께 맛있는 식사를 즐기세요.
+            새로운 친구를 만들고, 맛집을 공유하고, 즐거운 시간을 보내세요.</p>
+        <div class="banner-buttons" style="display: flex; gap: 0.5rem;">
+            <button class="btn btn-primary" th:onclick="'location.href=\'' + @{/team/create} + '\''">맛남 모임 만들기</button><!-- 모임 찾기 버튼 -->
+            <button class="btn btn-outline" id="signup-button" th:onclick="'location.href=\'' + @{/user/signup} + '\''">회원가입</button> <!-- 회원가입 버튼 -->
+
+        </div>
+    </div>
+        <img src="/img/index.png" alt="메인 배너 이미지" style="max-width: 60%;">
+
+</section>
+
+<!-- 검색 섹션 -->
+<section class="search-section">
+    <h2>원하는 모임을 찾아보세요</h2>
+    <p>관심 있는 모임을 검색해보세요</p>
+    <div class="search-button">
+        <button class="btn btn-primary" style="width: 100%;" th:onclick="'location.href=\'' + @{/team/search} + '\''">모임 검색하기</button> <!-- 모임 검색하기 버튼 -->
+    </div>
+</section>
+
+<!-- 인기 모임 섹션 -->
+<section class="meetings-section">
+    <h2>인기 모임</h2>
+    <p>지금 가장 인기 있는 모임을 확인해보세요</p>
+    <div class="meetings-grid">
+        <!-- 첫 번째 모임 카드 -->
+        <div class="meeting-card">
+            <div class="meeting-image">
+                <img src = "/img/food.jpg" alt = "첫번째 모임 카드 이미지" style = "width: 100%; height: 100%; object-fit: cover;">
+            </div>
+            <div class="meeting-details">
+                <div class="meeting-title">강남 스테이크 탐방 모임</div>
+                <div class="meeting-date">📅 2025년 05월 24일 (토) 오후 7시</div>
+                <div class="meeting-location">📍 서울 강남구</div>
+                <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" th:onclick="'location.href=\'' + @{/team/detail/1} + '\''">자세히 보기</button>
+            </div>
+        </div>
+
+        <!-- 두 번째 모임 카드 -->
+        <div class="meeting-card">
+            <div class="meeting-image">
+                <img src = "/img/food_2.jpg" alt = "두번째 모임 카드 이미지" style = "width: 100%; height: 100%; object-fit: cover;">
+            </div>
+            <div class="meeting-details">
+                <div class="meeting-title">이태원 타코 사랑단</div>
+                <div class="meeting-date">📅 2025년 05월 25일 (일) 오후 6시</div>
+                <div class="meeting-location">📍 서울 용산구</div>
+                <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" th:onclick="'location.href=\'' + @{/team/detail/2} + '\''">자세히 보기</button>
+            </div>
+        </div>
+
+        <!-- 세 번째 모임 카드 -->
+        <div class="meeting-card">
+            <div class="meeting-image">
+                <img src = "/img/dessert.jpg" alt = "세번째 모임 카드 이미지" style = "width: 100%; height: 100%; object-fit: cover;">
+            </div>
+            <div class="meeting-details">
+                <div class="meeting-title">성수 카페 투어</div>
+                <div class="meeting-date">📅 2025년 05월 27일 (화) 오후 3시</div>
+                <div class="meeting-location">📍 서울 성동구</div>
+                <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" th:onclick="'location.href=\'' + @{/team/detail/3} + '\''">자세히 보기</button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 콘텐츠 랭킹 섹션 -->
+<section class="ranking-section" th:if="${contentRanking != null and not #lists.isEmpty(rankingItems)}">
+    <h2 th:text="${contentRanking.title}">🍽️ 소개팅 때 먹으면 안 되는 음식 TOP 5 🍽️</h2>
+    <p th:text="${contentRanking.subtitle}">맛남이 알려드리는 소개팅 성공률을 높이는 음식 선택 팁!</p>
+    <div class="ranking-list">
+        <!-- 동적으로 랭킹 정보 표시 -->
+        <div th:each="item : ${rankingItems}" class="ranking-item">
+            <div class="ranking-number">
+                <span th:text="${item.ranking}"></span>
+            </div>
+            <div class="ranking-content">
+                <div class="item-name" th:text="${item.itemName}"></div>
+                <div class="item-description" th:text="${item.description}"></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 기능 소개 섹션 -->
+<section class="features-section">
+    <h2>맛남의 특별한 기능</h2>
+    <div class="features-grid">
+        <!-- 첫 번째 기능 -->
+        <div class="feature">
+            <h3>맞춤형 시스템</h3>
+            <p>지역과 시간에 따라 모임을 쉽게 필터링하여 나에게 꼭 맞는 모임을 찾을 수 있어요.</p>
+        </div>
+
+        <!-- 두 번째 기능 -->
+        <div class="feature">
+            <h3>신사적 매칭</h3>
+            <p>취향과 관심사를 반영한 매칭으로 즐거운 사람들과의 만남을 도와드립니다.</p>
+        </div>
+
+        <!-- 세 번째 기능 (간편 예약 기능 → 기능 변경) -->
+        <div class="feature">
+            <h3>신뢰 기반 커뮤니티</h3>
+            <p>참여자 후기와 평점을 통해 신뢰할 수 있는 모임만 골라 참여할 수 있어 안심이에요.</p>
+        </div>
+    </div>
+</section>
+
+<!-- 푸터 -->
+<footer>
+    © 2025 맛남. 모든 권리 보유.
+</footer>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const message = urlParams.get('message');
+
+        if (message === 'account_deactivated') {
+            const messageBox = document.getElementById('messageBox');
+            messageBox.style.display = 'block';
+
+            setTimeout(function() {
+                messageBox.style.display = 'none';
+
+                const url = new URL(window.location);
+                url.searchParams.delete('message');
+                window.history.replaceState({}, document.title, url);
+            }, 5000);
+        }
+    });
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const signupButton = document.getElementById("signup-button");
+        if (auth.isLoggedIn() && signupButton) {
+            signupButton.style.display = "none";
+        }
+    });
+</script>
+<script src="/js/header.js"></script>
+<script src="/js/notification-common.js"></script>
+</body>
+</html>
