@@ -37,7 +37,6 @@ public class Team extends BaseEntity {
     @JoinColumn(name = "restaurantId")
     private Restaurant restaurant;
 
-//    @OneToMany(cascade = CascadeType.ALL)
     @OneToMany(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "teamId")
     private List<Participant> participants;

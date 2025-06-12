@@ -666,6 +666,13 @@
           참여 중
         </button>
 
+        <button th:classappend="${tab=='favorites'} ? 'active'"
+                id="favorites-tab"
+                th:data-tab="favorites"
+                onclick="switchTab('favorites')">
+          즐겨찾기
+        </button>
+
         <button class="create-meeting"
                 onclick="location.href='/team/create'">모임 만들기
         </button>
@@ -896,6 +903,36 @@
             </div>
           </div>
         </div>
+        <div id="favorites-meetings"
+             class="meetings-section"
+             style="display:none">
+          <h3>즐겨찾기 모임</h3>
+
+          <div th:if="${#lists.isEmpty(favoriteTeams)}" class="empty-state">
+            <p>즐겨찾기한 모임이 없습니다.</p>
+            <p>원하는 모임을 즐겨찾기 해보세요!</p>
+          </div>
+
+          <div th:each="team : ${favoriteTeams}" class="meeting-item">
+            <h4>
+              <span th:text="${team.teamTitle}">모임 제목</span>
+              <span class="status-badge"
+                    th:if="${#strings.toString(team.status) == 'RECRUITING'}">모집중</span>
+              <span class="status-badge"
+                    th:if="${#strings.toString(team.status) == 'FULL'}">모집완료</span>
+              <span class="status-badge"
+                    th:if="${#strings.toString(team.status) == 'COMPLETED'}">모임완료</span>
+              <span class="status-badge"
+                    th:if="${#strings.toString(team.status) == 'CANCELED'}">모임취소</span>
+            </h4>
+            <p>📅 <span th:text="${#temporals.format(team.teamDate, 'yyyy년 MM월 dd일 (E) a hh:mm')}">모임 날짜</span>
+            </p>
+            <p>📍 <span th:text="${team.restaurantName}">식당 이름</span></p>
+            <p>👥 참여 인원: <span th:text="${team.nowPeople + '/' + team.maxPeople}">참여 인원</span></p>
+            <a th:href="@{'/team/detail/' + ${team.teamId}}">자세히 보기</a><br>
+          </div>
+        </div>
+
       </div>
     </div>
 
@@ -1085,7 +1122,7 @@
     tabButtons.forEach(btn => btn.classList.remove('active'));
     document.getElementById(tabName + '-tab').classList.add('active');
 
-    ['all', 'hosting', 'participating'].forEach(name => {
+    ['all', 'hosting', 'participating', 'favorites'].forEach(name => {
       document.getElementById(name + '-meetings').style.display = 'none';
     });
 

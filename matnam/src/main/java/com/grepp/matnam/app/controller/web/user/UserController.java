@@ -1,6 +1,8 @@
 package com.grepp.matnam.app.controller.web.user;
 
 import com.grepp.matnam.app.model.mymap.service.MymapService;
+import com.grepp.matnam.app.model.team.dto.TeamDto;
+import com.grepp.matnam.app.model.team.service.FavoriteService;
 import com.grepp.matnam.app.model.team.service.TeamReviewService;
 import com.grepp.matnam.app.model.team.service.TeamService;
 import com.grepp.matnam.app.model.team.code.Status;
@@ -14,6 +16,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
@@ -38,6 +41,7 @@ public class UserController {
     private final TeamService teamService;
     private final TeamReviewService teamReviewService;
     private final MymapService mymapService;
+    private final FavoriteService favoriteService;
 
     @GetMapping("/signup")
     public String signupPage() {
@@ -109,7 +113,6 @@ public class UserController {
             List<Team> paginatedTeamsWithoutReview =
                     start < totalTeamsWithoutReview ? teamsWithoutReview.subList(start, end) : new ArrayList<>();
 
-            // 모델에 데이터 추가
             model.addAttribute("user", user);
             model.addAttribute("teamsWithoutReview", paginatedTeamsWithoutReview);
             model.addAttribute("currentPage", page);
@@ -166,6 +169,10 @@ public class UserController {
             model.addAttribute("teamCurrentPage", teamPage);
             model.addAttribute("teamSize", teamSize);
             model.addAttribute("userMaps", new ArrayList<>());
+            
+            // 즐겨찾기 조회
+            List<TeamDto> favoriteTeams = favoriteService.getFavoriteForUser(userId);
+            model.addAttribute("favoriteTeams", favoriteTeams);
 
             return "user/mypage";
         } catch (Exception e) {

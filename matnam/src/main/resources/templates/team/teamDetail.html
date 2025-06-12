@@ -4,7 +4,8 @@
   <meta charset="UTF-8">
   <title th:text="${team.teamTitle} + ' | 맛남'">강남 맛집 탐방 모임 | 맛남</title>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+  <link rel="stylesheet" type="text/css"
+        href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
   <script th:src="@{/js/common-toast.js}"></script>
   <style>
@@ -93,6 +94,7 @@
       margin-left: 10px;
       height: 40px;
     }
+
     .report-btn:hover {
       background-color: #d14e4e;
     }
@@ -108,9 +110,26 @@
       margin-left: 10px;
       height: 40px;
     }
+
     .team-page-btn:hover {
-       background-color: #3b56c6;
-     }
+      background-color: #3b56c6;
+    }
+
+    .favorite-btn {
+      background-color: #dfce75;
+      color: white;
+      padding: 0.5rem 0.8rem;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      margin-left: 10px;
+      height: 40px;
+    }
+
+    .favorite-btn:hover {
+      background-color: #d5bc6f;
+    }
 
 
     .modal {
@@ -282,6 +301,17 @@
     <div class="card">
       <div style="display: flex; justify-content: space-between;">
         <h2 th:text="${team.teamTitle} + ' '">강남 맛집 탐방 모임 </h2>
+        <button
+            id="favorite-btn"
+            type="button"
+            th:data-team-id="${team.teamId}"
+            class="favorite-btn"
+            th:classappend="${isFavorite} ? 'favorited' : ''">
+          <i class="fa"
+             th:classappend="${isFavorite} ? 'fa-star' : 'fa-star-o'"></i>
+          <span th:text="${isFavorite} ? '즐겨찾기 취소' : '즐겨찾기'"></span>
+        </button>
+
         <div style="min-width: 180px; display: flex; justify-content: flex-end;">
           <button class="team-page-btn" th:unless="${isAnonymous or !isParticipant}"
                   th:onclick="|window.location.href='/team/page/${team.teamId}'|">
@@ -444,7 +474,8 @@
 <footer>
   © 2025 맛남. 모든 권리 보유.
 </footer>
-<script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=9e9f7116c9bee853591bfa6e12c7fa5f&libraries=services"></script>
+<script
+    src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=9e9f7116c9bee853591bfa6e12c7fa5f&libraries=services"></script>
 <script th:inline="javascript">
   $(document).ready(function () {
     // 모임 참여 신청
@@ -549,6 +580,49 @@
     });
   });
 
+  document.addEventListener('DOMContentLoaded', () => {
+    const btn = document.getElementById('favorite-btn');
+    if (!btn) {
+      return;
+    }
+
+    btn.addEventListener('click', async () => {
+      const teamId = btn.dataset.teamId;
+      const isFav = btn.classList.contains('favorited');
+      try {
+        if (isFav) {
+          // 즐겨찾기 취소
+          const res = await fetch(`/api/favorite/remove/${teamId}`, {
+            method: 'DELETE',
+          });
+          if (!res.ok) {
+            throw new Error('취소 실패');
+          }
+          // UI 토글
+          btn.classList.remove('favorited');
+          btn.querySelector('i').classList.replace('fa-star', 'fa-star-o');
+          btn.querySelector('span').textContent = '즐겨찾기';
+        } else {
+          // 즐겨찾기 추가
+          const res = await fetch(`/api/favorite/add`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ teamId })
+          });
+          if (!res.ok) {
+            throw new Error('추가 실패');
+          }
+          // UI 토글
+          btn.classList.add('favorited');
+          btn.querySelector('i').classList.replace('fa-star-o', 'fa-star');
+          btn.querySelector('span').textContent = '즐겨찾기 취소';
+        }
+      } catch (e) {
+        alert(e.message || '오류가 발생했습니다.');
+      }
+    });
+  });
+
   document.addEventListener('DOMContentLoaded', function () {
     const modal = document.getElementById('reportModal');
     const reportBtn = document.getElementById('reportBtn');
@@ -630,12 +704,12 @@
       });
     });
   });
-  kakao.maps.load(function() {
+  kakao.maps.load(function () {
     const container = document.getElementById('map-placeholder');
     const options = {
-    center: new kakao.maps.LatLng(37.5665, 126.9780),
-    level: 4
-  };
+      center: new kakao.maps.LatLng(37.5665, 126.9780),
+      level: 4
+    };
     new kakao.maps.Map(container, options);
   });
 
