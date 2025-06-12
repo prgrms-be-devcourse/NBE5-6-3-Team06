@@ -102,11 +102,11 @@ public class RestaurantService {
 
         return new RestaurantDto(
             restaurant.getName(),
+            restaurant.getMainFood(),
             restaurant.getSummary(),
-            restaurant.getAddress(),
             restaurant.getCategory(),
-            restaurant.getOpenTime(),
-            restaurant.getMainFood()
+            restaurant.getAddress(),
+            restaurant.getOpenTime()
         );
     }
 

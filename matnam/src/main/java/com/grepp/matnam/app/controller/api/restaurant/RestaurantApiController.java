@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @Slf4j
 @RequiredArgsConstructor
-@RequestMapping("api/ai")
+@RequestMapping("/api/ai")
 public class RestaurantApiController {
 
     private final RestaurantAiService restaurantAiService;
@@ -44,8 +44,8 @@ public class RestaurantApiController {
     }
 
     @GetMapping("recommend/restaurant/{teamId}")
-    @Operation(summary = "추천", description = "팀에 속한 사용자의 취향 키워드를 종합하여 이를 기반으로 추천을 제공합니다.")
-    public ResponseEntity<ApiResponse<RestaurantRecommendResponse>> recommend(@PathVariable Long teamId) {
+    @Operation(summary = "추천", description = "팀에 속한 사용자의 취향 키워드, 거리를 종합하여 이를 기반으로 추천을 제공합니다.")
+    public ResponseEntity<ApiResponse<RestaurantRecommendResponse>> recommend(@PathVariable Long teamId, @RequestParam String category) {
         try {
             if(teamId == null||teamId <= 0) {
                 return ResponseEntity.badRequest()
@@ -54,9 +54,20 @@ public class RestaurantApiController {
             List<String> keywords = teamService.countPreferenceKeyword(teamId);
             log.info("teamId {}에 대한 추출된 키워드: {}", teamId, keywords);
 
-            String keywordPrompt = "우리 팀은 다음 키워드를 선호해요: " +
-                String.join(", ", keywords) + ". 이 키워드를 기반으로 최적의 식당 3곳을 추천해줘.";
-            log.info("keywordPrompt {}", keywordPrompt);
+            String address = teamService.getTeamByIdWithParticipants(teamId).getRestaurantAddress();
+            log.info("일차장소: {}", address);
+            log.info("팀 카테고리: {}", category);
+
+            String keywordPrompt = "우리 팀은 다음 키워드를 선호해요: " + String.join(" ", keywords);
+
+            if (category != null && !category.isEmpty() && !category.equals("카테고리")) {
+                keywordPrompt += " 그리고 우리팀이 원하는 카테고리는 " + category + "입니다.";
+            }
+            keywordPrompt += " 현재 위치는 " + address + "일 때 키워드를 잘 반영하고";
+
+            keywordPrompt += " 너무 먼 거리는 제외하고 카테고리는 무조건 동일한 최적의 식당 3곳을 추천해줘.";
+
+            log.info("최종 프롬프트: {}", keywordPrompt);
 
             RestaurantRecommendResponse response = restaurantAiService.recommendRestaurant(keywordPrompt);
             return ResponseEntity.ok(ApiResponse.success(response));
@@ -68,11 +79,18 @@ public class RestaurantApiController {
     }
 
     // 재추천
-    @GetMapping("reRecommend/restaurant")
+    @GetMapping("reRecommend/restaurant/{teamId}")
     @Operation(summary = "재추천", description = "취향 기반 추천이 마음에 들지 않을 때 제공하는 재추천입니다.")
-    public ResponseEntity<ApiResponse<RestaurantRecommendResponse>> reRecommend() {
+    public ResponseEntity<ApiResponse<RestaurantRecommendResponse>> reRecommend(@PathVariable Long teamId) {
         try {
-            return ResponseEntity.ok(ApiResponse.success(restaurantAiService.reRecommendRestaurant()));
+            String address = teamService.getTeamByIdWithParticipants(teamId).getRestaurantAddress();
+
+            String rePrompt = "현재 1차 장소는 " + address + "입니다. " +
+                "이 위치에서 너무 멀지 않은 거리에 있는 " +
+                "좋은 2차 식당 3곳을 추천해주세요. " +
+                "각 식당의 특징과 추천 이유를 자세히 설명해주세요.";
+
+            return ResponseEntity.ok(ApiResponse.success(restaurantAiService.reRecommendRestaurant(rePrompt)));
         } catch (Exception e) {
             log.error("재추천 오류 발생", e);
             return ResponseEntity.internalServerError()
