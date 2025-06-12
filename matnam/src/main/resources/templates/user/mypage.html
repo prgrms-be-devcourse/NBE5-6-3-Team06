@@ -931,6 +931,23 @@
             <p>👥 참여 인원: <span th:text="${team.nowPeople + '/' + team.maxPeople}">참여 인원</span></p>
             <a th:href="@{'/team/detail/' + ${team.teamId}}">자세히 보기</a><br>
           </div>
+          <div class="teamPaging-container" th:if="${favoritePages > 1}">
+            <div class="pagination">
+              <a th:if="${teamCurrentPage > 0}"
+                 th:href="@{/user/mypage(tab='favorites', teamPage=${teamCurrentPage - 1}, teamSize=${teamSize})}"
+                 class="page-link">&laquo; 이전</a>
+              <span th:each="i : ${#numbers.sequence(0, favoritePages - 1)}">
+                <a th:if="${i != teamCurrentPage}"
+                   th:href="@{/user/mypage(tab='favorites', teamPage=${i}, teamSize=${teamSize})}"
+                   class="page-link" th:text="${i + 1}">1</a>
+                  <span th:if="${i == teamCurrentPage}" class="page-link active"
+                        th:text="${i + 1}">1</span>
+                </span>
+              <a th:if="${teamCurrentPage < favoritePages - 1}"
+                 th:href="@{/user/mypage(tab='favorites', teamPage=${teamCurrentPage + 1}, teamSize=${teamSize})}"
+                 class="page-link">다음 &raquo;</a>
+            </div>
+          </div>
         </div>
 
       </div>

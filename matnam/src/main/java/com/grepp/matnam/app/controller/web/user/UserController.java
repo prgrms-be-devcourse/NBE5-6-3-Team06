@@ -128,6 +128,9 @@ public class UserController {
             // 참여한 모든 모임 조회 (승인된 참여자 및 상태 무관)
             List<Team> allTeams = teamService.getAllTeams(userId);
 
+            // 즐겨찾기 조회
+            List<TeamDto> favoriteTeams = favoriteService.getFavoriteForUser(userId);
+
             hostingTeams.sort(getTeamComparator());
             participatingTeams.sort(getTeamComparator());
             allTeams.sort(getTeamComparator());
@@ -135,10 +138,12 @@ public class UserController {
             int allTotal = allTeams.size();
             int hostingTotal = hostingTeams.size();
             int partTotal = participatingTeams.size();
+            int favTotal = favoriteTeams.size();
 
             int allPages = (int)Math.ceil((double)allTotal / teamSize);
             int hostingPages = (int)Math.ceil((double)hostingTotal / teamSize);
             int partPages = (int)Math.ceil((double)partTotal / teamSize);
+            int favPages = (int)Math.ceil((double)favTotal / teamSize);
 
             int allStart = teamPage * teamSize;
             int allEnd = Math.min(allStart + teamSize, allTotal);
@@ -146,6 +151,8 @@ public class UserController {
             int hostEnd = Math.min(hostStart + teamSize, hostingTotal);
             int partStart = teamPage * teamSize;
             int partEnd = Math.min(partStart + teamSize, partTotal);
+            int favStart = teamPage * teamSize;
+            int favEnd = Math.min(favStart + teamSize, favTotal);
 
             List<Team> paginatedAll  = allStart < allTotal
                 ? allTeams.subList(allStart, allEnd)
@@ -155,6 +162,9 @@ public class UserController {
                 : Collections.emptyList();
             List<Team> paginatedPart = partStart < partTotal
                 ? participatingTeams.subList(partStart, partEnd)
+                : Collections.emptyList();
+            List<TeamDto> paginatedFav = favStart < favTotal
+                ? favoriteTeams.subList(favStart, favEnd)
                 : Collections.emptyList();
 
             model.addAttribute("allTeams", paginatedAll);
@@ -166,13 +176,16 @@ public class UserController {
             model.addAttribute("participatingTeams", paginatedPart);
             model.addAttribute("participatingPages", partPages);
 
+            // todo 즐겨찾기 정렬 나중에 하기(모든 조회를 teamDto 로 수정)
+//            favoriteTeams.sort(getTeamComparator());
+            model.addAttribute("favoriteTeams", paginatedFav);
+            model.addAttribute("favoritePages", favPages);
+
             model.addAttribute("teamCurrentPage", teamPage);
             model.addAttribute("teamSize", teamSize);
             model.addAttribute("userMaps", new ArrayList<>());
-            
-            // 즐겨찾기 조회
-            List<TeamDto> favoriteTeams = favoriteService.getFavoriteForUser(userId);
-            model.addAttribute("favoriteTeams", favoriteTeams);
+
+
 
             return "user/mypage";
         } catch (Exception e) {
