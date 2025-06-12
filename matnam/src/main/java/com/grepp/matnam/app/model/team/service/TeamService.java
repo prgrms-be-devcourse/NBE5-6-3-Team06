@@ -94,6 +94,12 @@ public class TeamService {
             }
 
             participantRepository.save(participant);
+
+            if (!user.getUserId().equals(team.getUser().getUserId())) { // 리더가 아닐 때만 알림 발송
+                notificationSender.sendNotificationToUser(team.getUser().getUserId(),
+                    NotificationType.TEAM_STATUS, "[" + team.getTeamTitle() + "] 모임에 참여 신청이 들어왔습니다!",
+                    "/team/detail/" + team.getTeamId());
+            }
         } else {
             throw new IllegalStateException("이미 참여한 사용자입니다.");
         }
