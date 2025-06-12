@@ -1,9 +1,11 @@
 package com.grepp.matnam.app.model.team.repository;
 
+import com.grepp.matnam.app.model.team.dto.MeetingDto;
 import com.grepp.matnam.app.model.team.dto.MonthlyMeetingStatsDto;
 import com.grepp.matnam.app.model.team.dto.ParticipantWithUserIdDto;
 import com.grepp.matnam.app.model.team.code.ParticipantStatus;
 import com.grepp.matnam.app.model.team.entity.Team;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -30,4 +32,6 @@ public interface TeamRepositoryCustom {
     Page<Team> findAllWithParticipantsAndActivatedTrue(Pageable pageable);
 
     Optional<Team> findByIdWithParticipantsAndUserAndActivatedTrue(Long teamId);
+
+    List<MeetingDto> findByTeamDateIn(LocalDate date);
 }
