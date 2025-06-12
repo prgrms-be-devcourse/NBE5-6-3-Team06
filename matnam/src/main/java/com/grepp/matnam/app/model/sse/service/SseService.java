@@ -23,6 +23,12 @@ public class SseService {
      * SSE 구독
      */
     public SseEmitter subscribe(String userId) {
+        SseEmitter existing = sseRepository.get(userId);
+        if (existing != null) {
+            existing.complete();
+            sseRepository.delete(userId);
+        }
+
         SseEmitter emitter = new SseEmitter(DEFAULT_TIMEOUT);
         sseRepository.save(userId, emitter);
 
