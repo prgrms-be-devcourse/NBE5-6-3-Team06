@@ -52,8 +52,6 @@ public class TeamService {
 
     private final ParticipantRepository participantRepository;
     private final PreferenceRepository preferenceRepository;
-//    private final RestaurantRepository restaurantRepository;
-
     private final MymapRepository mymapRepository;
     private final UserRepository userRepository;
     private final ChatRoomRepository chatRoomRepository;
@@ -224,6 +222,10 @@ public class TeamService {
         return teamRepository.findTeamsByParticipantUserIdAndParticipantStatusAndActivatedTrue(
                 userId, ParticipantStatus.APPROVED
         );
+    }
+
+    public List<Team> getAllTeams(String userId) {
+        return teamRepository.findTeamsByParticipantUserIdAndParticipantStatusAndActivatedTrue(userId, ParticipantStatus.APPROVED);
     }
 
     // 사용자의 모든 참여 정보 조회 (PENDING, APPROVED, REJECTED)

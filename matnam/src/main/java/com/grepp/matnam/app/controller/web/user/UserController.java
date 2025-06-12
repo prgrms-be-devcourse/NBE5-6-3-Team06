@@ -1,6 +1,8 @@
 package com.grepp.matnam.app.controller.web.user;
 
 import com.grepp.matnam.app.model.mymap.service.MymapService;
+import com.grepp.matnam.app.model.team.dto.TeamDto;
+import com.grepp.matnam.app.model.team.service.FavoriteService;
 import com.grepp.matnam.app.model.team.service.TeamReviewService;
 import com.grepp.matnam.app.model.team.service.TeamService;
 import com.grepp.matnam.app.model.team.code.Status;
@@ -12,7 +14,9 @@ import com.grepp.matnam.infra.auth.CookieUtils;
 import com.grepp.matnam.infra.auth.jwt.JwtProvider;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
@@ -37,6 +41,7 @@ public class UserController {
     private final TeamService teamService;
     private final TeamReviewService teamReviewService;
     private final MymapService mymapService;
+    private final FavoriteService favoriteService;
 
     @GetMapping("/signup")
     public String signupPage() {
@@ -108,7 +113,6 @@ public class UserController {
             List<Team> paginatedTeamsWithoutReview =
                     start < totalTeamsWithoutReview ? teamsWithoutReview.subList(start, end) : new ArrayList<>();
 
-            // 모델에 데이터 추가
             model.addAttribute("user", user);
             model.addAttribute("teamsWithoutReview", paginatedTeamsWithoutReview);
             model.addAttribute("currentPage", page);
@@ -122,45 +126,66 @@ public class UserController {
             participatingTeams.removeAll(hostingTeams);
 
             // 참여한 모든 모임 조회 (승인된 참여자 및 상태 무관)
-//            List<Team> allTeamsForUser = teamService.getAllTeamsForUser(userId);
-            List<Team> allTeams = new ArrayList<>();
-            allTeams.addAll(hostingTeams);
-            allTeams.addAll(participatingTeams);
+            List<Team> allTeams = teamService.getAllTeams(userId);
+
+            // 즐겨찾기 조회
+            List<TeamDto> favoriteTeams = favoriteService.getFavoriteForUser(userId);
+
+            hostingTeams.sort(getTeamComparator());
+            participatingTeams.sort(getTeamComparator());
             allTeams.sort(getTeamComparator());
 
-            // 팀 페이지네이션
-            int totalTeams = allTeams.size();
-            int totalTeamPages = (int) Math.ceil((double) totalTeams / teamSize);
+            int allTotal = allTeams.size();
+            int hostingTotal = hostingTeams.size();
+            int partTotal = participatingTeams.size();
+            int favTotal = favoriteTeams.size();
 
-            int teamStart = teamPage * teamSize;
-            int teamEnd = Math.min(teamStart + teamSize, totalTeams);
+            int allPages = (int)Math.ceil((double)allTotal / teamSize);
+            int hostingPages = (int)Math.ceil((double)hostingTotal / teamSize);
+            int partPages = (int)Math.ceil((double)partTotal / teamSize);
+            int favPages = (int)Math.ceil((double)favTotal / teamSize);
 
-            List<Team> paginatedHostingTeams = new ArrayList<>();
-            List<Team> paginatedParticipatingTeams = new ArrayList<>();
+            int allStart = teamPage * teamSize;
+            int allEnd = Math.min(allStart + teamSize, allTotal);
+            int hostStart = teamPage * teamSize;
+            int hostEnd = Math.min(hostStart + teamSize, hostingTotal);
+            int partStart = teamPage * teamSize;
+            int partEnd = Math.min(partStart + teamSize, partTotal);
+            int favStart = teamPage * teamSize;
+            int favEnd = Math.min(favStart + teamSize, favTotal);
 
-            List<Team> paginatedAllTeams = new ArrayList<>();
+            List<Team> paginatedAll  = allStart < allTotal
+                ? allTeams.subList(allStart, allEnd)
+                : Collections.emptyList();
+            List<Team> paginatedHost = hostStart < hostingTotal
+                ? hostingTeams.subList(hostStart, hostEnd)
+                : Collections.emptyList();
+            List<Team> paginatedPart = partStart < partTotal
+                ? participatingTeams.subList(partStart, partEnd)
+                : Collections.emptyList();
+            List<TeamDto> paginatedFav = favStart < favTotal
+                ? favoriteTeams.subList(favStart, favEnd)
+                : Collections.emptyList();
 
-            if (teamStart < totalTeams) {
-                paginatedAllTeams = allTeams.subList(teamStart, teamEnd);
+            model.addAttribute("allTeams", paginatedAll);
+            model.addAttribute("allPages", allPages);
 
-                // 호스트/참여 분류
-                for (Team team : paginatedAllTeams) {
-                    if (team.getUser().getUserId().equals(userId)) {
-                        paginatedHostingTeams.add(team);
-                    } else {
-                        paginatedParticipatingTeams.add(team);
-                    }
-                }
-            }
+            model.addAttribute("hostingTeams", paginatedHost);
+            model.addAttribute("hostingPages", hostingPages);
 
-            model.addAttribute("all", paginatedAllTeams);
-            model.addAttribute("hostingTeams", paginatedHostingTeams);
-            model.addAttribute("participatingTeams", paginatedParticipatingTeams);
-//            model.addAttribute("allTeamsForUser", allTeamsForUser);
+            model.addAttribute("participatingTeams", paginatedPart);
+            model.addAttribute("participatingPages", partPages);
+
+            // todo 즐겨찾기 정렬 나중에 하기(모든 조회를 teamDto 로 수정)
+//            favoriteTeams.sort(getTeamComparator());
+            model.addAttribute("favoriteTeams", paginatedFav);
+            model.addAttribute("favoritePages", favPages);
+
             model.addAttribute("teamCurrentPage", teamPage);
-            model.addAttribute("teamTotalPages", totalTeamPages);
             model.addAttribute("teamSize", teamSize);
             model.addAttribute("userMaps", new ArrayList<>());
+
+
 
             return "user/mypage";
         } catch (Exception e) {

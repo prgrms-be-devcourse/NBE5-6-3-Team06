@@ -2,17 +2,18 @@ package com.grepp.matnam.app.controller.web.team;
 
 import com.grepp.matnam.app.controller.api.team.payload.TeamRequest;
 import com.grepp.matnam.app.controller.api.team.payload.UpdatedTeamRequest;
-import com.grepp.matnam.app.model.team.repository.ParticipantRepository;
-import com.grepp.matnam.app.model.team.repository.TeamReviewRepository;
-import com.grepp.matnam.app.model.team.service.TeamService;
 import com.grepp.matnam.app.model.team.code.ParticipantStatus;
 import com.grepp.matnam.app.model.team.code.Role;
 import com.grepp.matnam.app.model.team.code.Status;
 import com.grepp.matnam.app.model.team.entity.Participant;
 import com.grepp.matnam.app.model.team.entity.Team;
 import com.grepp.matnam.app.model.team.entity.TeamReview;
-import com.grepp.matnam.app.model.user.service.UserService;
+import com.grepp.matnam.app.model.team.repository.ParticipantRepository;
+import com.grepp.matnam.app.model.team.repository.TeamReviewRepository;
+import com.grepp.matnam.app.model.team.service.FavoriteService;
+import com.grepp.matnam.app.model.team.service.TeamService;
 import com.grepp.matnam.app.model.user.entity.User;
+import com.grepp.matnam.app.model.user.service.UserService;
 import jakarta.validation.Valid;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -45,6 +46,7 @@ public class TeamController {
     private final UserService userService;
     private final TeamReviewRepository teamReviewRepository;
     private final ParticipantRepository participantRepository;
+    private final FavoriteService favoriteService;
 
 
     // 모임 생성 페이지
@@ -58,7 +60,7 @@ public class TeamController {
     @PostMapping("/create")
     public String createTeam(@Valid @ModelAttribute TeamRequest teamRequest,
         BindingResult bindingResult,
-        @RequestParam(value="image", required=false) MultipartFile imageFile
+        @RequestParam(value = "image", required = false) MultipartFile imageFile
     ) {
         if (bindingResult.hasErrors()) {
             return "team/teamCreate";
@@ -102,7 +104,8 @@ public class TeamController {
 
     // 모임 수정
     @PostMapping("/edit/{teamId}")
-    public String updateTeam(@PathVariable Long teamId, @ModelAttribute UpdatedTeamRequest updatedTeamRequest) {
+    public String updateTeam(@PathVariable Long teamId,
+        @ModelAttribute UpdatedTeamRequest updatedTeamRequest) {
         String UserId = SecurityContextHolder.getContext().getAuthentication().getName();
         Team team = updatedTeamRequest.toTeam();
         team.setTeamId(teamId);
@@ -159,11 +162,12 @@ public class TeamController {
         boolean alreadyApplied = participantRepository.existsByUser_UserIdAndTeam_TeamIdAndParticipantStatus(
             userId, teamId, ParticipantStatus.PENDING);
 
-
         model.addAttribute("isParticipant", isParticipant);
         model.addAttribute("alreadyApplied", alreadyApplied);
         model.addAttribute("user", user);
         model.addAttribute("isAnonymous", false);
+
+        model.addAttribute("isFavorite", favoriteService.existsByUserAndTeam(userId, teamId));
 
         return "team/teamDetail";
     }
@@ -192,19 +196,21 @@ public class TeamController {
         }
 
         List<Participant> approvedParticipants = team.getParticipants().stream()
-                .filter(participant -> participant.getRole() == Role.MEMBER)
-                .toList();
+            .filter(participant -> participant.getRole() == Role.MEMBER)
+            .toList();
         model.addAttribute("participants", approvedParticipants);
 
         // 주최자인지 확인
         boolean isLeader = team.getUser().getUserId().equals(currentUser.getUserId());
         model.addAttribute("isLeader", isLeader);
 
-        boolean isAdmin = currentUser.getRole().equals(com.grepp.matnam.app.model.user.code.Role.ROLE_ADMIN);
+        boolean isAdmin = currentUser.getRole()
+            .equals(com.grepp.matnam.app.model.user.code.Role.ROLE_ADMIN);
 
         if (!isAdmin) {
             log.info("Checking if user {} is a participant in team {}", userId, teamId);
-            Participant participant = participantRepository.findByUser_UserIdAndTeam_TeamId(userId, teamId);
+            Participant participant = participantRepository.findByUser_UserIdAndTeam_TeamId(userId,
+                teamId);
             if (participant == null) {
                 return "redirect:/team/" + teamId + "?error=notParticipant";
             }
@@ -212,7 +218,6 @@ public class TeamController {
 
         return "team/teamPage";
     }
-
 
 
     // 모임 완료 후 리뷰 작성 페이지 표시
