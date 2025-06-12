@@ -1,12 +1,10 @@
-package com.grepp.matnam.app.controller.api.user.payload;
+package com.grepp.matnam.app.controller.api.auth.payload;
 
 import jakarta.validation.constraints.NotBlank;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 
-@Getter
-@Setter
-public class UserSigninRequest {
+@Data
+public class SigninRequest {
     @NotBlank(message = "아이디는 필수입니다.")
     private String userId;
 

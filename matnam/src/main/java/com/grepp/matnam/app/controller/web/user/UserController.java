@@ -9,6 +9,7 @@ import com.grepp.matnam.app.model.user.service.UserService;
 import com.grepp.matnam.app.model.user.entity.User;
 import com.grepp.matnam.infra.auth.AuthenticationUtils;
 import com.grepp.matnam.infra.auth.CookieUtils;
+import com.grepp.matnam.infra.auth.jwt.JwtProvider;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.Comparator;
@@ -37,7 +38,6 @@ public class UserController {
     private final TeamReviewService teamReviewService;
     private final MymapService mymapService;
 
-
     @GetMapping("/signup")
     public String signupPage() {
         return "user/signup";
@@ -50,7 +50,7 @@ public class UserController {
 
     @GetMapping("/preference")
     public String preference(HttpServletRequest request) {
-        if (CookieUtils.getJwtToken(request).isEmpty() && !AuthenticationUtils.isAuthenticated()) {
+        if (CookieUtils.getAccessToken(request).isEmpty() && !AuthenticationUtils.isAuthenticated()) {
             return "redirect:/user/signin";
         }
 
@@ -60,10 +60,10 @@ public class UserController {
     @Transactional
     @GetMapping("/mypage")
     public String mypage(Model model,
-        @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "5") int size,
-        @RequestParam(defaultValue = "0") int teamPage,
-        @RequestParam(defaultValue = "5") int teamSize) {
+                         @RequestParam(defaultValue = "0") int page,
+                         @RequestParam(defaultValue = "5") int size,
+                         @RequestParam(defaultValue = "0") int teamPage,
+                         @RequestParam(defaultValue = "5") int teamSize) {
         log.info("마이페이지 접근 시도");
 
         if (!AuthenticationUtils.isAuthenticated()) {
@@ -88,8 +88,8 @@ public class UserController {
 
             // 리뷰 정보
             List<Team> completedTeams = teamService.getTeamsByParticipant(userId).stream()
-                .filter(team -> team.getStatus() == Status.COMPLETED)
-                .toList();
+                    .filter(team -> team.getStatus() == Status.COMPLETED)
+                    .toList();
 
             List<Team> teamsWithoutReview = new ArrayList<>();
             for (Team team : completedTeams) {
@@ -106,7 +106,7 @@ public class UserController {
             int end = Math.min(start + size, totalTeamsWithoutReview);
 
             List<Team> paginatedTeamsWithoutReview =
-                start < totalTeamsWithoutReview ? teamsWithoutReview.subList(start, end) : new ArrayList<>();
+                    start < totalTeamsWithoutReview ? teamsWithoutReview.subList(start, end) : new ArrayList<>();
 
             // 모델에 데이터 추가
             model.addAttribute("user", user);
@@ -171,19 +171,19 @@ public class UserController {
 
     public static Comparator<Team> getTeamComparator() {
         return Comparator
-            .comparing((Team team) -> {
-                if (team.getStatus() == Status.RECRUITING) {
-                    return 1;
-                } else if (team.getStatus() == Status.FULL) {
-                    return 2;
-                } else if (team.getStatus() == Status.COMPLETED) {
-                    return 3;
-                } else if (team.getStatus() == Status.CANCELED) {
-                    return 4;
-                }
-                return 5;
-            })
-            .thenComparing(Team::getTeamDate);
+                .comparing((Team team) -> {
+                    if (team.getStatus() == Status.RECRUITING) {
+                        return 1;
+                    } else if (team.getStatus() == Status.FULL) {
+                        return 2;
+                    } else if (team.getStatus() == Status.COMPLETED) {
+                        return 3;
+                    } else if (team.getStatus() == Status.CANCELED) {
+                        return 4;
+                    }
+                    return 5;
+                })
+                .thenComparing(Team::getTeamDate);
     }
 
     @PostMapping("/deactivate")

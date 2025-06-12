@@ -1,3 +1,4 @@
+// 📁 src/main/java/com/grepp/matnam/infra/auth/CookieUtils.java (개선)
 package com.grepp.matnam.infra.auth;
 
 import jakarta.servlet.http.Cookie;
@@ -19,23 +20,11 @@ public class CookieUtils {
         Cookie cookie = new Cookie(name, value);
         cookie.setMaxAge(maxAge);
         cookie.setPath(path);
-        cookie.setHttpOnly(false); // XSS 공격 방지
+        cookie.setHttpOnly(false);
         cookie.setSecure(false);
 
         response.addCookie(cookie);
-        log.debug("쿠키 생성: {}, 유효시간: {}", name, maxAge);
-    }
-
-    public static void addJwtCookie(HttpServletResponse response, String token, int maxAge) {
-        addCookie(response, "jwtToken", token, maxAge, "/");
-    }
-
-    public static void addUserIdCookie(HttpServletResponse response, String userId, int maxAge) {
-        addCookie(response, "userId", userId, maxAge, "/");
-    }
-
-    public static void addUserRoleCookie(HttpServletResponse response, String role, int maxAge) {
-        addCookie(response, "userRole", role, maxAge, "/");
+        log.debug("쿠키 생성: {}, 유효시간: {}초", name, maxAge);
     }
 
     public static void addUserNicknameCookie(HttpServletResponse response, String nickname, int maxAge) {
@@ -53,13 +42,8 @@ public class CookieUtils {
         return Optional.empty();
     }
 
-    public static Optional<String> getJwtToken(HttpServletRequest request) {
-        return getCookie(request, "jwtToken")
-                .map(Cookie::getValue);
-    }
-
-    public static Optional<String> getUserNicknameCookie(HttpServletRequest request) {
-        return getCookie(request, "userNickname")
+    public static Optional<String> getAccessToken(HttpServletRequest request) {
+        return getCookie(request, "ACCESS_TOKEN")
                 .map(Cookie::getValue);
     }
 
@@ -67,12 +51,25 @@ public class CookieUtils {
         Cookie[] cookies = request.getCookies();
         if (cookies != null) {
             for (Cookie cookie : cookies) {
-                cookie.setValue("");
-                cookie.setPath("/");
-                cookie.setMaxAge(0);
-                response.addCookie(cookie);
+                if (isAuthRelatedCookie(cookie.getName())) {
+                    Cookie clearCookie = new Cookie(cookie.getName(), "");
+                    clearCookie.setPath("/");
+                    clearCookie.setMaxAge(0);
+                    clearCookie.setHttpOnly(true);
+                    response.addCookie(clearCookie);
+                    log.debug("쿠키 삭제: {}", cookie.getName());
+                }
             }
         }
-        log.debug("모든 쿠키 삭제 완료");
+        log.debug("인증 관련 쿠키 삭제 완료");
+    }
+
+    private static boolean isAuthRelatedCookie(String cookieName) {
+        return cookieName.equals("ACCESS_TOKEN") ||
+                cookieName.equals("REFRESH_TOKEN") ||
+                cookieName.equals("jwtToken") ||
+                cookieName.equals("userId") ||
+                cookieName.equals("userRole") ||
+                cookieName.equals("userNickname");
     }
 }

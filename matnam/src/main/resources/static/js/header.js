@@ -32,10 +32,14 @@ function updateHeader() {
     const headerAnonymous = document.getElementById('header-anonymous');
 
     if (headerAnonymous && headerLogin && auth.isLoggedIn()) {
-        const userInfo = auth.getUserInfo();
+        const nickname = auth.getNickname();
         headerAnonymous.style.display = 'none';
         headerLogin.style.display = 'flex';
-        document.getElementById('profile-name').textContent = userInfo.nickname + '님';
+
+        const profileNameElement = document.getElementById('profile-name');
+        if (profileNameElement) {
+            profileNameElement.textContent = (nickname || '사용자') + '님';
+        }
     } else if (headerAnonymous && headerLogin && !auth.isLoggedIn()){
         headerAnonymous.style.display = 'flex';
         headerLogin.style.display = 'none';

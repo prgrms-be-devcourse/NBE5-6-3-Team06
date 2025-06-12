@@ -255,13 +255,13 @@
       };
 
       try {
-        console.log('로그인 시도:', loginData);
-        const response = await fetch('/api/user/signin', {
+        const response = await fetch('/api/auth/signin', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify(loginData)
+          body: JSON.stringify(loginData),
+          credentials: 'include'
         });
 
         console.log('응답 상태:', response.status);
@@ -269,37 +269,33 @@
         console.log('응답 데이터:', result);
 
         if (response.ok) {
-          if (result.data.role === 'ROLE_ADMIN') {
-            redirectWithSessionToast('/admin', '로그인에 성공했습니다!', 'success');
+          if (auth.getUserRole() === 'ROLE_ADMIN') {
+            redirectWithSessionToast('/admin', '관리자로 로그인되었습니다!', 'success');
           } else {
             redirectWithSessionToast('/', '로그인에 성공했습니다!', 'success');
           }
         } else {
-          if (result.data) {
-            if (typeof result.data === 'string') {
-              if (result.data.includes('아이디')) {
-                document.getElementById('userIdError').textContent = result.data;
-              } else if (result.data.includes('비밀번호')) {
-                document.getElementById('passwordError').textContent = result.data;
-              } else {
-                document.getElementById('userIdError').textContent = result.data;
-              }
-            } else if (typeof result.data === 'object') {
-              for (const field in result.data) {
-                const errorElement = document.getElementById(`${field}Error`);
-                if (errorElement) {
-                  errorElement.textContent = result.data[field];
-                }
-              }
+          if (result.message) {
+            if (result.message.includes('아이디') || result.message.includes('사용자')) {
+              document.getElementById('userIdError').textContent = result.message;
+            } else if (result.message.includes('비밀번호')) {
+              document.getElementById('passwordError').textContent = result.message;
+            } else {
+              showToastNow(result.message, 'error');
             }
-          } else if (result.message) {
-            document.getElementById('userIdError').textContent = result.message;
+          } else if (result.data && typeof result.data === 'string') {
+            if (result.data.includes('아이디')) {
+              document.getElementById('userIdError').textContent = result.data;
+            } else if (result.data.includes('비밀번호')) {
+              document.getElementById('passwordError').textContent = result.data;
+            } else {
+              showToastNow(result.data, 'error');
+            }
           } else {
-            showToastNow("로그인 중 오류가 발생했습니다.", 'error');
+            showToastNow("로그인에 실패했습니다. 아이디와 비밀번호를 확인해주세요.", 'error');
           }
         }
       } catch (error) {
-        console.error('로그인 오류 상세:', error);
         showToastNow("서버와 통신 중 오류가 발생했습니다.", 'error');
       }
     });
