@@ -66,7 +66,7 @@ public class RecommendationConfig {
         return EmbeddingStoreContentRetriever.builder()
             .embeddingStore(embeddingStore)
             .embeddingModel(embeddingModel)
-            .maxResults(50)
+            .maxResults(100)
             .minScore(0.7)
             .build();
     }
