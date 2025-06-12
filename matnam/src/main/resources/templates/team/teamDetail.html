@@ -301,18 +301,19 @@
     <div class="card">
       <div style="display: flex; justify-content: space-between;">
         <h2 th:text="${team.teamTitle} + ' '">강남 맛집 탐방 모임 </h2>
-        <button
-            id="favorite-btn"
-            type="button"
-            th:data-team-id="${team.teamId}"
-            class="favorite-btn"
-            th:classappend="${isFavorite} ? 'favorited' : ''">
-          <i class="fa"
-             th:classappend="${isFavorite} ? 'fa-star' : 'fa-star-o'"></i>
-          <span th:text="${isFavorite} ? '즐겨찾기 취소' : '즐겨찾기'"></span>
-        </button>
 
         <div style="min-width: 180px; display: flex; justify-content: flex-end;">
+          <button
+              id="favorite-btn"
+              type="button"
+              th:data-team-id="${team.teamId}"
+              class="favorite-btn"
+              th:unless="${isAnonymous}"
+              th:classappend="${isFavorite} ? 'favorited' : ''">
+            <i class="fa"
+               th:classappend="${isFavorite} ? 'fa-star' : 'fa-star-o'"></i>
+            <span th:text="${isFavorite} ? '즐겨찾기 취소' : '즐겨찾기'"></span>
+          </button>
           <button class="team-page-btn" th:unless="${isAnonymous or !isParticipant}"
                   th:onclick="|window.location.href='/team/page/${team.teamId}'|">
             팀 페이지
