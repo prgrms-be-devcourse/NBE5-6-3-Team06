@@ -1,6 +1,7 @@
 package com.grepp.matnam.app.model.team.repository;
 
 import com.grepp.matnam.app.model.team.code.ParticipantStatus;
+import com.grepp.matnam.app.model.team.dto.MeetingDto;
 import com.grepp.matnam.app.model.team.dto.MonthlyMeetingStatsDto;
 import com.grepp.matnam.app.model.team.dto.ParticipantWithUserIdDto;
 import com.grepp.matnam.app.model.team.entity.QParticipant;
@@ -18,7 +19,9 @@ import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -275,5 +278,28 @@ public class TeamRepositoryCustomImpl implements TeamRepositoryCustom {
             .fetchOne();
 
         return Optional.ofNullable(result);
+    }
+
+    @Override
+    public List<MeetingDto> findByTeamDateIn(LocalDate date) {
+        LocalDateTime startOfDay = date.atStartOfDay();
+        LocalDateTime endOfDay = date.atTime(LocalTime.MAX);
+
+        return queryFactory
+            .select(Projections.constructor(
+                MeetingDto.class,
+                team.teamId,
+                team.teamTitle,
+                participant.participantId,
+                participant.user.userId
+            ))
+            .from(team)
+            .join(team.participants, participant)
+            .where(
+                team.status.in(Status.RECRUITING, Status.FULL),
+                participant.participantStatus.eq(ParticipantStatus.APPROVED),
+                team.teamDate.between(startOfDay, endOfDay)
+            )
+            .fetch();
     }
 }

@@ -318,6 +318,7 @@ class NotificationHandler {
         switch (type) {
             case 'USER_STATUS': return '<i class="fas fa-user-check"></i>';
             case 'TEAM_STATUS': return '<i class="fas fa-users"></i>';
+            case 'TEAM_MEET': return '<i class="fas fa-calendar-days"></i>';
             case 'NOTICE': return '<i class="fas fa-bullhorn"></i>';
             case 'PARTICIPANT_STATUS': return '<i class="fas fa-user-plus"></i>';
             case 'REVIEW_REQUEST': return '<i class="fas fa-star"></i>';
