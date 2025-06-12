@@ -52,9 +52,14 @@ public class MymapApiController {
     public ResponseEntity<ApiResponse<String>> savePlace(@RequestBody @Valid MymapRequestDto dto) {
         String userId = getCurrentUserId();
         User user = userService.getUserById(userId);
-        mymapService.savePlace(dto, user);
-        return ResponseEntity.status(ResponseCode.OK.status())
-                .body(ApiResponse.success("장소가 저장되었습니다."));
+        try {
+            mymapService.savePlace(dto, user);
+            return ResponseEntity.status(ResponseCode.OK.status())
+                    .body(ApiResponse.success("장소가 저장되었습니다."));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(ResponseCode.CONFLICT.status())
+                    .body(ApiResponse.error(ResponseCode.CONFLICT, e.getMessage()));
+        }
     }
 
     @PatchMapping("/{id}/pinned")
