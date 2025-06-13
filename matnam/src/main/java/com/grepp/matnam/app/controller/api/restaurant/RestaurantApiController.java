@@ -66,6 +66,7 @@ public class RestaurantApiController {
             keywordPrompt += " 현재 위치는 " + address + "일 때 키워드를 잘 반영하고";
 
             keywordPrompt += " 너무 먼 거리는 제외하고 카테고리는 무조건 동일한 최적의 식당 3곳을 추천해줘.";
+            keywordPrompt += " 단, activated 가 false 인 식당은 추천에서 제외해주세요.";
 
             log.info("최종 프롬프트: {}", keywordPrompt);
 
@@ -88,7 +89,8 @@ public class RestaurantApiController {
             String rePrompt = "현재 1차 장소는 " + address + "입니다. " +
                 "이 위치에서 너무 멀지 않은 거리에 있는 " +
                 "좋은 2차 식당 3곳을 추천해주세요. " +
-                "각 식당의 특징과 추천 이유를 자세히 설명해주세요.";
+                "각 식당의 특징과 추천 이유를 자세히 설명해주세요." +
+                "단, activated 가 false 인 식당은 추천에서 제외해주세요.";
 
             return ResponseEntity.ok(ApiResponse.success(restaurantAiService.reRecommendRestaurant(rePrompt)));
         } catch (Exception e) {

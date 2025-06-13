@@ -2,11 +2,14 @@ package com.grepp.matnam.app.model.restaurant.service;
 
 import com.grepp.matnam.app.controller.api.admin.payload.RestaurantRankingResponse;
 import com.grepp.matnam.app.controller.api.admin.payload.RestaurantRequest;
+import com.grepp.matnam.app.model.restaurant.document.RestaurantEmbedding;
+import com.grepp.matnam.app.model.restaurant.repository.RestaurantEmbeddingRepository;
 import com.grepp.matnam.app.model.restaurant.repository.RestaurantRepository;
 import com.grepp.matnam.app.model.restaurant.dto.RestaurantDto;
 import com.grepp.matnam.app.controller.web.admin.payload.RestaurantStatsResponse;
 import com.grepp.matnam.app.model.restaurant.code.Category;
 import com.grepp.matnam.app.model.restaurant.entity.Restaurant;
+import dev.langchain4j.model.embedding.EmbeddingModel;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +32,8 @@ import org.springframework.util.StringUtils;
 public class RestaurantService {
 
     private final RestaurantRepository restaurantRepository;
+    private final RestaurantEmbeddingRepository restaurantEmbeddingRepository;
+    private final EmbeddingModel embeddingModel;
 
 
     public List<Restaurant> findAll() {
@@ -66,6 +71,13 @@ public class RestaurantService {
         restaurant.setLongStay(request.isLongStay());
         restaurant.setBigStore(request.isBigStore());
         restaurant.setGoogleRating(request.getGoogleRating());
+
+        // MongoDB 업데이트
+        String embeddingId = String.valueOf(restaurantId);
+        RestaurantEmbedding newEmbedding = RestaurantEmbedding.fromEntity(restaurant, embeddingModel);
+        newEmbedding.setId(embeddingId);
+
+        restaurantEmbeddingRepository.save(newEmbedding);
     }
 
     @Transactional
@@ -73,11 +85,26 @@ public class RestaurantService {
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
             .orElseThrow(() -> new IllegalArgumentException("식당을 찾을 수 없습니다."));
         restaurant.unActivated();
+
+        //MongoDB 비활성화
+        String embeddingId = String.valueOf(restaurantId);
+        RestaurantEmbedding embedding = restaurantEmbeddingRepository.findById(embeddingId)
+            .orElseThrow(() -> new IllegalArgumentException("MongoDB 임베딩 문서를 찾을 수 없습니다."));
+        embedding.setActivated(false);
+        restaurantEmbeddingRepository.save(embedding);
     }
 
+    //todo 정원님이랑 얘기해볼 부분
     @Transactional
     public void createRestaurant(RestaurantRequest request) {
-        restaurantRepository.save(request.toEntity());
+        Restaurant restaurant = request.toEntity();
+
+        Restaurant saved = restaurantRepository.save(restaurant);
+
+        //MongoDB 식당 추가
+        RestaurantEmbedding embedding = RestaurantEmbedding.fromEntity(saved, embeddingModel);
+
+        restaurantEmbeddingRepository.save(embedding);
     }
 
     public Page<Restaurant> findByFilter(String category, String keyword, Pageable pageable) {
