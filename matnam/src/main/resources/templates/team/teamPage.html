@@ -676,13 +676,27 @@
             style="margin-bottom: 2rem; background-color: #fefefe; padding: 1.5rem; border-radius: 10px; border: 1px solid #e0e0e0; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
       <p style="margin-bottom: 1rem; font-size: 1.05rem; line-height: 1.6;">
         🍽️ <strong>오늘의 2차 장소</strong>, 고민하지 마세요!<br>
-        <span style="color: #555;">우리 팀을 위해 AI가 분위기 좋은 맛집을 추천해드려요.</span><br>
-        아래 버튼을 눌러 <strong style="color: #4CAF50;">맞춤 추천</strong>을 받아보세요! ✨
+        <span style="color: #555;">카테고리를 선택하고 AI 추천을 받아보세요.</span><br>
+        <strong>최적의 추천을 하는 과정에서 카테고리를 벗어날 수 있습니다</strong>
       </p>
-      <button type="button" id="recommend-button"
-              style="padding: 0.75rem 1.6rem; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1rem;">
-        👍 추천받기
-      </button>
+      <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+        <select id="category-select"
+                style="padding: 0.75rem 1rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; min-width: 150px;">
+          <option value="">카테고리</option>
+          <option value="한식">🍚 한식</option>
+          <option value="중식">&#127836; 중식</option>
+          <option value="일식">🍣 일식</option>
+          <option value="양식">🍝 양식</option>
+          <option value="디저트">🍰 디저트</option>
+          <option value="분식">🍢 분식</option>
+          <option value="상관없음">😀 상관없음</option>
+        </select>
+
+        <button type="button" id="recommend-button"
+                style="padding: 0.75rem 1.6rem; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1rem;">
+          👍 추천받기
+        </button>
+      </div>
     </div>
 
     <!-- 추천 결과 카드 (처음엔 숨김) -->
@@ -726,6 +740,7 @@
   const teamId = [[${teamId}]]; // 테스트용 팀 ID (백엔드와 맞춰서 수정)
   const senderId = [[${userId}]]; // 로그인된 사용자 ID
   const senderNickname = [[${userNickname}]]; // 로그인된 사용자 닉네임
+  const firstAddress = '[[${team.restaurantAddress}]]';
 
   function connect() {
     const socket = new SockJS('/ws');
@@ -1015,11 +1030,19 @@
   });
   // ====================================== 추천 ========================================
   document.getElementById("recommend-button").addEventListener("click", () => {
-    fetchRecommendations(`/api/ai/recommend/restaurant/${teamId}`);
+    const selectedCategory = document.getElementById("category-select").value;
+
+    if(!selectedCategory || selectedCategory === "" || selectedCategory === "카테고리") {
+      alert("카테고리를 선택해주세요!");
+      return;
+    }
+
+    const category = `?category=${encodeURIComponent(selectedCategory)}`;
+    fetchRecommendations(`/api/ai/recommend/restaurant/${teamId}${category}`);
   });
 
   document.getElementById("retry-button").addEventListener("click", () => {
-    fetchRecommendations(`/api/ai/reRecommend/restaurant`);
+    fetchRecommendations(`/api/ai/reRecommend/restaurant/${teamId}`);
   });
 
   // 먼저 데이터 가져오기
@@ -1057,11 +1080,12 @@
               const reason = data.reason;
               let completed = 0;
 
-              restaurants.forEach(name => {
+              restaurants.forEach((name) => {
                 fetch(`/api/ai/restaurant/name?name=${encodeURIComponent(name)}`)
                         .then(res => res.json())
                         .then(dbItem => {
                           const data = dbItem.data;
+                          console.log(data)
                           const card = document.createElement("div");
                           card.className = "recommend-card";
 
@@ -1075,7 +1099,7 @@
                 <p style="margin-bottom: 0.6rem;"><strong>📝 소개:</strong> ${data.description}</p>
                 <p style="margin-top: 1rem; margin-bottom: 0;">
                   <strong>🔗 URL:</strong>
-                  <a href="https://map.kakao.com/?q=${encodeURIComponent(data.restaurantName)}"
+                  <a href="https://map.kakao.com/?map_type=TYPE_MAP&target=car&rt=%2C%2C523953%2C1084098&rt1=${encodeURIComponent(firstAddress)}&rt2=${encodeURIComponent(data.restaurantName)}&rtIds=%2C&rtTypes=%2C"
                      target="_blank" style="color: blue;">바로가기</a>
                 </p>
               </div>

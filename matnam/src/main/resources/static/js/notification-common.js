@@ -1,3 +1,5 @@
+const TAB_ID = crypto.randomUUID();
+
 class NotificationHandler {
     constructor() {
         this.isServerRestarting = false;
@@ -17,11 +19,23 @@ class NotificationHandler {
 
     async initialize() {
         await this.fetchUnreadCount();
+        this.setActiveTab();
         this.connectSSE();
         await this.fetchNotifications(this.currentTab);
         this.setupTabEventListeners();
         this.setupModalToggle();
         this.setupMarkAllReadButton();
+    }
+
+    setActiveTab() {
+        localStorage.setItem('activeSseTabId', TAB_ID);
+        window.addEventListener('storage', (event) => {
+            if (event.key === 'activeSseTabId' && event.newValue !== TAB_ID && this.eventSource) {
+                console.log('다른 탭이 SSE를 활성화함. 현재 탭의 SSE 종료');
+                this.eventSource.close();
+                this.eventSource = null;
+            }
+        });
     }
 
     setupModalToggle() {
@@ -241,6 +255,11 @@ class NotificationHandler {
     }
 
     connectSSE() {
+        if (localStorage.getItem('activeSseTabId') !== TAB_ID) {
+            console.log('SSE 연결하지 않음 - 다른 탭이 활성화됨');
+            return;
+        }
+
         this.eventSource = new EventSource('/api/sse/subscribe', {
             withCredentials: true,
             headers: window.auth.getAuthHeaders()
@@ -253,6 +272,11 @@ class NotificationHandler {
         this.eventSource.onerror = (error) => {
             console.error('SSE 연결 오류:', error);
             if (!this.isServerRestarting){
+                if (this.eventSource) {
+                    this.eventSource.close();
+                    this.eventSource = null;
+                }
+
                 setTimeout(() => this.connectSSE(), 3000);
             }
         };
@@ -274,8 +298,10 @@ class NotificationHandler {
         this.eventSource.addEventListener('shutdown', (event) => {
             console.log("서버가 종료 중입니다:", event.data);
             this.isServerRestarting = true;
-            this.eventSource.close();  // SSE 연결 종료
-            this.eventSource = null;
+            if (this.eventSource) {
+                this.eventSource.close(); // SSE 연결 종료
+                this.eventSource = null;
+            }
         });
 
         // 페이지 언로드(새로고침/탭 닫기) 직전에 SSE 연결 닫기
@@ -292,6 +318,7 @@ class NotificationHandler {
         switch (type) {
             case 'USER_STATUS': return '<i class="fas fa-user-check"></i>';
             case 'TEAM_STATUS': return '<i class="fas fa-users"></i>';
+            case 'TEAM_MEET': return '<i class="fas fa-calendar-days"></i>';
             case 'NOTICE': return '<i class="fas fa-bullhorn"></i>';
             case 'PARTICIPANT_STATUS': return '<i class="fas fa-user-plus"></i>';
             case 'REVIEW_REQUEST': return '<i class="fas fa-star"></i>';

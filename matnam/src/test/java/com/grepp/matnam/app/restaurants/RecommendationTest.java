@@ -18,7 +18,9 @@ public class RecommendationTest {
     @Test
     public void testRecommend() {
 
-        RestaurantRecommendResponse response = restaurantAiService.reRecommendRestaurant();
+        String rePrompt = "식당 추천";
+
+        RestaurantRecommendResponse response = restaurantAiService.reRecommendRestaurant(rePrompt);
 
         // null 검사
         assertNotNull(response);

@@ -1,5 +1,6 @@
 package com.grepp.matnam.app.model.user.repository;
 
+import com.grepp.matnam.app.controller.api.admin.payload.SearchUserResponse;
 import com.grepp.matnam.app.model.user.code.Gender;
 import com.grepp.matnam.app.model.user.entity.User;
 import java.util.List;
@@ -23,4 +24,6 @@ public interface UserRepositoryCustom {
     long countByStatusNotActive();
 
     long countByGenderAndStatusNotActive(Gender gender);
+
+    List<SearchUserResponse> findUserByKeyword(String keyword);
 }

@@ -1,14 +1,18 @@
 package com.grepp.matnam.app.model.team.repository;
 
+import com.grepp.matnam.app.controller.api.admin.payload.SearchTeamResponse;
 import com.grepp.matnam.app.model.team.code.ParticipantStatus;
+import com.grepp.matnam.app.model.team.dto.MeetingDto;
 import com.grepp.matnam.app.model.team.dto.MonthlyMeetingStatsDto;
 import com.grepp.matnam.app.model.team.dto.ParticipantWithUserIdDto;
+import com.grepp.matnam.app.model.team.entity.QFavorite;
 import com.grepp.matnam.app.model.team.entity.QParticipant;
 import com.grepp.matnam.app.model.team.entity.QTeam;
 import com.grepp.matnam.app.model.team.entity.Team;
 import com.grepp.matnam.app.model.team.code.Status;
 import com.grepp.matnam.app.model.user.entity.QUser;
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Expression;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
@@ -18,11 +22,17 @@ import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.support.PageableExecutionUtils;
@@ -35,6 +45,7 @@ public class TeamRepositoryCustomImpl implements TeamRepositoryCustom {
     private final QTeam team = QTeam.team;
     private final QParticipant participant = QParticipant.participant;
     private final QUser user = QUser.user;
+    private final QFavorite favorite = QFavorite.favorite;
 
     @Override
     public Page<Team> findAllUsers(Pageable pageable) {
@@ -233,11 +244,13 @@ public class TeamRepositoryCustomImpl implements TeamRepositoryCustom {
 
     // 페이징: activated=true, 상태가 COMPLETED/CANCELED 가 아닌 팀을 참여자 정보 포함하여 조회
     @Override
-    public Page<Team> findAllWithParticipantsAndActivatedTrue(Pageable pageable) {
+    public Page<Team> findAllWithParticipantsAndActivatedTrue(Pageable pageable, boolean includeCompleted) {
         BooleanBuilder builder = new BooleanBuilder()
             .and(team.activated.isTrue())
-            .and(team.status.ne(Status.COMPLETED))
             .and(team.status.ne(Status.CANCELED));
+        if (!includeCompleted) {
+            builder.and(team.status.ne(Status.COMPLETED));
+        }
 
         List<Team> content = queryFactory
             .selectDistinct(team)
@@ -275,5 +288,104 @@ public class TeamRepositoryCustomImpl implements TeamRepositoryCustom {
             .fetchOne();
 
         return Optional.ofNullable(result);
+    }
+
+    @Override
+    public List<MeetingDto> findByTeamDateIn(LocalDate date) {
+        LocalDateTime startOfDay = date.atStartOfDay();
+        LocalDateTime endOfDay = date.atTime(LocalTime.MAX);
+
+        return queryFactory
+            .select(Projections.constructor(
+                MeetingDto.class,
+                team.teamId,
+                team.teamTitle,
+                participant.participantId,
+                participant.user.userId
+            ))
+            .from(team)
+            .join(team.participants, participant)
+            .where(
+                team.status.in(Status.RECRUITING, Status.FULL),
+                participant.participantStatus.eq(ParticipantStatus.APPROVED),
+                team.teamDate.between(startOfDay, endOfDay)
+            )
+            .fetch();
+    }
+
+    @Override
+    public List<SearchTeamResponse> findTeamByKeyword(String keyword) {
+        List<Tuple> raw = queryFactory
+            .select(
+                team.teamId,
+                team.teamTitle,
+                team.user.userId,
+                participant.user.userId)
+            .from(team)
+            .join(team.participants, participant)
+            .where(
+                team.activated.isTrue(),
+                team.user.userId.contains(keyword)
+            )
+            .fetch();
+
+        // Java로 그룹핑
+        Map<Long, SearchTeamResponse> result = new LinkedHashMap<>();
+
+        for (Tuple row : raw) {
+            Long teamId = row.get(team.teamId);
+            String teamTitle = row.get(team.teamTitle);
+            String leaderId = row.get(team.user.userId);
+            String participantId = row.get(participant.user.userId);
+
+            // 팀 ID를 키로 그룹핑
+            result.computeIfAbsent(
+                    teamId, k -> new SearchTeamResponse(leaderId, teamTitle, new ArrayList<>()))
+                .getUserIds()
+                .add(participantId);
+        }
+
+        return new ArrayList<>(result.values());
+    }
+
+    // 즐겨찾기 카운트
+    @Override
+    public Page<Team> findAllOrderByFavoriteCount(Pageable pageable, boolean includeCompleted) {
+
+        BooleanBuilder builder = new BooleanBuilder()
+            .and(team.activated.eq(true))
+            .and(team.status.ne(Status.CANCELED));
+        if (!includeCompleted) {
+            builder.and(team.status.ne(Status.COMPLETED));
+        }
+
+        List<Tuple> tuples = queryFactory
+            .select(team, favorite.count())
+            .from(team)
+            .leftJoin(team.favorites, favorite)
+            .where(builder)
+            .groupBy(team)
+            .orderBy(favorite.count().desc())
+            .offset(pageable.getOffset())
+            .limit(pageable.getPageSize())
+            .fetch();
+
+        List<Team> teams = tuples.stream()
+            .map(tuple -> {
+                Team t = tuple.get(team);
+                Long cnt = tuple.get(favorite.count());
+                t.setFavoriteCount(cnt != null ? cnt : 0L);
+                return t;
+            })
+            .toList();
+
+        Long totalCount = queryFactory
+            .select(team.count())
+            .from(team)
+            .where(builder)
+            .fetchOne();
+        long total = (totalCount != null ? totalCount : 0L);
+
+        return new PageImpl<>(teams, pageable, total);
     }
 }

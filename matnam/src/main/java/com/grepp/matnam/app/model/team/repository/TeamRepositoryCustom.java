@@ -1,9 +1,12 @@
 package com.grepp.matnam.app.model.team.repository;
 
+import com.grepp.matnam.app.controller.api.admin.payload.SearchTeamResponse;
+import com.grepp.matnam.app.model.team.dto.MeetingDto;
 import com.grepp.matnam.app.model.team.dto.MonthlyMeetingStatsDto;
 import com.grepp.matnam.app.model.team.dto.ParticipantWithUserIdDto;
 import com.grepp.matnam.app.model.team.code.ParticipantStatus;
 import com.grepp.matnam.app.model.team.entity.Team;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -27,7 +30,13 @@ public interface TeamRepositoryCustom {
 
     List<Team> findTeamsByParticipantUserIdAndParticipantStatusAndActivatedTrue(String userId, ParticipantStatus status);
 
-    Page<Team> findAllWithParticipantsAndActivatedTrue(Pageable pageable);
+    Page<Team> findAllWithParticipantsAndActivatedTrue(Pageable pageable, boolean includeCompleted);
 
     Optional<Team> findByIdWithParticipantsAndUserAndActivatedTrue(Long teamId);
+
+    List<MeetingDto> findByTeamDateIn(LocalDate date);
+
+    List<SearchTeamResponse> findTeamByKeyword(String keyword);
+
+    Page<Team> findAllOrderByFavoriteCount(Pageable pageable, boolean includeCompleted);
 }

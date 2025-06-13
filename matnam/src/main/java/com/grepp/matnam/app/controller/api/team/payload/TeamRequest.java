@@ -15,10 +15,10 @@ import lombok.Setter;
 public class TeamRequest {
 
     @NotBlank(message = "제목은 필수 입력 값입니다.")
-    @Size(max = 100, message = "제목은 100자를 초과할 수 없습니다.")
+    @Size(max = 15, message = "제목은 15자를 초과할 수 없습니다.")
     private String title;
     @NotBlank(message = "설명은 필수 입력 값입니다.")
-    @Size(max = 500, message = "설명은 500자를 초과할 수 없습니다.")
+    @Size(max = 300, message = "설명은 300자를 초과할 수 없습니다.")
     private String description;
 
     @NotBlank(message = "날짜는 필수 입력 값입니다.")

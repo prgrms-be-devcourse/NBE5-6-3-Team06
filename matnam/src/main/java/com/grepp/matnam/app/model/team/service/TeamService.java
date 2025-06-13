@@ -1,5 +1,7 @@
 package com.grepp.matnam.app.model.team.service;
 
+import com.grepp.matnam.app.controller.api.admin.payload.SearchTeamResponse;
+import com.grepp.matnam.app.controller.api.admin.payload.SearchUserResponse;
 import com.grepp.matnam.app.controller.api.admin.payload.StatDoubleResponse;
 import com.grepp.matnam.app.controller.api.admin.payload.TeamStatusUpdateRequest;
 import com.grepp.matnam.app.controller.web.admin.payload.ActiveTeamResponse;
@@ -18,6 +20,7 @@ import com.grepp.matnam.app.model.team.dto.MonthlyMeetingStatsDto;
 import com.grepp.matnam.app.model.team.dto.ParticipantWithUserIdDto;
 import com.grepp.matnam.app.model.team.entity.Participant;
 import com.grepp.matnam.app.model.team.entity.Team;
+import com.grepp.matnam.app.model.team.repository.FavoriteRepository;
 import com.grepp.matnam.app.model.team.repository.ParticipantRepository;
 import com.grepp.matnam.app.model.team.repository.TeamRepository;
 import com.grepp.matnam.app.model.user.repository.PreferenceRepository;
@@ -52,11 +55,10 @@ public class TeamService {
 
     private final ParticipantRepository participantRepository;
     private final PreferenceRepository preferenceRepository;
-//    private final RestaurantRepository restaurantRepository;
-
     private final MymapRepository mymapRepository;
     private final UserRepository userRepository;
     private final ChatRoomRepository chatRoomRepository;
+    private final FavoriteRepository favoriteRepository;
 
     private final NotificationSender notificationSender;
 
@@ -96,6 +98,12 @@ public class TeamService {
             }
 
             participantRepository.save(participant);
+
+            if (!user.getUserId().equals(team.getUser().getUserId())) { // 리더가 아닐 때만 알림 발송
+                notificationSender.sendNotificationToUser(team.getUser().getUserId(),
+                    NotificationType.TEAM_STATUS, "[" + team.getTeamTitle() + "] 모임에 참여 신청이 들어왔습니다!",
+                    "/team/detail/" + team.getTeamId());
+            }
         } else {
             throw new IllegalStateException("이미 참여한 사용자입니다.");
         }
@@ -226,6 +234,10 @@ public class TeamService {
         );
     }
 
+    public List<Team> getAllTeams(String userId) {
+        return teamRepository.findTeamsByParticipantUserIdAndParticipantStatusAndActivatedTrue(userId, ParticipantStatus.APPROVED);
+    }
+
     // 사용자의 모든 참여 정보 조회 (PENDING, APPROVED, REJECTED)
     public List<Participant> getAllParticipantsForUser(String userId) {
         return participantRepository.findByUser_UserId(userId);
@@ -247,8 +259,13 @@ public class TeamService {
     }
 
     // 모임 검색 페이지
-    public Page<Team> getAllTeams(Pageable pageable) {
-        return teamRepository.findAllWithParticipantsAndActivatedTrue(pageable);
+    public Page<Team> getAllTeams(Pageable pageable, boolean includeCompleted) {
+        return teamRepository.findAllWithParticipantsAndActivatedTrue(pageable, includeCompleted);
+    }
+    
+    // 모임 즐겨찾기 카운트
+    public Page<Team> getAllTeamsByFavoriteCount(Pageable pageable, boolean includeCompleted){
+        return teamRepository.findAllOrderByFavoriteCount(pageable, includeCompleted);
     }
 
     // 모임 상세 조회, 팀 페이지 조회
@@ -321,10 +338,6 @@ public class TeamService {
     public long getParticipantCountExcludingHost(Long teamId) {
         return participantRepository.countApprovedExcludingHost(teamId, ParticipantStatus.APPROVED);
     }
-
-//    public List<Team> findAll() {
-//        return teamRepository.findAll();
-//    }
 
     public Page<Team> findByFilter(String status, String keyword, Pageable pageable) {
         if (!status.isBlank() && StringUtils.hasText(keyword)) {
@@ -623,5 +636,13 @@ public class TeamService {
                         null);
             }
         }
+    }
+
+    public List<SearchTeamResponse> getParticipantByLeader(String keyword) {
+        return teamRepository.findTeamByKeyword(keyword);
+    }
+
+    public List<SearchUserResponse> getUserByUserId(String keyword) {
+        return userRepository.findUserByKeyword(keyword);
     }
 }
