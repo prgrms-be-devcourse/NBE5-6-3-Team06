@@ -300,7 +300,7 @@
 
       try {
         console.log('회원가입 시도:', signupData);
-        const response = await fetch('/api/user/signup', {
+        const response = await fetch('/api/auth/signup', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
