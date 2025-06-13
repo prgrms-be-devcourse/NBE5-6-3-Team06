@@ -1,4 +1,19 @@
 document.addEventListener('DOMContentLoaded', () => {
+  // 공지사항 작성 및 검색 모듈 초기화
+  const modal = document.getElementById('create-announcement-modal');
+  const form = document.getElementById('announcement-form');
+  const searchInput = document.getElementById('search-input');
+  const searchBtn = document.getElementById('search-btn');
+  const searchResults = document.getElementById('search-results');
+  const selectedTargets = document.getElementById('selected-targets');
+  const selectedTargetsContainer = document.getElementById(
+      'selected-targets-container');
+  const searchContainer = document.getElementById('search-container');
+  const targetTypeSelect = document.getElementById('announcement-target-type');
+
+  const addedUserIds = new Set();
+  let currentNoticeId = null;
+
   // 새 공지사항 작성 버튼 클릭 이벤트
   const createNotificationBtn = document.getElementById(
       'create-notification-btn');
@@ -8,6 +23,8 @@ document.addEventListener('DOMContentLoaded', () => {
   if (createNotificationBtn && createNotificationModal) {
     createNotificationBtn.addEventListener('click', function () {
       createNotificationModal.style.display = 'block';
+      document.getElementById('modal-title').textContent = "새 공지사항 작성"
+      form.querySelector('#announcement-content').disabled = false;
     });
   }
 
@@ -44,40 +61,16 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.action-btn.send').forEach(button => {
     button.addEventListener('click', function () {
       const noticeId = this.getAttribute('data-id');
+      const noticeMessage = this.getAttribute('data-message');
 
-      fetch(`/api/admin/notification/${noticeId}`, {
-        method: 'POST',
-      })
-      .then(response => {
-        if (response.ok) {
-          alert("공지사항이 성공적으로 발송되었습니다.");
-          window.location.reload();
-        } else {
-          return response.text().then(text => {
-            throw new Error(text)
-          });
-        }
-      })
-      .catch(error => {
-        console.error('에러 발생:', error);
-        alert('공지사항 발송 중 문제가 발생했습니다.');
-      });
+      modal.style.display = 'block';
+      resetModal();
+      form.querySelector('#announcement-content').value = noticeMessage;
+      form.querySelector('#announcement-content').disabled = true;
+      document.getElementById('modal-title').textContent = "공지사항 발송"
+      currentNoticeId = noticeId;
     });
   });
-
-  // 공지사항 작성 및 검색 모듈 초기화
-  const modal = document.getElementById('create-announcement-modal');
-  const form = document.getElementById('announcement-form');
-  const searchInput = document.getElementById('search-input');
-  const searchBtn = document.getElementById('search-btn');
-  const searchResults = document.getElementById('search-results');
-  const selectedTargets = document.getElementById('selected-targets');
-  const selectedTargetsContainer = document.getElementById(
-      'selected-targets-container');
-  const searchContainer = document.getElementById('search-container');
-  const targetTypeSelect = document.getElementById('announcement-target-type');
-
-  const addedUserIds = new Set();
 
   document.getElementById('create-announcement-btn')?.addEventListener('click',
       () => {
@@ -112,7 +105,11 @@ document.addEventListener('DOMContentLoaded', () => {
           targetUserIds
         };
 
-        fetch('/api/admin/notification/broadcast', {
+        const url = currentNoticeId
+            ? `/api/admin/notification/${currentNoticeId}`
+            : '/api/admin/notification/broadcast';
+
+        fetch(url, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -145,7 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const isAll = type === 'all';
     searchContainer.style.display = isAll ? 'none' : 'block';
     selectedTargetsContainer.style.display = isAll ? 'none' : 'block';
-    searchInput.placeholder = type === 'group' ? '모임 리더 아이디 검색' : '사용자 아이디 검색';
+    searchInput.placeholder = type === 'group' ? '모임 주최자 아이디 검색' : '사용자 아이디 검색';
     searchInput.value = '';
     searchResults.innerHTML = '';
   });

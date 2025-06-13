@@ -34,10 +34,9 @@ public class AdminNotificationApiController {
     private final TeamService teamService;
 
     @PostMapping("/broadcast")
-    @Operation(summary = "공지사항 발송", description = "모든 활성 사용자들에게 공지사항을 발송합니다.")
+    @Operation(summary = "공지사항 발송", description = "알림 대상 사용자들에게 공지사항을 발송합니다.")
     public ResponseEntity<ApiResponse<Void>> broadcastNotice(
         @RequestBody @Valid BroadcastNotificationRequest request) {
-        log.info("=== set ===, {}", request.getTargetUserIds());
         userService.sendBroadcastNotification(request);
         return ResponseEntity.ok(ApiResponse.noContent());
     }
@@ -50,9 +49,10 @@ public class AdminNotificationApiController {
     }
 
     @PostMapping("/{noticeId}")
-    @Operation(summary = "공지사항 재발송", description = "기존 공지사항을 모든 활성 사용자에게 재발송합니다.")
-    public ResponseEntity<ApiResponse<Void>> resendNotice(@PathVariable Long noticeId) {
-        userService.resendBroadcastNotification(noticeId);
+    @Operation(summary = "공지사항 재발송", description = "기존 공지사항을 알림 대상 사용자들에게 재발송합니다.")
+    public ResponseEntity<ApiResponse<Void>> resendNotice(@PathVariable Long noticeId,
+        @RequestBody @Valid BroadcastNotificationRequest request) {
+        userService.resendBroadcastNotification(noticeId, request);
         return ResponseEntity.ok(ApiResponse.noContent());
     }
 

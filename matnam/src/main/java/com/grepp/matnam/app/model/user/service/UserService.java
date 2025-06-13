@@ -323,12 +323,24 @@ public class UserService {
         }
     }
 
-    public void resendBroadcastNotification(Long noticeId) {
-        List<User> usersToSend = userRepository.findByRoleEqualsAndActivatedIsTrue(Role.ROLE_USER);
+    public void resendBroadcastNotification(Long noticeId, BroadcastNotificationRequest request) {
         Notice notice = notificationService.getNotice(noticeId);
 
-        for (User user : usersToSend) {
-            notificationSender.resendNotificationToUser(user.getUserId(), notice);
+        if (request.getTargetType().equals("all")) {
+            List<User> usersToSend = userRepository.findByRoleEqualsAndActivatedIsTrue(Role.ROLE_USER);
+
+            for (User user : usersToSend) {
+                notificationSender.resendNotificationToUser(user.getUserId(), notice);
+            }
+        } else {
+            for (String userId : request.getTargetUserIds()) {
+                if (!userRepository.existsByUserId(userId)) {
+                    throw new RuntimeException("존재하지 않는 사용자입니다.");
+                }
+                notificationSender.resendNotificationToUser(userId, notice);
+            }
         }
+
+
     }
 }

@@ -47,7 +47,7 @@
             <td th:text="${notice.message}"></td>
             <td th:text="${#temporals.format(notice.createdAt, 'yyyy-MM-dd HH:mm')}"></td>
             <td>
-              <button class="action-btn send" th:data-id="${notice.id}"><i
+              <button class="action-btn send" th:data-id="${notice.id}" th:data-message="${notice.message}"><i
                   class="fas fa-paper-plane"></i></button>
               <button class="action-btn delete" th:data-id="${notice.id}"><i
                   class="fas fa-trash"></i></button>
@@ -65,7 +65,7 @@
 <div id="create-announcement-modal" class="modal">
   <div class="modal-content">
     <div class="modal-header">
-      <h2>새 공지사항 작성</h2>
+      <h2 id="modal-title">새 공지사항 작성</h2>
       <span class="close-modal">&times;</span>
     </div>
     <div class="modal-body">
