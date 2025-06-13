@@ -132,7 +132,9 @@ public class RestaurantService {
             restaurant.getSummary(),
             restaurant.getCategory(),
             restaurant.getAddress(),
-            restaurant.getOpenTime()
+            restaurant.getOpenTime(),
+                restaurant.getLatitude(),
+                restaurant.getLongitude()
         );
     }
 
