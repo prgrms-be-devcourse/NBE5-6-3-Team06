@@ -6,6 +6,7 @@
   <title>맛남 | 마이페이지</title>
   <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+  <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=9e9f7116c9bee853591bfa6e12c7fa5f&libraries=services"></script>
   <script th:src="@{/js/common-toast.js}"></script>
   <style>
     body {
@@ -427,7 +428,7 @@
     .cancel-btn {
       margin-top: 0.3rem;
       font-size: 13px;
-      background-color: #ff4d4d;
+      background-color: #191919;
       padding: 0.5rem 1rem;
       border: none;
       border-radius: 4px;
@@ -634,6 +635,12 @@
       <p>주최한 모임: <span th:text="${stats.leaderCount}">5</span>회</p>
       <p>참여한 모임: <span th:text="${stats.participatingCount}">12</span>회</p>
       <p>완료한 모임: <span th:text="${stats.completedCount}">8</span>곳</p>
+    </div>
+
+    <div class="profile-section">
+      <h4>서비스 개선 참여하기</h4>
+      <button id = "suggestBtn" class="btn-primary" >식당 등록 제안</button>
+      <div id="suggest-modal-container"></div>
     </div>
   </div>
 
@@ -1216,11 +1223,135 @@
       });
     });
   });
+</script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    fetch('/modal/restaurant-suggestion')
+            .then(res => res.text())
+            .then(html => {
+              const container = document.getElementById('suggest-modal-container');
+              container.innerHTML = html;
 
+              let map = null;
+              let marker = null;
+              let ps = null;
+              let geocoder = null;
+              let mapInitialized = false;
+
+              const openBtn = document.getElementById("suggestBtn");
+              const modal = document.getElementById("suggestRestaurantModal");
+              const closeBtn = modal?.querySelector(".close-modal");
+              const cancelBtn = modal?.querySelector("#cancel-suggest");
+              const submitBtn = modal?.querySelector("#submit-suggest");
+
+              const closeModal = () => modal.style.display = "none";
+
+              openBtn?.addEventListener("click", () => {
+                modal.style.display = "block";
+                setTimeout(() => {
+                  if (!mapInitialized) {
+                    initMap();
+                    mapInitialized = true;
+                  } else {
+                    kakao.maps.event.trigger(map, 'resize');
+                    map.setCenter(new kakao.maps.LatLng(37.5665, 126.9780));
+                  }
+                }, 200);
+              });
+
+              closeBtn && (closeBtn.onclick = closeModal);
+              cancelBtn && (cancelBtn.onclick = closeModal);
+
+              submitBtn?.addEventListener("click", () => {
+                const name = document.getElementById("suggest-name").value.trim();
+                const address = document.getElementById("suggest-address").value.trim();
+                const mainFood = document.getElementById("suggest-reason").value.trim();
+                const latitude = parseFloat(document.getElementById("latitude").value);
+                const longitude = parseFloat(document.getElementById("longitude").value);
+                const submittedByUserId = document.getElementById("submitted-user-id").value;
+
+                if (!name || !address || !mainFood || isNaN(latitude) || isNaN(longitude)) {
+                  return alert("필수 항목을 모두 입력해주세요.");
+                }
+
+                fetch('/api/suggestions', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ name, address, mainFood, latitude, longitude, submittedByUserId })
+                })
+                        .then(res => {
+                          if (!res.ok) throw new Error("제출에 실패했습니다.");
+                          return res.text();
+                        })
+                        .then(() => {
+                          alert("제안이 성공적으로 제출되었습니다.");
+                          closeModal();
+                        })
+                        .catch(err => {
+                          alert(err.message || "서버 오류가 발생했습니다.");
+                        });
+              });
+
+              function initMap() {
+                const mapContainer = document.getElementById("map");
+                if (!mapContainer) return;
+
+                const centerLatLng = new kakao.maps.LatLng(37.5665, 126.9780);
+                map = new kakao.maps.Map(mapContainer, {
+                  center: centerLatLng,
+                  level: 3
+                });
+
+                ps = new kakao.maps.services.Places();
+                geocoder = new kakao.maps.services.Geocoder();
+
+                const markerImage = new kakao.maps.MarkerImage(
+                        "/img/map-marker-blue.png",
+                        new kakao.maps.Size(38, 40),
+                        { offset: new kakao.maps.Point(19, 40) }
+                );
+
+                marker = new kakao.maps.Marker({
+                  map: null,
+                  position: centerLatLng,
+                  image: markerImage
+                });
+
+                const searchBtn = document.getElementById("search-place");
+                if (searchBtn) {
+                  searchBtn.addEventListener("click", () => {
+                    const keyword = document.getElementById("suggest-name").value.trim();
+                    if (!keyword) return alert("식당명을 입력하세요.");
+
+                    ps.keywordSearch(keyword, (data, status) => {
+                      if (status === kakao.maps.services.Status.OK && data.length > 0) {
+                        const place = data[0];
+                        const position = new kakao.maps.LatLng(place.y, place.x);
+                        map.setCenter(position);
+
+                        marker.setPosition(position);
+                        marker.setMap(map);
+
+                        document.getElementById("suggest-address").value = place.road_address_name || place.address_name;
+                        document.getElementById("latitude").value = place.y;
+                        document.getElementById("longitude").value = place.x;
+                      } else {
+                        alert("검색 결과가 없습니다.");
+                      }
+                    });
+                  });
+                }
+
+                setTimeout(() => {
+                  kakao.maps.event.trigger(map, 'resize');
+                  map.setCenter(centerLatLng);
+                }, 300);
+              }
+            });
+          });
 </script>
 <script src="/js/auth.js"></script>
 <script src="/js/header.js"></script>
 <script src="/js/notification-common.js"></script>
 </body>
-
 </html>

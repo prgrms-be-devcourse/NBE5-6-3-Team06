@@ -94,7 +94,6 @@ public class RestaurantService {
         restaurantEmbeddingRepository.save(embedding);
     }
 
-    //todo 정원님이랑 얘기해볼 부분
     @Transactional
     public void createRestaurant(RestaurantRequest request) {
         Restaurant restaurant = request.toEntity();
@@ -133,7 +132,9 @@ public class RestaurantService {
             restaurant.getSummary(),
             restaurant.getCategory(),
             restaurant.getAddress(),
-            restaurant.getOpenTime()
+            restaurant.getOpenTime(),
+                restaurant.getLatitude(),
+                restaurant.getLongitude()
         );
     }
 

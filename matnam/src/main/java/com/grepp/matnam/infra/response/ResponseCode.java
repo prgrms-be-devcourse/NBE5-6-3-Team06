@@ -7,8 +7,8 @@ public enum ResponseCode {
     BAD_REQUEST("4000", HttpStatus.BAD_REQUEST, "잘못된 요청입니다."),
     UNAUTHORIZED("4001", HttpStatus.UNAUTHORIZED, "권한이 없습니다."),
     INTERNAL_SERVER_ERROR("5000", HttpStatus.INTERNAL_SERVER_ERROR, "서버에러 입니다."),
-    NOT_FOUND("4004", HttpStatus.NOT_FOUND, "요청하신 리소스를 찾을 수 없습니다.");
-
+    NOT_FOUND("4004", HttpStatus.NOT_FOUND, "요청하신 리소스를 찾을 수 없습니다."),
+    CONFLICT("4009", HttpStatus.CONFLICT, "중복된 데이터입니다.");
     
     private final String code;
     private final HttpStatus status;

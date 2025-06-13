@@ -1,14 +1,13 @@
 package com.grepp.matnam.app.model.restaurant.entity;
 
-
 import com.grepp.matnam.infra.entity.BaseEntity;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 
 @Entity
 @Getter
@@ -39,7 +38,6 @@ public class Restaurant extends BaseEntity {
 
     private Float googleRating;
 
-    // 각 식당 대표 분위기 추가
     private boolean goodTalk;
     private boolean manyDrink;
     private boolean goodMusic;
@@ -51,15 +49,20 @@ public class Restaurant extends BaseEntity {
     private boolean longStay;
     private boolean bigStore;
 
+    @Column
+    private Double latitude;
+
+    @Column
+    private Double longitude;
+
     @Override
     public String toString() {
         return "Restaurant{" +
-            "name='" + name + '\'' +
-            ", summary='" + summary + '\'' +
-            ", mainFood='" + mainFood + '\'' +
-            ", category='" + category + '\'' +
-            ", mood='" + mood + '\'' +
-            '}';
+                "name='" + name + '\'' +
+                ", summary='" + summary + '\'' +
+                ", mainFood='" + mainFood + '\'' +
+                ", category='" + category + '\'' +
+                ", mood='" + mood + '\'' +
+                '}';
     }
-
 }

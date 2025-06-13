@@ -128,7 +128,9 @@
   const teamId = [[${teamId}]];
   fetch('/api/team/map/' + teamId)
           .then(res => res.json())
-          .then(data => {
+          .then(res => {
+            const data = res.data || [];
+
             const nicknameList = document.getElementById('nickname-list');
             const mapContainer = document.getElementById('map');
             const restaurantList = document.getElementById('restaurant-list');
@@ -191,6 +193,7 @@
                 div.addEventListener('click', () => {
                   const key = `${item.latitude},${item.longitude}`;
                   const marker = locationMarkerMap.get(key);
+                  if (!marker) return;
                   if (currentInfowindow) currentInfowindow.close();
                   map.setCenter(marker.getPosition());
                   map.setLevel(3);

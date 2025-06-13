@@ -1,0 +1,93 @@
+<div th:fragment="suggestModal">
+  <div id="suggestRestaurantModal" class="modal" style="display: none;">
+    <div class="modal-content large-modal"
+         style="position: relative;
+                width: 700px;
+                margin: 5% auto;
+                background-color: #fff;
+                border-radius: 8px;
+                padding: 2rem;
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+                max-height: 80vh;
+                overflow-y: auto;">
+
+      <div class="modal-header">
+        <h2 style="margin-bottom: 0.5rem;">식당 등록 제안</h2>
+        <h5 style="color: lightslategray; margin-bottom: 0.3rem;">새로운 맛집을 저희에게도 알려주세요!</h5>
+        <h5 style="color: lightslategray; margin-top: 0;">제출해주신 내용은 검토 후 업데이트할 예정입니다 🍽️</h5>
+      </div>
+
+      <span class="close-modal"
+            style="position: absolute;
+                   top: 16px;
+                   right: 20px;
+                   font-size: 24px;
+                   cursor: pointer;
+                   color: #666;">&times;</span>
+
+      <div class="modal-body" style="margin-top: 1.5rem;">
+        <div style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
+
+          <div style="flex: 2; min-width: 320px;">
+            <div id="map"
+                 style="width: 100%;
+                        height: 300px;
+                        border: 1px solid #ccc;
+                        background-color: #fff;
+                        border-radius: 0 !important;
+                        position: relative;
+                        clip-path: none !important;
+                        mask-image: none !important;">
+            </div>
+          </div>
+
+          <div style="flex: 1; min-width: 260px;">
+            <input type="hidden" id="submitted-user-id" th:value="${#authentication.name}" />
+
+            <div class="form-group" style="margin-bottom: 1rem;">
+              <label for="suggest-name">상호명</label><br>
+              <input type="text" id="suggest-name"
+                     style="width: 100%; height: 40px; padding: 0.5rem;"
+                     placeholder="예: 강남 에그키친" required>
+              <button type="button" id="search-place"
+                      class="btn-primary" style="margin-top: 0.5rem;">검색</button>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 1rem;">
+              <label for="suggest-address">주소</label><br>
+              <input type="text" id="suggest-address" readonly required
+                     placeholder="검색 결과를 기반으로 로드됩니다."
+                     style="width: 100%; height: 40px; padding: 0.5rem;">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 1rem;">
+              <label for="suggest-reason">대표 메뉴</label><br>
+              <input type="text" id="suggest-reason" required
+                     placeholder="대표 메뉴 한가지를 알려주세요"
+                     style="width: 100%; height: 40px; padding: 0.5rem;">
+            </div>
+
+            <input type="hidden" id="latitude">
+            <input type="hidden" id="longitude">
+
+            <div style="margin-left:140px; margin-top: 1.5rem; display: flex; gap: 0.5rem;">
+              <button id="cancel-suggest" class="btn-primary">취소</button>
+              <button id="submit-suggest" class="btn-primary">제출</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    #map, #map * {
+      border-radius: 0 !important;
+      clip-path: none !important;
+      -webkit-clip-path: none !important;
+      mask-image: none !important;
+      -webkit-mask-image: none !important;
+      box-shadow: none !important;
+    }
+  </style>
+</div>
