@@ -1,5 +1,6 @@
 package com.grepp.matnam.app.model.user.repository;
 
+import com.grepp.matnam.app.controller.api.admin.payload.SearchUserResponse;
 import com.grepp.matnam.app.model.user.code.Gender;
 import com.grepp.matnam.app.model.user.code.Status;
 import com.grepp.matnam.app.model.user.entity.QUser;
@@ -7,6 +8,7 @@ import com.grepp.matnam.app.model.user.entity.User;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
@@ -168,6 +170,21 @@ public class UserRepositoryCustomImpl implements UserRepositoryCustom {
                 user.status.ne(Status.ACTIVE)
             )
             .fetchOne()).orElse(0L);
+    }
+
+    @Override
+    public List<SearchUserResponse> findUserByKeyword(String keyword) {
+        return queryFactory
+            .select(Projections.constructor(
+                SearchUserResponse.class,
+                user.userId,
+                user.nickname
+            ))
+            .from(user)
+            .where(
+                user.userId.contains(keyword)
+            )
+            .fetch();
     }
 
     private OrderSpecifier<?>[] getOrderSpecifiers(Sort sort) {

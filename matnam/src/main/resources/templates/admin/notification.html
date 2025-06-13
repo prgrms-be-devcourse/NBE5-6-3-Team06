@@ -61,35 +61,53 @@
     </div>
   </div>
 
-  <!-- 새 공지사항 작성 모달 -->
-  <div id="create-notification-modal" class="modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2>새 공지사항 작성</h2>
-        <span class="close-modal">&times;</span>
-      </div>
-      <div class="modal-body">
-        <form id="notification-form">
-          <div class="form-group">
-            <label for="notification-target">알림 대상</label>
-            <select id="notification-target" name="notification-target" class="form-control">
-              <option value="all">전체</option>
-              <option value="specific" disabled>직접 지정 (준비 중)</option>
-            </select>
+<!-- 새 공지사항 작성 모달 수정 -->
+<div id="create-announcement-modal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>새 공지사항 작성</h2>
+      <span class="close-modal">&times;</span>
+    </div>
+    <div class="modal-body">
+      <form id="announcement-form">
+        <div class="form-group">
+          <label for="announcement-target-type">알림 대상</label>
+          <select id="announcement-target-type" name="announcement-target-type" class="form-control">
+            <option value="all">전체</option>
+            <option value="group">모임</option>
+            <option value="user">사용자</option>
+          </select>
+          <span id="error-type" class="error-message"></span>
+        </div>
+
+        <!-- 검색 영역 (모임/사용자 선택 시 표시) -->
+        <div id="search-container" class="form-group" style="display: none;">
+          <div class="search-box">
+            <input type="text" id="search-input" placeholder="검색어를 입력하세요" class="form-control">
+            <button type="button" id="search-btn" class="btn primary-btn">검색</button>
           </div>
 
-          <div class="form-group">
-            <label for="notification-content">메시지 내용</label>
-            <textarea id="notification-content" name="notification-content" rows="5"
-                      placeholder="공지사항 메시지 내용을 입력하세요" required></textarea>
-            <span id="error-content" class="error-message"></span>
-          </div>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button class="btn cancel-btn">취소</button>
-        <button class="btn primary-btn" id="send-notification-btn">공지사항 발송</button>
-      </div>
+          <!-- 검색 결과 영역 -->
+          <div id="search-results" class="search-results"></div>
+        </div>
+
+        <!-- 선택된 대상 표시 영역 -->
+        <div id="selected-targets-container" class="form-group" style="display: none;">
+          <label>선택된 대상</label>
+          <div id="selected-targets" class="selected-targets"></div>
+          <span id="error-targets" class="error-message"></span>
+        </div>
+
+        <div class="form-group">
+          <label for="announcement-content">메시지 내용</label>
+          <textarea id="announcement-content" name="announcement-content" rows="5" placeholder="공지사항 메시지 내용을 입력하세요"></textarea>
+          <span id="error-content" class="error-message"></span>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn cancel-btn">취소</button>
+      <button class="btn primary-btn" id="send-announcement-btn">공지사항 발송</button>
     </div>
   </div>
 </div>

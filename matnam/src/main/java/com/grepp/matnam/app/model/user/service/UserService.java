@@ -2,6 +2,7 @@ package com.grepp.matnam.app.model.user.service;
 
 import com.grepp.matnam.app.controller.api.admin.payload.AgeDistributionResponse;
 import com.grepp.matnam.app.controller.api.admin.payload.UserStatusRequest;
+import com.grepp.matnam.app.controller.api.admin.payload.BroadcastNotificationRequest;
 import com.grepp.matnam.app.facade.NotificationSender;
 import com.grepp.matnam.app.model.notification.code.NotificationType;
 import com.grepp.matnam.app.model.notification.entity.Notice;
@@ -302,13 +303,23 @@ public class UserService {
     }
 
     @Transactional
-    public void sendBroadcastNotification(String content) {
-        // ROLE_USER 이고 활성화된 사용자만 조회
-        List<User> usersToSend = userRepository.findByRoleEqualsAndActivatedIsTrue(Role.ROLE_USER);
-        notificationService.saveNotice(content, null);
+    public void sendBroadcastNotification(BroadcastNotificationRequest request) {
+        notificationService.saveNotice(request.getContent(), null);
 
-        for (User user : usersToSend) {
-            notificationSender.sendNotificationToUser(user.getUserId(), NotificationType.NOTICE, content, null);
+        if (request.getTargetType().equals("all")) {
+            // ROLE_USER 이고 활성화된 사용자만 조회
+            List<User> usersToSend = userRepository.findByRoleEqualsAndActivatedIsTrue(Role.ROLE_USER);
+
+            for (User user : usersToSend) {
+                notificationSender.sendNotificationToUser(user.getUserId(), NotificationType.NOTICE, request.getContent(), null);
+            }
+        } else {
+            for (String userId : request.getTargetUserIds()) {
+                if (!userRepository.existsByUserId(userId)) {
+                    throw new RuntimeException("존재하지 않는 사용자입니다.");
+                }
+                notificationSender.sendNotificationToUser(userId, NotificationType.NOTICE, request.getContent(), null);
+            }
         }
     }
 

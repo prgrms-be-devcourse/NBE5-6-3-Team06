@@ -1,5 +1,7 @@
 package com.grepp.matnam.app.model.team.service;
 
+import com.grepp.matnam.app.controller.api.admin.payload.SearchTeamResponse;
+import com.grepp.matnam.app.controller.api.admin.payload.SearchUserResponse;
 import com.grepp.matnam.app.controller.api.admin.payload.StatDoubleResponse;
 import com.grepp.matnam.app.controller.api.admin.payload.TeamStatusUpdateRequest;
 import com.grepp.matnam.app.controller.web.admin.payload.ActiveTeamResponse;
@@ -631,5 +633,13 @@ public class TeamService {
                         null);
             }
         }
+    }
+
+    public List<SearchTeamResponse> getParticipantByLeader(String keyword) {
+        return teamRepository.findTeamByKeyword(keyword);
+    }
+
+    public List<SearchUserResponse> getUserByUserId(String keyword) {
+        return userRepository.findUserByKeyword(keyword);
     }
 }
