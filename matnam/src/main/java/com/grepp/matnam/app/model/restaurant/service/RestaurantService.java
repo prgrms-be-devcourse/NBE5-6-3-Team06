@@ -106,7 +106,9 @@ public class RestaurantService {
             restaurant.getAddress(),
             restaurant.getCategory(),
             restaurant.getOpenTime(),
-            restaurant.getMainFood()
+            restaurant.getMainFood(),
+                restaurant.getLongitude(),
+                restaurant.getLatitude()
         );
     }
 

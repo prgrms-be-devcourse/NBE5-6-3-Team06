@@ -40,6 +40,10 @@ public class RestaurantEmbedding {
 
     private String openTime;
 
+    private Double latitude;
+
+    private Double longitude;
+
     //평점
     private Float googleRating;
 
@@ -52,6 +56,8 @@ public class RestaurantEmbedding {
         this.googleRating=entity.getGoogleRating();
         this.openTime=entity.getOpenTime();
         this.address=entity.getAddress();
+        this.latitude=entity.getLatitude();
+        this.longitude=entity.getLongitude();
 
         this.text=segment.text();
         this.embedding=embedding.vector();
