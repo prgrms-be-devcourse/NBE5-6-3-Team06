@@ -20,6 +20,7 @@ public class TeamDto {
     private String category;
     private String imageUrl;
     private Status status;
+    private long favoriteCount;
 
     public static TeamDto from(Team team) {
         TeamDto dto = new TeamDto();
@@ -34,6 +35,7 @@ public class TeamDto {
         dto.setCategory(team.getCategory());
         dto.setImageUrl(team.getImageUrl());
         dto.setStatus(team.getStatus());
+        dto.setFavoriteCount(team.getFavoriteCount());
         return dto;
     }
 

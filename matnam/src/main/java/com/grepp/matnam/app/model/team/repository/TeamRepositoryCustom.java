@@ -30,11 +30,13 @@ public interface TeamRepositoryCustom {
 
     List<Team> findTeamsByParticipantUserIdAndParticipantStatusAndActivatedTrue(String userId, ParticipantStatus status);
 
-    Page<Team> findAllWithParticipantsAndActivatedTrue(Pageable pageable);
+    Page<Team> findAllWithParticipantsAndActivatedTrue(Pageable pageable, boolean includeCompleted);
 
     Optional<Team> findByIdWithParticipantsAndUserAndActivatedTrue(Long teamId);
 
     List<MeetingDto> findByTeamDateIn(LocalDate date);
 
     List<SearchTeamResponse> findTeamByKeyword(String keyword);
+
+    Page<Team> findAllOrderByFavoriteCount(Pageable pageable, boolean includeCompleted);
 }

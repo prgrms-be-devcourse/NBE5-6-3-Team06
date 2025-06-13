@@ -1,5 +1,6 @@
 package com.grepp.matnam.app.model.team.service;
 
+import com.grepp.matnam.app.model.team.code.Status;
 import com.grepp.matnam.app.model.team.dto.TeamDto;
 import com.grepp.matnam.app.model.team.entity.Team;
 import com.grepp.matnam.app.model.team.entity.Favorite;
@@ -42,7 +43,8 @@ public class FavoriteService {
     // 내 즐겨찾기 모임 조회
     @Transactional(readOnly = true)
     public List<TeamDto> getFavoriteForUser(String userId) {
-        return favoriteRepository.findAllByUser_UserId(userId)
+        return favoriteRepository.findAllByUser_UserIdAndTeam_ActivatedTrueAndTeam_StatusNot(
+            userId, Status.CANCELED)
             .stream()
             .map(f -> TeamDto.from(f.getTeam()))
             .collect(Collectors.toList());
@@ -52,5 +54,9 @@ public class FavoriteService {
     public Object existsByUserAndTeam(String userId, Long teamId) {
         return favoriteRepository
             .existsByUser_UserIdAndTeam_TeamId(userId, teamId);
+    }
+
+    public long countFavoritesByTeamId(Long teamId) {
+        return favoriteRepository.countByTeam_TeamId(teamId);
     }
 }

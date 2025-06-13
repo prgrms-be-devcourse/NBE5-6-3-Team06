@@ -20,6 +20,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -35,6 +36,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 @RequestMapping("/team")
@@ -117,14 +119,33 @@ public class TeamController {
     // 모임 검색 페이지
     @GetMapping("/search")
     public String searchTeams(
-        @PageableDefault(size = 12, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
+        @PageableDefault(size = 12, sort = "createdAt", direction = Sort.Direction.DESC)
+        Pageable pageable,
+        @RequestParam(name = "sort", defaultValue = "createdAt")
+        String sort,
+        @RequestParam(name = "includeCompleted", defaultValue = "true")
+        boolean includeCompleted,
         Model model) {
-        Page<Team> teamPage = teamService.getAllTeams(pageable);
-        model.addAttribute("teams", teamPage.getContent());
-        model.addAttribute("page", teamPage);
+        Page<Team> page;
+
+        if ("favoriteCount".equals(sort)) {
+            Pageable favPageable = PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                Sort.by(Sort.Direction.DESC, "favoriteCount")
+            );
+            page = teamService.getAllTeamsByFavoriteCount(favPageable, includeCompleted);
+
+        } else {
+            page = teamService.getAllTeams(pageable, includeCompleted);
+        }
+
+        model.addAttribute("teams", page.getContent());
+        model.addAttribute("page", page);
+        model.addAttribute("sort", sort);
+        model.addAttribute("includeCompleted", includeCompleted);
         return "team/teamSearch";
     }
-
 
     // 모임 상세 조회
     @GetMapping("/detail/{teamId}")

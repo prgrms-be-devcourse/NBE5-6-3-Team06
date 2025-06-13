@@ -131,10 +131,21 @@ public class UserController {
             // 즐겨찾기 조회
             List<TeamDto> favoriteTeams = favoriteService.getFavoriteForUser(userId);
 
+            for (TeamDto dto : favoriteTeams) {
+                long cnt = favoriteService.countFavoritesByTeamId(dto.getTeamId());
+                dto.setFavoriteCount(cnt);
+            }
+
+            favoriteTeams.sort(
+                Comparator.comparingLong(TeamDto::getFavoriteCount).reversed()
+            );
+
             hostingTeams.sort(getTeamComparator());
             participatingTeams.sort(getTeamComparator());
             allTeams.sort(getTeamComparator());
 
+
+            // todo 겹치는 코드 리팩토링
             int allTotal = allTeams.size();
             int hostingTotal = hostingTeams.size();
             int partTotal = participatingTeams.size();
@@ -176,8 +187,6 @@ public class UserController {
             model.addAttribute("participatingTeams", paginatedPart);
             model.addAttribute("participatingPages", partPages);
 
-            // todo 즐겨찾기 정렬 나중에 하기(모든 조회를 teamDto 로 수정)
-//            favoriteTeams.sort(getTeamComparator());
             model.addAttribute("favoriteTeams", paginatedFav);
             model.addAttribute("favoritePages", favPages);
 

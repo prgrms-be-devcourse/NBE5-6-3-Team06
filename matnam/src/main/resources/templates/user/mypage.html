@@ -929,6 +929,7 @@
             </p>
             <p>📍 <span th:text="${team.restaurantName}">식당 이름</span></p>
             <p>👥 참여 인원: <span th:text="${team.nowPeople + '/' + team.maxPeople}">참여 인원</span></p>
+            <p>⭐️ <span th:text="${team.favoriteCount}">0</span>명</p>
             <a th:href="@{'/team/detail/' + ${team.teamId}}">자세히 보기</a><br>
           </div>
           <div class="teamPaging-container" th:if="${favoritePages > 1}">

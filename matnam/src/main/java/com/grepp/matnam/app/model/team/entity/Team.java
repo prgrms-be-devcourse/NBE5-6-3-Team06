@@ -15,6 +15,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.Transient;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.Getter;
@@ -40,6 +41,9 @@ public class Team extends BaseEntity {
     @OneToMany(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "teamId")
     private List<Participant> participants;
+
+    @OneToMany(mappedBy = "team", cascade = CascadeType.ALL)
+    private List<Favorite> favorites;
     
     private String restaurantAddress;
     private String category;
@@ -69,5 +73,7 @@ public class Team extends BaseEntity {
         return this.createdAt;
     }
 
+    @Transient
+    private long favoriteCount;
 
 }
