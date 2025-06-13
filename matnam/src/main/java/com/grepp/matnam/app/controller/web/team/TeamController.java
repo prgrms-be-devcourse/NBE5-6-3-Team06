@@ -119,8 +119,12 @@ public class TeamController {
     // 모임 검색 페이지
     @GetMapping("/search")
     public String searchTeams(
-        @PageableDefault(size = 12, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
-        @RequestParam(name = "sort", defaultValue = "createdAt") String sort,
+        @PageableDefault(size = 12, sort = "createdAt", direction = Sort.Direction.DESC)
+        Pageable pageable,
+        @RequestParam(name = "sort", defaultValue = "createdAt")
+        String sort,
+        @RequestParam(name = "includeCompleted", defaultValue = "true")
+        boolean includeCompleted,
         Model model) {
         Page<Team> page;
 
@@ -130,15 +134,16 @@ public class TeamController {
                 pageable.getPageSize(),
                 Sort.by(Sort.Direction.DESC, "favoriteCount")
             );
-            page = teamService.getAllTeamsByFavoriteCount(favPageable);
+            page = teamService.getAllTeamsByFavoriteCount(favPageable, includeCompleted);
 
         } else {
-            page = teamService.getAllTeams(pageable);
+            page = teamService.getAllTeams(pageable, includeCompleted);
         }
 
         model.addAttribute("teams", page.getContent());
         model.addAttribute("page", page);
         model.addAttribute("sort", sort);
+        model.addAttribute("includeCompleted", includeCompleted);
         return "team/teamSearch";
     }
 

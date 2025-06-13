@@ -244,10 +244,13 @@ public class TeamRepositoryCustomImpl implements TeamRepositoryCustom {
 
     // 페이징: activated=true, 상태가 COMPLETED/CANCELED 가 아닌 팀을 참여자 정보 포함하여 조회
     @Override
-    public Page<Team> findAllWithParticipantsAndActivatedTrue(Pageable pageable) {
+    public Page<Team> findAllWithParticipantsAndActivatedTrue(Pageable pageable, boolean includeCompleted) {
         BooleanBuilder builder = new BooleanBuilder()
             .and(team.activated.isTrue())
             .and(team.status.ne(Status.CANCELED));
+        if (!includeCompleted) {
+            builder.and(team.status.ne(Status.COMPLETED));
+        }
 
         List<Team> content = queryFactory
             .selectDistinct(team)
@@ -347,11 +350,14 @@ public class TeamRepositoryCustomImpl implements TeamRepositoryCustom {
 
     // 즐겨찾기 카운트
     @Override
-    public Page<Team> findAllOrderByFavoriteCount(Pageable pageable) {
+    public Page<Team> findAllOrderByFavoriteCount(Pageable pageable, boolean includeCompleted) {
 
         BooleanBuilder builder = new BooleanBuilder()
             .and(team.activated.eq(true))
             .and(team.status.ne(Status.CANCELED));
+        if (!includeCompleted) {
+            builder.and(team.status.ne(Status.COMPLETED));
+        }
 
         List<Tuple> tuples = queryFactory
             .select(team, favorite.count())

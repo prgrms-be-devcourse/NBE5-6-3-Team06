@@ -171,23 +171,41 @@
   </div>
 
   <div class="filters">
-    <a th:href="@{/team/search(page=0, size=${page.size}, sort='createdAt')}"
+    <a th:href="@{/team/search(page=0, size=${page.size}, sort='createdAt', includeCompleted=${includeCompleted})}"
        th:classappend="${sort == 'createdAt'} ? 'active' : ''"
        class="filter-btn">전체</a>
 
-    <a th:href="@{/team/search(page=0, size=${page.size}, sort='viewCount')}"
+<!--    조회수순 파트-->
+    <a th:href="@{/team/search(page=0, size=${page.size}, sort='viewCount', includeCompleted=${includeCompleted})}"
        th:classappend="${sort == 'viewCount'} ? 'active' : ''"
        class="filter-btn">조회수순</a>
 
-    <a th:href="@{/team/search(page=0, size=${page.size}, sort='favoriteCount')}"
+    <a th:href="@{/team/search(page=0, size=${page.size}, sort='favoriteCount', includeCompleted=${includeCompleted})}"
        th:classappend="${sort == 'favoriteCount'} ? 'active' : ''"
        class="filter-btn">즐겨찾기순</a>
 
-    <a th:href="@{/team/search(page=0, size=${page.size}, sort='deadline')}"
+<!--    이건 할지 말지 고민중-->
+    <a th:href="@{/team/search(page=0, size=${page.size}, sort='deadline', includeCompleted=${includeCompleted})}"
        th:classappend="${sort == 'deadline'} ? 'active' : ''"
        class="filter-btn">마감 임박</a>
-
   </div>
+
+  <form id="filterForm" th:action="@{/team/search}" method="get">
+    <input type="hidden" name="page" th:value="${page.number}" />
+    <input type="hidden" name="size" th:value="${page.size}" />
+    <input type="hidden" name="sort" th:value="${sort}" />
+
+    <label>
+      <input id="includeCompletedCheckbox"
+             type="checkbox"
+             name="includeCompleted"
+             th:value="true"
+      th:checked="${includeCompleted}" />
+      완료된 모임 포함
+    </label>
+
+    <input type="hidden" name="includeCompleted" value="false" />
+  </form>
 
   <div class="meetings-grid">
     <div class="meeting-card" th:each="team : ${teams}">
@@ -202,22 +220,29 @@
       <p>현재 등록된 모임이 없습니다.</p>
     </div>
   </div>
-
   <div class="pagination" th:if="${page.totalPages > 0}">
-    <a th:if="${page.hasPrevious()}" th:href="@{/team/search(page=${page.number - 1}, size=${page.size}, sort=${param.sort})}">이전</a>
+    <a th:if="${page.hasPrevious()}" th:href="@{/team/search(page=${page.number - 1}, size=${page.size}, sort=${param.sort}, includeCompleted=${includeCompleted})}">이전</a>
 
     <th:block th:each="pageNumber : ${#numbers.sequence(0, page.totalPages - 1)}">
       <span th:if="${pageNumber == page.number}" class="current" th:text="${pageNumber + 1}"></span>
       <a th:unless="${pageNumber == page.number}"
-         th:href="@{/team/search(page=${pageNumber}, size=${page.size}, sort=${param.sort})}"
+         th:href="@{/team/search(page=${pageNumber}, size=${page.size}, sort=${param.sort}, includeCompleted=${includeCompleted})}"
          th:text="${pageNumber + 1}"></a>
     </th:block>
 
-    <a th:if="${page.hasNext()}" th:href="@{/team/search(page=${page.number + 1}, size=${page.size}, sort=${param.sort})}">다음</a>
+    <a th:if="${page.hasNext()}" th:href="@{/team/search(page=${page.number + 1}, size=${page.size}, sort=${param.sort}, includeCompleted=${includeCompleted})}">다음</a>
   </div>
 </div>
 <script src="/js/auth.js"></script>
 <script src="/js/header.js"></script>
 <script src="/js/notification-common.js"></script>
+<script>
+  const cb = document.getElementById('includeCompletedCheckbox');
+  if (cb) {
+    cb.addEventListener('change', function() {
+      document.getElementById('filterForm').submit();
+    });
+  }
+</script>
 </body>
 </html>

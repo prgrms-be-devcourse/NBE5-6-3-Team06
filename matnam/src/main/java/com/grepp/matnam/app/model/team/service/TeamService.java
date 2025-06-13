@@ -259,13 +259,13 @@ public class TeamService {
     }
 
     // 모임 검색 페이지
-    public Page<Team> getAllTeams(Pageable pageable) {
-        return teamRepository.findAllWithParticipantsAndActivatedTrue(pageable);
+    public Page<Team> getAllTeams(Pageable pageable, boolean includeCompleted) {
+        return teamRepository.findAllWithParticipantsAndActivatedTrue(pageable, includeCompleted);
     }
     
     // 모임 즐겨찾기 카운트
-    public Page<Team> getAllTeamsByFavoriteCount(Pageable pageable){
-        return teamRepository.findAllOrderByFavoriteCount(pageable);
+    public Page<Team> getAllTeamsByFavoriteCount(Pageable pageable, boolean includeCompleted){
+        return teamRepository.findAllOrderByFavoriteCount(pageable, includeCompleted);
     }
 
     // 모임 상세 조회, 팀 페이지 조회
