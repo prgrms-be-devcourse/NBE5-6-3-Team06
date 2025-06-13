@@ -60,7 +60,7 @@ public class SecurityConfig {
                         // 1. 인증이 필요하지 않은 경로
                         .requestMatchers("/", "/error", "/favicon.ico").permitAll()
                         .requestMatchers("/team/search", "/team/detail/**").permitAll()
-                        .requestMatchers("/css/**", "/js/**", "/img/**").permitAll()
+                        .requestMatchers( "/static/**", "/img/**", "/js/**", "/css/**").permitAll()
 
                         // 회원가입/로그인 관련
                         .requestMatchers("/user/signup", "/user/signin", "/user/oauth2/signup").permitAll()

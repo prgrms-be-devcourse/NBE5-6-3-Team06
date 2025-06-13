@@ -10,25 +10,21 @@
   <div class="tab-container">
     <div class="tabs">
       <div class="tab active" data-tab="restaurant-list">식당 목록</div>
+      <div class="tab" data-tab="restaurant-suggestion-list">신규 등록 제안</div>
     </div>
 
     <div class="tab-content active" id="restaurant-list">
       <div class="action-bar">
-        <button class="primary-btn" id="add-restaurant-btn"><i class="fas fa-plus"></i> 새 식당 추가
-        </button>
+        <button class="primary-btn" id="add-restaurant-btn"><i class="fas fa-plus"></i> 새 식당 추가</button>
         <form method="get" action="/admin/restaurant">
           <div class="form-row">
-
             <div class="search-filter">
-              <input type="text" name="keyword" placeholder="식당명을 입력하세요"
-                     th:value="${param.keyword}"/>
+              <input type="text" name="keyword" placeholder="식당명을 입력하세요" th:value="${param.keyword}"/>
               <button class="search-btn" type="submit"><i class="fas fa-search"></i></button>
             </div>
-
             <div class="filter-options">
               <select name="category" id="restaurant-category-filter" onchange="this.form.submit()">
-                <option value="" th:selected="${#strings.isEmpty(selectedCategory)}">모든 카테고리
-                </option>
+                <option value="" th:selected="${#strings.isEmpty(selectedCategory)}">모든 카테고리</option>
                 <option th:each="category : ${categories}"
                         th:value="${category.name()}"
                         th:text="${category.koreanName}"
@@ -43,10 +39,8 @@
             </div>
           </div>
         </form>
-
       </div>
 
-      <!-- 테이블 형태로 변경 -->
       <div class="table-container">
         <table class="data-table">
           <thead>
@@ -80,10 +74,8 @@
               </div>
             </td>
             <td>
-              <button class="action-btn edit" th:data-id="${restaurant.restaurantId}"><i
-                  class="fas fa-edit"></i></button>
-              <button class="action-btn delete" th:data-id="${restaurant.restaurantId}"><i
-                  class="fas fa-trash"></i></button>
+              <button class="action-btn edit" th:data-id="${restaurant.restaurantId}"><i class="fas fa-edit"></i></button>
+              <button class="action-btn delete" th:data-id="${restaurant.restaurantId}"><i class="fas fa-trash"></i></button>
             </td>
           </tr>
           </tbody>
@@ -91,9 +83,43 @@
       </div>
       <div th:replace="~{admin/fragments/pagination :: pagination}"></div>
     </div>
+    <div class="tab-content" id="restaurant-suggestion-list" style="display: none;">
+      <table class="data-table">
+        <thead>
+        <tr>
+          <th>번호</th>
+          <th>식당명</th>
+          <th>주소</th>
+          <th>대표 메뉴</th>
+          <th>제안일</th>
+          <th>액션</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="suggestion, iterStat : ${suggestions}">
+          <td th:text="${iterStat.count}"></td>
+          <td th:text="${suggestion.name}" class="suggestion-row"
+              th:data-id="${suggestion.id}"
+              th:data-name="${suggestion.name}"
+              th:data-address="${suggestion.address}"
+              th:data-mainfood="${suggestion.mainFood}"
+              th:data-latitude="${suggestion.latitude}"
+              th:data-longitude="${suggestion.longitude}"></td>
+          <td th:text="${suggestion.address}"></td>
+          <td th:text="${suggestion.mainFood}"></td>
+          <td th:text="${#temporals.format(suggestion.submittedAt, 'yyyy-MM-dd')}"></td>
+          <td>
+            <button class="primary-btn approve-btn" th:data-id="${suggestion.id}">승인</button>
+            <button class="secondary-btn reject-btn" th:data-id="${suggestion.id}">거절</button>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+      <div th:replace="~{admin/fragments/pagination :: pagination}"></div>
+    </div>
   </div>
 
-  <!-- 식당 추가/수정 모달 (개선) -->
+  <!-- 식당 추가/수정 모달 -->
   <div class="modal" id="restaurantModal">
     <div class="modal-content large-modal">
       <div class="modal-header">
@@ -113,9 +139,7 @@
               <label for="restaurant-category">카테고리 <span class="required">*</span></label>
               <select id="restaurant-category" required>
                 <option value="">카테고리 선택</option>
-                <option th:each="category : ${categories}" th:value="${category.koreanName}"
-                        th:text="${category.koreanName}">
-                </option>
+                <option th:each="category : ${categories}" th:value="${category.koreanName}" th:text="${category.koreanName}"></option>
               </select>
               <span id="error-category" class="error-message"></span>
             </div>
@@ -133,8 +157,7 @@
             </div>
             <div class="form-group">
               <label for="restaurant-hours">영업 시간 <span class="required">*</span></label>
-              <input type="text" id="restaurant-hours"
-                     placeholder="예: 평일 11:00-22:00, 주말 11:00-23:00">
+              <input type="text" id="restaurant-hours" placeholder="예: 평일 11:00-22:00, 주말 11:00-23:00">
               <span id="error-hours" class="error-message"></span>
             </div>
           </div>
@@ -152,53 +175,16 @@
           </div>
           <div class="form-group">
             <label for="restaurant-description">식당 설명 <span class="required">*</span></label>
-            <textarea id="restaurant-description" rows="3"
-                      placeholder="식당에 대한 간략한 설명을 입력하세요"></textarea>
+            <textarea id="restaurant-description" rows="3" placeholder="식당에 대한 간략한 설명을 입력하세요"></textarea>
             <span id="error-description" class="error-message"></span>
           </div>
           <div class="form-group">
-            <label>분위기 (해당하는 항목 최소 1개에서 최대 3개 선택) <span class="required">*</span></label>
+            <label>분위기 (최소 1개, 최대 3개 선택) <span class="required">*</span></label>
             <span id="error-mood" class="error-message"></span>
             <div class="checkbox-group">
-              <div class="checkbox-item">
-                <input type="checkbox" id="goodTalk" name="restaurant-mood" value="goodTalk">
-                <label for="goodTalk">대화하기 좋은</label>
-              </div>
-              <div class="checkbox-item">
-                <input type="checkbox" id="manyDrink" name="restaurant-mood" value="manyDrink">
-                <label for="manyDrink">술이 다양한</label>
-              </div>
-              <div class="checkbox-item">
-                <input type="checkbox" id="goodMusic" name="restaurant-mood" value="goodMusic">
-                <label for="goodMusic">음악이 좋은</label>
-              </div>
-              <div class="checkbox-item">
-                <input type="checkbox" id="clean" name="restaurant-mood" value="clean">
-                <label for="clean">깨끗한</label>
-              </div>
-              <div class="checkbox-item">
-                <input type="checkbox" id="goodView" name="restaurant-mood" value="goodView">
-                <label for="goodView">뷰가 좋은</label>
-              </div>
-              <div class="checkbox-item">
-                <input type="checkbox" id="isTerrace" name="restaurant-mood" value="isTerrace">
-                <label for="isTerrace">테라스가 있는</label>
-              </div>
-              <div class="checkbox-item">
-                <input type="checkbox" id="goodPicture" name="restaurant-mood" value="goodPicture">
-                <label for="goodPicture">사진이 잘 나오는</label>
-              </div>
-              <div class="checkbox-item">
-                <input type="checkbox" id="goodMenu" name="restaurant-mood" value="goodMenu">
-                <label for="goodMenu">메뉴가 다양한</label>
-              </div>
-              <div class="checkbox-item">
-                <input type="checkbox" id="longStay" name="restaurant-mood" value="longStay">
-                <label for="longStay">오래 머물 수 있는</label>
-              </div>
-              <div class="checkbox-item">
-                <input type="checkbox" id="bigStore" name="restaurant-mood" value="bigStore">
-                <label for="bigStore">매장이 넓은</label>
+              <div th:each="mood : ${moodOptions}">
+                <input type="checkbox" th:id="${mood.value}" name="restaurant-mood" th:value="${mood.value}">
+                <label th:for="${mood.value}" th:text="${mood.label}"></label>
               </div>
             </div>
           </div>
@@ -211,9 +197,60 @@
     </div>
   </div>
 </div>
-
 <th:block layout:fragment="script">
   <script th:src="@{/js/restaurant-management.js}"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const tabs = document.querySelectorAll('.tab');
+      const contents = document.querySelectorAll('.tab-content');
+
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          tabs.forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+
+          const target = tab.dataset.tab;
+          contents.forEach(c => {
+            if (c.id === target) {
+              c.style.display = 'block';
+              c.classList.add('active');
+            } else {
+              c.style.display = 'none';
+              c.classList.remove('active');
+            }
+          });
+        });
+      });
+
+      contents.forEach(content => {
+        content.style.display = content.classList.contains('active') ? 'block' : 'none';
+      });
+
+      document.querySelectorAll('.suggestion-row').forEach(row => {
+        row.addEventListener('click', () => {
+          document.getElementById('restaurantModal').style.display = 'block';
+          document.getElementById('restaurant-id').value = row.dataset.id;
+          document.getElementById('restaurant-name').value = row.dataset.name;
+          document.getElementById('restaurant-address').value = row.dataset.address;
+          document.getElementById('restaurant-main-menu').value = row.dataset.mainfood;
+
+          ['restaurant-category', 'restaurant-phone', 'restaurant-hours', 'restaurant-description', 'restaurant-google-rating'].forEach(id => {
+            document.getElementById(id).value = '';
+          });
+
+          document.querySelectorAll('input[name="restaurant-mood"]').forEach(cb => cb.checked = false);
+          document.getElementById('restaurant-modal-title').innerText = '식당 제안 승인';
+        });
+      });
+
+      document.querySelector('.close-modal').addEventListener('click', () => {
+        document.getElementById('restaurantModal').style.display = 'none';
+      });
+      document.querySelector('.cancel-btn').addEventListener('click', () => {
+        document.getElementById('restaurantModal').style.display = 'none';
+      });
+    });
+  </script>
 </th:block>
 </body>
 </html>
