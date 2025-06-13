@@ -11,14 +11,19 @@ import com.grepp.matnam.app.model.team.entity.TeamReview;
 import com.grepp.matnam.app.model.team.repository.ParticipantRepository;
 import com.grepp.matnam.app.model.team.repository.TeamReviewRepository;
 import com.grepp.matnam.app.model.team.service.FavoriteService;
+import com.grepp.matnam.app.model.team.service.StorageService;
 import com.grepp.matnam.app.model.team.service.TeamService;
 import com.grepp.matnam.app.model.user.entity.User;
 import com.grepp.matnam.app.model.user.service.UserService;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
+import java.io.IOException;
+import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -44,40 +49,47 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @Slf4j
 public class TeamController {
 
+    @Value("${app.default-team-image}")
+    private String defaultImageUrl;
+
     private final TeamService teamService;
     private final UserService userService;
     private final TeamReviewRepository teamReviewRepository;
     private final ParticipantRepository participantRepository;
     private final FavoriteService favoriteService;
+    private final StorageService storageService;
 
 
     // 모임 생성 페이지
     @GetMapping("/create")
     public String create(Model model) {
         model.addAttribute("teamRequest", new TeamRequest());
+        model.addAttribute("defaultImageUrl", defaultImageUrl);
         return "team/teamCreate";
     }
 
     // 모임 생성
     @PostMapping("/create")
     public String createTeam(@Valid @ModelAttribute TeamRequest teamRequest,
-        BindingResult bindingResult,
-        @RequestParam(value = "image", required = false) MultipartFile imageFile
-    ) {
+        BindingResult bindingResult
+    ) throws IOException {
         if (bindingResult.hasErrors()) {
             return "team/teamCreate";
         }
-
-//        String imageUrl = null;
-//        if (imageFile != null && !imageFile.isEmpty()) {
-//            imageUrl = storageService.storeAndGetUrl(imageFile);
-//        }
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String userId = authentication.getName();
         User user = userService.getUserById(userId);
 
-        Team team = teamRequest.toEntity(user);
+        String imageUrl  = defaultImageUrl;
+
+        // 업로드한 파일이 있으면 덮어쓰기
+        MultipartFile file = teamRequest.getImageUrl();
+        if (file != null && !file.isEmpty()) {
+            imageUrl = storageService.store(file);
+        }
+
+        Team team = teamRequest.toEntity(user, imageUrl);
 
         if (teamRequest.getDate() != null && teamRequest.getTime() != null) {
             String dateTimeString = teamRequest.getDate() + "T" + teamRequest.getTime() + ":00";
@@ -100,19 +112,42 @@ public class TeamController {
     @GetMapping("/edit/{teamId}")
     public String getTeamEditPage(@PathVariable Long teamId, Model model) {
         Team team = teamService.getTeamById(teamId);
+        UpdatedTeamRequest dto = UpdatedTeamRequest.fromEntity(team);
+        model.addAttribute("updatedTeamRequest", dto);
         model.addAttribute("team", team);
+        model.addAttribute("defaultImageUrl", team.getImageUrl() != null
+            ? team.getImageUrl()
+            : defaultImageUrl);
         return "team/teamEdit";
     }
 
     // 모임 수정
     @PostMapping("/edit/{teamId}")
     public String updateTeam(@PathVariable Long teamId,
-        @ModelAttribute UpdatedTeamRequest updatedTeamRequest) {
+        @ModelAttribute UpdatedTeamRequest updatedTeamRequest,
+        BindingResult bindingResult, Model model
+    ) throws IOException {
+        if (bindingResult.hasErrors()) {
+            String existingUrl = teamService.getTeamById(teamId).getImageUrl();
+            model.addAttribute("defaultImageUrl", existingUrl);
+            return "team/teamEdit";
+        }
         String UserId = SecurityContextHolder.getContext().getAuthentication().getName();
-        Team team = updatedTeamRequest.toTeam();
-        team.setTeamId(teamId);
 
-        teamService.updateTeam(teamId, team, UserId);
+        Team existing = teamService.getTeamById(teamId);
+        if (existing == null) {
+            throw new EntityNotFoundException("모임을 찾을 수 없습니다.");
+        }
+        String imageUrl = existing.getImageUrl();
+        MultipartFile file = updatedTeamRequest.getImageUrl();
+        if (file != null && !file.isEmpty()) {
+            imageUrl = storageService.store(file);
+        }
+
+        Team toUpdate = updatedTeamRequest.toTeam(imageUrl);
+        toUpdate.setTeamId(teamId);
+
+        teamService.updateTeam(teamId, toUpdate, UserId);
         return "redirect:/team/detail/" + teamId;
     }
 

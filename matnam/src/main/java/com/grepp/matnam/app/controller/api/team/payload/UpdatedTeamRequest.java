@@ -5,6 +5,7 @@ import com.grepp.matnam.app.model.team.entity.Team;
 import java.time.LocalDateTime;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.web.multipart.MultipartFile;
 
 @Getter
 @Setter
@@ -18,9 +19,25 @@ public class UpdatedTeamRequest {
     private int maxPeople;
     private String restaurantName;
     private String restaurantAddress;
-    private String imageUrl;
+    private MultipartFile imageUrl;
 
-    public Team toTeam() {
+    public static UpdatedTeamRequest fromEntity(Team team) {
+        UpdatedTeamRequest dto = new UpdatedTeamRequest();
+        dto.setTitle(           team.getTeamTitle());
+        dto.setDescription(     team.getTeamDetails());
+        dto.setCategory(        team.getCategory());
+        dto.setMaxPeople(       team.getMaxPeople());
+        dto.setRestaurantName(  team.getRestaurantName());
+        dto.setRestaurantAddress(team.getRestaurantAddress());
+        if (team.getTeamDate() != null) {
+            LocalDateTime dt = team.getTeamDate();
+            dto.setDate( dt.toLocalDate().toString() );
+            dto.setTime( dt.toLocalTime().withSecond(0).toString() );
+        }
+        return dto;
+    }
+
+    public Team toTeam(String imageUrl) {
         Team team = new Team();
         team.setTeamTitle(this.title);
         team.setTeamDetails(this.description);
@@ -28,7 +45,7 @@ public class UpdatedTeamRequest {
         team.setCategory(this.category);
         team.setRestaurantName(this.restaurantName);
         team.setRestaurantAddress(this.restaurantAddress);
-        team.setImageUrl(this.imageUrl);
+        team.setImageUrl(imageUrl);
 
         if (this.date != null && this.time != null) {
             String dateTimeString = this.date + "T" + this.time + ":00";

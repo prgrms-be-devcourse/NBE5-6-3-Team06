@@ -473,7 +473,7 @@
 <header th:replace="~{fragments/header :: siteHeader}"></header>
 <div class="team-banner">
   <div class="team-banner__bg"
-       th:style="|background-image: url('@{/img/food.jpg}');|">
+       th:style="|background-image: url('${team.imageUrl != null ? team.imageUrl : '/img/default-team.png'}');|">
   </div>
   <h1 class="team-banner__title"
       th:text="'&quot;' + ${team.teamTitle} + '&quot; 모임입니다 👥'">

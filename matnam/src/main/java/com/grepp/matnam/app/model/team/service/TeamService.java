@@ -190,6 +190,7 @@ public class TeamService {
         team.setStatus(updatedTeam.getStatus());
         team.setRestaurantAddress(updatedTeam.getRestaurantAddress());
         team.setCategory(updatedTeam.getCategory());
+        team.setImageUrl(updatedTeam.getImageUrl());
 
         teamRepository.save(team);
     }
