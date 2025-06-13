@@ -18,7 +18,6 @@ import com.grepp.matnam.app.model.user.service.UserService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import java.io.IOException;
-import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -41,7 +40,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 @RequestMapping("/team")
@@ -70,10 +68,18 @@ public class TeamController {
 
     // 모임 생성
     @PostMapping("/create")
-    public String createTeam(@Valid @ModelAttribute TeamRequest teamRequest,
-        BindingResult bindingResult
+    public String createTeam(
+        @Valid @ModelAttribute TeamRequest teamRequest,
+        BindingResult bindingResult,
+        Model model
     ) throws IOException {
+        MultipartFile file = teamRequest.getImageUrl();
+        String previewUrl = defaultImageUrl;
+        if (file != null && !file.isEmpty()) {
+            previewUrl = storageService.store(file);
+        }
         if (bindingResult.hasErrors()) {
+            model.addAttribute("defaultImageUrl", previewUrl);
             return "team/teamCreate";
         }
 
@@ -81,15 +87,7 @@ public class TeamController {
         String userId = authentication.getName();
         User user = userService.getUserById(userId);
 
-        String imageUrl  = defaultImageUrl;
-
-        // 업로드한 파일이 있으면 덮어쓰기
-        MultipartFile file = teamRequest.getImageUrl();
-        if (file != null && !file.isEmpty()) {
-            imageUrl = storageService.store(file);
-        }
-
-        Team team = teamRequest.toEntity(user, imageUrl);
+        Team team = teamRequest.toEntity(user, previewUrl);
 
         if (teamRequest.getDate() != null && teamRequest.getTime() != null) {
             String dateTimeString = teamRequest.getDate() + "T" + teamRequest.getTime() + ":00";
@@ -124,12 +122,18 @@ public class TeamController {
     // 모임 수정
     @PostMapping("/edit/{teamId}")
     public String updateTeam(@PathVariable Long teamId,
-        @ModelAttribute UpdatedTeamRequest updatedTeamRequest,
+        @Valid @ModelAttribute UpdatedTeamRequest updatedTeamRequest,
         BindingResult bindingResult, Model model
     ) throws IOException {
         if (bindingResult.hasErrors()) {
-            String existingUrl = teamService.getTeamById(teamId).getImageUrl();
-            model.addAttribute("defaultImageUrl", existingUrl);
+            Team existing = teamService.getTeamById(teamId);
+            model.addAttribute("team", existing);
+            MultipartFile file = updatedTeamRequest.getImageUrl();
+            String previewUrl = existing.getImageUrl();
+            if (file != null && !file.isEmpty()) {
+                previewUrl = storageService.store(file);
+            }
+            model.addAttribute("defaultImageUrl", previewUrl);
             return "team/teamEdit";
         }
         String UserId = SecurityContextHolder.getContext().getAuthentication().getName();

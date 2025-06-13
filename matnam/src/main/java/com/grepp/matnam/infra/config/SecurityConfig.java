@@ -18,7 +18,6 @@ import org.springframework.security.config.annotation.web.configurers.HeadersCon
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -78,8 +77,6 @@ public class SecurityConfig {
 
                 // 팀 관련 공개 페이지
                 .requestMatchers("/team/search", "/team/detail/**").permitAll()
-
-                .requestMatchers(AntPathRequestMatcher.antMatcher("/download/**")).permitAll()
 
                 // 3. 관리자 권한이 필요한 경로
                 .requestMatchers("/admin/**", "/api/admin/**").hasRole("ADMIN")

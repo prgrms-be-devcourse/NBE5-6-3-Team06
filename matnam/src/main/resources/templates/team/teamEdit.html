@@ -4,7 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>맛남 | 모임 수정</title>
-  <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+  <link rel="stylesheet" type="text/css"
+        href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
   <script th:src="@{/js/common-toast.js}"></script>
   <style>
@@ -15,24 +16,29 @@
       background-color: #fff;
       color: #333;
     }
+
     .container {
       max-width: 800px;
       margin: 2rem auto;
       padding: 0 1rem;
     }
+
     .title-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 1.5rem;
     }
+
     .title-row h1 {
       font-size: 1.5rem;
       margin: 0;
     }
+
     .delete-button {
       margin: 0;
     }
+
     .delete-button button {
       padding: 0.4rem 1rem;
       background-color: #dc3545;
@@ -42,15 +48,18 @@
       font-size: 0.9rem;
       cursor: pointer;
     }
+
     .delete-button button:hover {
       background-color: #c82333;
       transition: background-color 0.2s ease;
     }
+
     label {
       display: block;
       font-weight: bold;
       margin: 1rem 0 0.5rem;
     }
+
     input[type="text"],
     input[type="date"],
     input[type="time"],
@@ -65,10 +74,12 @@
       font-size: 1rem;
       box-sizing: border-box;
     }
+
     textarea {
       resize: vertical;
       min-height: 100px;
     }
+
     .map-placeholder,
     .image-upload-box {
       display: flex;
@@ -79,14 +90,17 @@
       height: 150px;
       border: 1px dashed #ccc;
     }
+
     .section {
       margin-bottom: 2rem;
     }
+
     .btn-row {
       display: flex;
       justify-content: flex-end;
       gap: 1rem;
     }
+
     .btn {
       padding: 0.6rem 1.5rem;
       border-radius: 4px;
@@ -94,41 +108,67 @@
       cursor: pointer;
       border: none;
     }
+
     .btn.cancel {
       background-color: #f5f5f5;
       color: #333;
     }
+
     .btn.submit {
       background-color: #000;
       color: #fff;
     }
+
     input[type="file"] {
       border: none;
       padding: 0;
     }
+
     .image-upload-box {
       position: relative;
-      width: 200px; height: 200px;
+      width: 200px;
+      height: 200px;
       border: 2px dashed #ccc;
-      display: flex; align-items: center; justify-content: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       cursor: pointer;
     }
+
     .image-upload-box.drag-over {
       border-color: #007bff;
-      background-color: rgba(0,123,255,0.1);
+      background-color: rgba(0, 123, 255, 0.1);
     }
+
     .preview-img {
       position: absolute;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
       object-fit: cover;
       display: block;
     }
+
     .hidden-file-input {
       display: none;
     }
+
     .error-msg {
-      color: red; font-size: 0.9rem;
+      color: red;
+      font-size: 0.9rem;
+    }
+
+    .error-message {
+      color: #e74c3c;
+      font-weight: bold;
+      margin-top: 0.25rem;
+      font-size: 0.9rem;
+    }
+
+    .input-error {
+      border: 1px solid #e74c3c !important;
+      box-shadow: 0 0 3px rgba(231, 76, 60, 0.5);
     }
   </style>
   <link rel="stylesheet" th:href="@{/css/notification.css}">
@@ -145,23 +185,42 @@
   <form th:action="@{/team/edit/{teamId}(teamId=${team.teamId})}"
         th:object="${updatedTeamRequest}"
         method="post"
-        enctype="multipart/form-data">
+        enctype="multipart/form-data"
+        novalidate>
     <div class="section">
       <label>모임 제목</label>
-      <input type="text" th:field="*{title}" placeholder="모임 제목을 입력하세요"  required/>
+      <input type="text" th:field="*{title}"
+             th:classappend="${#fields.hasErrors('title')} ? 'input-error' : ''"
+             placeholder="모임 제목을 입력하세요"/>
+      <div th:if="${#fields.hasErrors('title')}"
+           th:errors="*{title}"
+           class="error-message"></div>
 
       <label>모임 설명</label>
-      <textarea th:field="*{description}" placeholder="간단한 모임 설명을 입력하세요" required></textarea>
+      <textarea th:field="*{description}" placeholder="간단한 모임 설명을 입력하세요"
+                th:classappend="${#fields.hasErrors('description')} ? ' input-error' : ''"></textarea>
+      <div th:if="${#fields.hasErrors('description')}"
+           th:errors="*{description}"
+           class="error-message"></div>
 
       <label>날짜</label>
-      <input type="date" th:field="*{date}" required>
+      <input type="date" th:field="*{date}"
+             th:classappend="${#fields.hasErrors('date')} ? 'input-error' : ''"/>
+      <div th:if="${#fields.hasErrors('date')}"
+           th:errors="*{date}"
+           class="error-message"></div>
 
       <label>시간</label>
-      <input type="time" th:field="*{time}" required>
+      <input type="time" th:field="*{time}"
+             th:classappend="${#fields.hasErrors('time')} ? 'input-error' : ''"/>
+      <div th:if="${#fields.hasErrors('time')}"
+           th:errors="*{time}"
+           class="error-message"></div>
 
       <label>음식 카테고리</label>
-      <select th:field="*{category}" required>
-        <option value="">카테고리 선택</option>
+      <select th:field="*{category}"
+              th:classappend="${#fields.hasErrors('category')} ? 'input-error' : ''">
+        <option value="" disabled>카테고리 선택</option>
         <option value="한식" th:selected="${team.category == '한식'}">한식</option>
         <option value="일식" th:selected="${team.category == '일식'}">일식</option>
         <option value="중식" th:selected="${team.category == '중식'}">중식</option>
@@ -169,23 +228,40 @@
         <option value="분식" th:selected="${team.category == '분식'}">분식</option>
         <option value="디저트" th:selected="${team.category == '디저트'}">디저트</option>
       </select>
+      <div th:if="${#fields.hasErrors('category')}"
+           th:errors="*{category}"
+           class="error-message"></div>
 
       <label>최대 인원</label>
-      <select th:field="*{maxPeople}" required>
-        <option th:each="i : ${#numbers.sequence(1,10)}"
+      <select th:field="*{maxPeople}"
+              th:classappend="${#fields.hasErrors('maxPeople')} ? 'input-error' : ''">
+        <option th:each="i : ${#numbers.sequence(2,10)}"
                 th:value="${i}" th:text="${i + '명'}"
                 th:selected="${team.maxPeople == i}">
         </option>
       </select>
+      <div th:if="${#fields.hasErrors('maxPeople')}"
+           th:errors="*{maxPeople}"
+           class="error-message"></div>
     </div>
 
     <div class="section">
       <h2>식당 정보</h2>
       <label>식당 이름</label>
-      <input type="text" th:field="*{restaurantName}" placeholder="식당 이름을 입력하세요" required>
+      <input type="text" th:field="*{restaurantName}"
+             th:classappend="${#fields.hasErrors('restaurantName')} ? 'input-error' : ''"
+             placeholder="식당 이름을 입력하세요" required>
+      <div th:if="${#fields.hasErrors('restaurantName')}"
+           th:errors="*{restaurantName}"
+           class="error-message"></div>
 
       <label>주소</label>
-      <input type="text" th:field="*{restaurantAddress}" placeholder="식당 주소를 입력하세요" required>
+      <input type="text" th:field="*{restaurantAddress}"
+             th:classappend="${#fields.hasErrors('restaurantAddress')} ? 'input-error' : ''"
+             placeholder="식당 주소를 입력하세요" required>
+      <div th:if="${#fields.hasErrors('restaurantAddress')}"
+           th:errors="*{restaurantAddress}"
+           class="error-message"></div>
 
       <label>위치 선택</label>
       <div id="map-placeholder" style="width:100%; height:300px; border:1px solid #ccc;"></div>
@@ -199,13 +275,13 @@
         <img id="preview"
              th:src="@{${defaultImageUrl}}"
              alt="모임 이미지 미리보기"
-             class="preview-img" />
+             class="preview-img"/>
         <input type="file"
                id="imageUrl"
                name="imageUrl"
                accept="image/*"
                th:field="*{imageUrl}"
-               class="hidden-file-input" />
+               class="hidden-file-input"/>
 
         <div th:if="${#fields.hasErrors('imageUrl')}"
              th:errors="*{imageUrl}"
@@ -223,51 +299,52 @@
 <footer>
   © 2025 맛남. 모든 권리 보유.
 </footer>
-<script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=9e9f7116c9bee853591bfa6e12c7fa5f&libraries=services"></script>
+<script
+    src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=9e9f7116c9bee853591bfa6e12c7fa5f&libraries=services"></script>
 
 <script>
-    kakao.maps.load(function() {
+  kakao.maps.load(function () {
     const container = document.getElementById('map-placeholder');
     const options = {
-    center: new kakao.maps.LatLng(37.5665, 126.9780),
-    level: 4
-  };
+      center: new kakao.maps.LatLng(37.5665, 126.9780),
+      level: 4
+    };
     new kakao.maps.Map(container, options);
   });
 
-    const uploadBox = document.getElementById('uploadBox');
-    const fileInput = document.getElementById('imageUrl');
-    const preview   = document.getElementById('preview');
+  const uploadBox = document.getElementById('uploadBox');
+  const fileInput = document.getElementById('imageUrl');
+  const preview = document.getElementById('preview');
 
-    uploadBox.addEventListener('click', () => fileInput.click());
+  uploadBox.addEventListener('click', () => fileInput.click());
 
-    fileInput.addEventListener('change', e => {
-      if (e.target.files && e.target.files.length > 0) {
-        const file = e.target.files[0];
-        preview.src = URL.createObjectURL(file);
-      }
-    });
+  fileInput.addEventListener('change', e => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      preview.src = URL.createObjectURL(file);
+    }
+  });
 
-    ['dragenter','dragover'].forEach(ev =>
-        uploadBox.addEventListener(ev, e => {
-          e.preventDefault();
-          uploadBox.classList.add('drag-over');
-        })
-    );
-    ['dragleave','drop'].forEach(ev =>
-        uploadBox.addEventListener(ev, e => {
-          e.preventDefault();
-          uploadBox.classList.remove('drag-over');
-        })
-    );
+  ['dragenter', 'dragover'].forEach(ev =>
+      uploadBox.addEventListener(ev, e => {
+        e.preventDefault();
+        uploadBox.classList.add('drag-over');
+      })
+  );
+  ['dragleave', 'drop'].forEach(ev =>
+      uploadBox.addEventListener(ev, e => {
+        e.preventDefault();
+        uploadBox.classList.remove('drag-over');
+      })
+  );
 
-    uploadBox.addEventListener('drop', e => {
-      e.preventDefault();
-      if (e.dataTransfer && e.dataTransfer.files.length > 0) {
-        fileInput.files = e.dataTransfer.files;
-        preview.src = URL.createObjectURL(e.dataTransfer.files[0]);
-      }
-    });
+  uploadBox.addEventListener('drop', e => {
+    e.preventDefault();
+    if (e.dataTransfer && e.dataTransfer.files.length > 0) {
+      fileInput.files = e.dataTransfer.files;
+      preview.src = URL.createObjectURL(e.dataTransfer.files[0]);
+    }
+  });
 </script>
 <script src="/js/auth.js"></script>
 <script src="/js/header.js"></script>
