@@ -5,6 +5,7 @@ import com.grepp.matnam.app.model.team.code.ParticipantStatus;
 import com.grepp.matnam.app.model.team.dto.MeetingDto;
 import com.grepp.matnam.app.model.team.dto.MonthlyMeetingStatsDto;
 import com.grepp.matnam.app.model.team.dto.ParticipantWithUserIdDto;
+import com.grepp.matnam.app.model.team.entity.QFavorite;
 import com.grepp.matnam.app.model.team.entity.QParticipant;
 import com.grepp.matnam.app.model.team.entity.QTeam;
 import com.grepp.matnam.app.model.team.entity.Team;
@@ -31,6 +32,7 @@ import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.support.PageableExecutionUtils;
@@ -43,6 +45,7 @@ public class TeamRepositoryCustomImpl implements TeamRepositoryCustom {
     private final QTeam team = QTeam.team;
     private final QParticipant participant = QParticipant.participant;
     private final QUser user = QUser.user;
+    private final QFavorite favorite = QFavorite.favorite;
 
     @Override
     public Page<Team> findAllUsers(Pageable pageable) {
@@ -244,7 +247,6 @@ public class TeamRepositoryCustomImpl implements TeamRepositoryCustom {
     public Page<Team> findAllWithParticipantsAndActivatedTrue(Pageable pageable) {
         BooleanBuilder builder = new BooleanBuilder()
             .and(team.activated.isTrue())
-            .and(team.status.ne(Status.COMPLETED))
             .and(team.status.ne(Status.CANCELED));
 
         List<Team> content = queryFactory
@@ -341,5 +343,43 @@ public class TeamRepositoryCustomImpl implements TeamRepositoryCustom {
         }
 
         return new ArrayList<>(result.values());
+    }
+
+    // 즐겨찾기 카운트
+    @Override
+    public Page<Team> findAllOrderByFavoriteCount(Pageable pageable) {
+
+        BooleanBuilder builder = new BooleanBuilder()
+            .and(team.activated.eq(true))
+            .and(team.status.ne(Status.CANCELED));
+
+        List<Tuple> tuples = queryFactory
+            .select(team, favorite.count())
+            .from(team)
+            .leftJoin(team.favorites, favorite)
+            .where(builder)
+            .groupBy(team)
+            .orderBy(favorite.count().desc())
+            .offset(pageable.getOffset())
+            .limit(pageable.getPageSize())
+            .fetch();
+
+        List<Team> teams = tuples.stream()
+            .map(tuple -> {
+                Team t = tuple.get(team);
+                Long cnt = tuple.get(favorite.count());
+                t.setFavoriteCount(cnt != null ? cnt : 0L);
+                return t;
+            })
+            .toList();
+
+        Long totalCount = queryFactory
+            .select(team.count())
+            .from(team)
+            .where(builder)
+            .fetchOne();
+        long total = (totalCount != null ? totalCount : 0L);
+
+        return new PageImpl<>(teams, pageable, total);
     }
 }

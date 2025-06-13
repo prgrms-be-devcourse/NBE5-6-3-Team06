@@ -36,7 +36,7 @@ public class FavoriteApiController {
         return ResponseEntity.ok(ApiResponse.noContent());
     }
 
-    // 즐겨찾기 해제
+    // 즐겨찾기 취소
     @DeleteMapping("remove/{teamId}")
     public ResponseEntity<ApiResponse<Void>> removeFavorites(
         @PathVariable Long teamId

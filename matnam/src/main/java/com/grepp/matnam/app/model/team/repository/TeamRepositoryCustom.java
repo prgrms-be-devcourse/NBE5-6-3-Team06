@@ -37,4 +37,6 @@ public interface TeamRepositoryCustom {
     List<MeetingDto> findByTeamDateIn(LocalDate date);
 
     List<SearchTeamResponse> findTeamByKeyword(String keyword);
+
+    Page<Team> findAllOrderByFavoriteCount(Pageable pageable);
 }

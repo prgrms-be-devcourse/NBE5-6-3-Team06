@@ -6,7 +6,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class ParticipantRepositoryImpl implements ParticipantRepositoryCustom {
+public class ParticipantRepositoryCustomImpl implements ParticipantRepositoryCustom {
     private final JPAQueryFactory queryFactory;
     private final QParticipant participant = QParticipant.participant;
 

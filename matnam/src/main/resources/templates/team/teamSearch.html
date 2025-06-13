@@ -85,19 +85,41 @@
       cursor: pointer;
     }
     .link-button {
-      display: block;
-      width: 100%;
-      padding: 0.5rem;
-      background-color: #000;
+      display: inline-block;
+      margin-top: 0.75rem;
+      padding: 0.4rem 0.8rem;
+      background-color: #a7a7d1;
       color: #fff;
-      text-align: center;
       border-radius: 4px;
       text-decoration: none;
-      cursor: pointer;
+      font-size: 0.9rem;
+      transition: background-color 0.2s ease;
     }
 
-    .link-button:hover {
-      background-color: #333;
+    .link-button:hover{
+      background-color: #5b5b9f;
+    }
+
+    .filters {
+      margin-bottom: 0.75rem;
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .filter-btn{
+      padding: 0.25rem 0.5rem;
+      border: 1px solid #ccc;
+      background-color: #f9f9f9;
+      color: #333;
+      border-radius: 4px;
+      cursor: pointer;
+      text-decoration: none;
+      font-size: 0.875rem;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+
+    .filter-btn:hover{
+      background-color: #eaeaea;
     }
 
     .pagination {
@@ -149,10 +171,22 @@
   </div>
 
   <div class="filters">
-    <button>전체</button>
-    <button>예약 열림</button>
-    <button>인기 모임</button>
-    <button>신규 모임</button>
+    <a th:href="@{/team/search(page=0, size=${page.size}, sort='createdAt')}"
+       th:classappend="${sort == 'createdAt'} ? 'active' : ''"
+       class="filter-btn">전체</a>
+
+    <a th:href="@{/team/search(page=0, size=${page.size}, sort='viewCount')}"
+       th:classappend="${sort == 'viewCount'} ? 'active' : ''"
+       class="filter-btn">조회수순</a>
+
+    <a th:href="@{/team/search(page=0, size=${page.size}, sort='favoriteCount')}"
+       th:classappend="${sort == 'favoriteCount'} ? 'active' : ''"
+       class="filter-btn">즐겨찾기순</a>
+
+    <a th:href="@{/team/search(page=0, size=${page.size}, sort='deadline')}"
+       th:classappend="${sort == 'deadline'} ? 'active' : ''"
+       class="filter-btn">마감 임박</a>
+
   </div>
 
   <div class="meetings-grid">
@@ -161,6 +195,7 @@
       <p>📅 <span th:text="${#temporals.format(team.teamDate, 'yyyy-MM-dd HH:mm')}"></span></p>
       <p>📍 <span th:text="${team.restaurantName}"></span></p>
       <p>👥 <span th:text="${team.nowPeople}"></span>/ <span th:text="${team.maxPeople}"></span>명 참여중</p>
+      <p th:if="${sort == 'favoriteCount'}">⭐️ <span th:text="${team.favoriteCount}"></span>명</p>
       <a class="link-button" th:href="@{/team/detail/{teamId}(teamId=${team.teamId})}">자세히 보기</a>
     </div>
     <div th:if="${teams.isEmpty()}">
@@ -169,14 +204,16 @@
   </div>
 
   <div class="pagination" th:if="${page.totalPages > 0}">
-    <a th:if="${page.hasPrevious()}" th:href="@{/team/search(page=${page.number - 1}, size=${page.size})}">이전</a>
+    <a th:if="${page.hasPrevious()}" th:href="@{/team/search(page=${page.number - 1}, size=${page.size}, sort=${param.sort})}">이전</a>
 
     <th:block th:each="pageNumber : ${#numbers.sequence(0, page.totalPages - 1)}">
       <span th:if="${pageNumber == page.number}" class="current" th:text="${pageNumber + 1}"></span>
-      <a th:unless="${pageNumber == page.number}" th:href="@{/team/search(page=${pageNumber}, size=${page.size})}" th:text="${pageNumber + 1}"></a>
+      <a th:unless="${pageNumber == page.number}"
+         th:href="@{/team/search(page=${pageNumber}, size=${page.size}, sort=${param.sort})}"
+         th:text="${pageNumber + 1}"></a>
     </th:block>
 
-    <a th:if="${page.hasNext()}" th:href="@{/team/search(page=${page.number + 1}, size=${page.size})}">다음</a>
+    <a th:if="${page.hasNext()}" th:href="@{/team/search(page=${page.number + 1}, size=${page.size}, sort=${param.sort})}">다음</a>
   </div>
 </div>
 <script src="/js/auth.js"></script>

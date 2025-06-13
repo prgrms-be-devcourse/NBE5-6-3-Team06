@@ -20,6 +20,7 @@ import com.grepp.matnam.app.model.team.dto.MonthlyMeetingStatsDto;
 import com.grepp.matnam.app.model.team.dto.ParticipantWithUserIdDto;
 import com.grepp.matnam.app.model.team.entity.Participant;
 import com.grepp.matnam.app.model.team.entity.Team;
+import com.grepp.matnam.app.model.team.repository.FavoriteRepository;
 import com.grepp.matnam.app.model.team.repository.ParticipantRepository;
 import com.grepp.matnam.app.model.team.repository.TeamRepository;
 import com.grepp.matnam.app.model.user.repository.PreferenceRepository;
@@ -57,6 +58,7 @@ public class TeamService {
     private final MymapRepository mymapRepository;
     private final UserRepository userRepository;
     private final ChatRoomRepository chatRoomRepository;
+    private final FavoriteRepository favoriteRepository;
 
     private final NotificationSender notificationSender;
 
@@ -260,6 +262,11 @@ public class TeamService {
     public Page<Team> getAllTeams(Pageable pageable) {
         return teamRepository.findAllWithParticipantsAndActivatedTrue(pageable);
     }
+    
+    // 모임 즐겨찾기 카운트
+    public Page<Team> getAllTeamsByFavoriteCount(Pageable pageable){
+        return teamRepository.findAllOrderByFavoriteCount(pageable);
+    }
 
     // 모임 상세 조회, 팀 페이지 조회
     @Transactional
@@ -331,10 +338,6 @@ public class TeamService {
     public long getParticipantCountExcludingHost(Long teamId) {
         return participantRepository.countApprovedExcludingHost(teamId, ParticipantStatus.APPROVED);
     }
-
-//    public List<Team> findAll() {
-//        return teamRepository.findAll();
-//    }
 
     public Page<Team> findByFilter(String status, String keyword, Pageable pageable) {
         if (!status.isBlank() && StringUtils.hasText(keyword)) {
