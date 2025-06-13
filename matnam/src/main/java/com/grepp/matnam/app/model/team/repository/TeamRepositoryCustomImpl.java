@@ -1,5 +1,6 @@
 package com.grepp.matnam.app.model.team.repository;
 
+import com.grepp.matnam.app.controller.api.admin.payload.SearchTeamResponse;
 import com.grepp.matnam.app.model.team.code.ParticipantStatus;
 import com.grepp.matnam.app.model.team.dto.MeetingDto;
 import com.grepp.matnam.app.model.team.dto.MonthlyMeetingStatsDto;
@@ -10,6 +11,7 @@ import com.grepp.matnam.app.model.team.entity.Team;
 import com.grepp.matnam.app.model.team.code.Status;
 import com.grepp.matnam.app.model.user.entity.QUser;
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Expression;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
@@ -22,7 +24,10 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -301,5 +306,40 @@ public class TeamRepositoryCustomImpl implements TeamRepositoryCustom {
                 team.teamDate.between(startOfDay, endOfDay)
             )
             .fetch();
+    }
+
+    @Override
+    public List<SearchTeamResponse> findTeamByKeyword(String keyword) {
+        List<Tuple> raw = queryFactory
+            .select(
+                team.teamId,
+                team.teamTitle,
+                team.user.userId,
+                participant.user.userId)
+            .from(team)
+            .join(team.participants, participant)
+            .where(
+                team.activated.isTrue(),
+                team.user.userId.contains(keyword)
+            )
+            .fetch();
+
+        // Java로 그룹핑
+        Map<Long, SearchTeamResponse> result = new LinkedHashMap<>();
+
+        for (Tuple row : raw) {
+            Long teamId = row.get(team.teamId);
+            String teamTitle = row.get(team.teamTitle);
+            String leaderId = row.get(team.user.userId);
+            String participantId = row.get(participant.user.userId);
+
+            // 팀 ID를 키로 그룹핑
+            result.computeIfAbsent(
+                    teamId, k -> new SearchTeamResponse(leaderId, teamTitle, new ArrayList<>()))
+                .getUserIds()
+                .add(participantId);
+        }
+
+        return new ArrayList<>(result.values());
     }
 }

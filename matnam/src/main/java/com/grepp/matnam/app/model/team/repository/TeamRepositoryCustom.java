@@ -1,5 +1,6 @@
 package com.grepp.matnam.app.model.team.repository;
 
+import com.grepp.matnam.app.controller.api.admin.payload.SearchTeamResponse;
 import com.grepp.matnam.app.model.team.dto.MeetingDto;
 import com.grepp.matnam.app.model.team.dto.MonthlyMeetingStatsDto;
 import com.grepp.matnam.app.model.team.dto.ParticipantWithUserIdDto;
@@ -34,4 +35,6 @@ public interface TeamRepositoryCustom {
     Optional<Team> findByIdWithParticipantsAndUserAndActivatedTrue(Long teamId);
 
     List<MeetingDto> findByTeamDateIn(LocalDate date);
+
+    List<SearchTeamResponse> findTeamByKeyword(String keyword);
 }
