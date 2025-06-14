@@ -3,7 +3,10 @@ package com.grepp.matnam.app.model.restaurant.service;
 import com.grepp.matnam.app.model.restaurant.code.SuggestionStatus;
 import com.grepp.matnam.app.model.restaurant.dto.RestaurantSuggestionDto;
 import com.grepp.matnam.app.model.restaurant.entity.RestaurantSuggestion;
+import com.grepp.matnam.app.model.restaurant.repository.RestaurantRepository;
 import com.grepp.matnam.app.model.restaurant.repository.RestaurantSuggestionRepository;
+import com.grepp.matnam.infra.error.exceptions.CommonException;
+import com.grepp.matnam.infra.response.ResponseCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,6 +23,7 @@ import org.springframework.util.StringUtils;
 public class RestaurantSuggestionService {
 
     private final RestaurantSuggestionRepository suggestionRepository;
+    private final RestaurantRepository restaurantRepository;
 
     public List<RestaurantSuggestion> getAllSuggestions() {
         return suggestionRepository.findAll();
@@ -49,6 +53,7 @@ public class RestaurantSuggestionService {
 
     @Transactional
     public void saveSuggestion(RestaurantSuggestionDto dto, String userId) {
+        existsRestaurant(dto.getLatitude(), dto.getLongitude());
         RestaurantSuggestion suggestion = new RestaurantSuggestion();
         suggestion.setName(dto.getName());
         suggestion.setAddress(dto.getAddress());
@@ -60,6 +65,12 @@ public class RestaurantSuggestionService {
         suggestion.setSubmittedAt(LocalDateTime.now());
 
         suggestionRepository.save(suggestion);
+    }
+
+    public void existsRestaurant(Double latitude, Double longitude) {
+        if (restaurantRepository.existsByLatitudeAndLongitudeAndActivatedTrue(latitude, longitude)) {
+            throw new CommonException(ResponseCode.CONFLICT);
+        }
     }
 
     public Page<RestaurantSuggestion> findByFilter(String status, String keyword, Pageable pageable) {

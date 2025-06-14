@@ -9,6 +9,8 @@ import com.grepp.matnam.app.model.restaurant.dto.RestaurantDto;
 import com.grepp.matnam.app.controller.web.admin.payload.RestaurantStatsResponse;
 import com.grepp.matnam.app.model.restaurant.code.Category;
 import com.grepp.matnam.app.model.restaurant.entity.Restaurant;
+import com.grepp.matnam.infra.error.exceptions.CommonException;
+import com.grepp.matnam.infra.response.ResponseCode;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import java.util.HashMap;
 import java.util.List;
@@ -97,13 +99,19 @@ public class RestaurantService {
     @Transactional
     public void createRestaurant(RestaurantRequest request) {
         Restaurant restaurant = request.toEntity();
-
+        existsRestaurant(request.getLatitude(), request.getLongitude());
         Restaurant saved = restaurantRepository.save(restaurant);
 
         //MongoDB 식당 추가
         RestaurantEmbedding embedding = RestaurantEmbedding.fromEntity(saved, embeddingModel);
 
         restaurantEmbeddingRepository.save(embedding);
+    }
+
+    public void existsRestaurant(Double latitude, Double longitude) {
+        if (restaurantRepository.existsByLatitudeAndLongitudeAndActivatedTrue(latitude, longitude)) {
+            throw new CommonException(ResponseCode.CONFLICT);
+        }
     }
 
     public Page<Restaurant> findByFilter(String category, String keyword, Pageable pageable) {

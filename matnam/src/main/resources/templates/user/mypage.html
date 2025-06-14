@@ -1280,6 +1280,7 @@
                   body: JSON.stringify({ name, address, mainFood, latitude, longitude, submittedByUserId })
                 })
                         .then(res => {
+                          if (res.status === 409) throw new Error("이미 존재하는 식당입니다.");
                           if (!res.ok) throw new Error("제출에 실패했습니다.");
                           return res.text();
                         })

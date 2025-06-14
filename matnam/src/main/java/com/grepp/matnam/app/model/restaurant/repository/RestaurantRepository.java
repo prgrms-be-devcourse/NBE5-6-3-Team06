@@ -38,4 +38,6 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long>,
     long countByLongStayAndActivatedTrue(boolean longStay);
 
     long countByBigStoreAndActivatedTrue(boolean bigStore);
+
+    boolean existsByLatitudeAndLongitudeAndActivatedTrue(Double latitude, Double longitude);
 }

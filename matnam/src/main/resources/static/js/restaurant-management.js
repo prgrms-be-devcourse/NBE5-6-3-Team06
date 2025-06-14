@@ -140,6 +140,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 // 모달 닫기 등 후처리
                 document.getElementById('restaurantModal').style.display = 'none';
                 location.reload(); // 새로고침으로 반영
+            } else if (response.status === 409) {
+                alert("이미 존재하는 식당입니다.");
             } else {
                 document.querySelector('#error-name').textContent = result.name;
                 document.querySelector('#error-category').textContent = result.category;
