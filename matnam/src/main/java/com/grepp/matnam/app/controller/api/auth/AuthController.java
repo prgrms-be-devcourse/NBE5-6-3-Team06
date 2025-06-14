@@ -5,6 +5,7 @@ import com.grepp.matnam.app.controller.api.auth.payload.SignupRequest;
 import com.grepp.matnam.app.controller.api.auth.payload.TokenResponse;
 import com.grepp.matnam.app.model.auth.service.AuthService;
 import com.grepp.matnam.app.model.auth.token.dto.TokenDto;
+import com.grepp.matnam.app.model.kafka.service.KafkaProducerService;
 import com.grepp.matnam.app.model.log.service.UserActivityLogService;
 import com.grepp.matnam.app.model.user.entity.User;
 import com.grepp.matnam.app.model.user.service.UserService;
@@ -37,6 +38,7 @@ public class AuthController {
     private final UserActivityLogService userActivityLogService;
     private final UserService userService;
     private final JwtProvider jwtProvider;
+    private final KafkaProducerService kafkaProducerService;
 
     @PostMapping("/signup")
     @Operation(summary = "회원가입 + 자동 로그인", description = "회원가입과 동시에 토큰을 발급합니다.")
@@ -49,6 +51,8 @@ public class AuthController {
             User user = userService.getUserById(request.getUserId());
 
             setAuthCookies(response, dto);
+
+            kafkaProducerService.sendSignupEvent(request);
 
             TokenResponse tokenResponse = TokenResponse.builder()
                     .accessToken(dto.getAccessToken())
