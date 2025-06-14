@@ -1,4 +1,3 @@
-// 📁 src/main/java/com/grepp/matnam/infra/auth/CookieUtils.java (개선)
 package com.grepp.matnam.infra.auth;
 
 import jakarta.servlet.http.Cookie;
@@ -25,6 +24,17 @@ public class CookieUtils {
 
         response.addCookie(cookie);
         log.debug("쿠키 생성: {}, 유효시간: {}초", name, maxAge);
+    }
+
+    public static void addTokenCookie(HttpServletResponse response, String name, String value, String path) {
+        Cookie cookie = new Cookie(name, value);
+        cookie.setMaxAge(7 * 24 * 60 * 60); // 7일
+        cookie.setPath(path);
+        cookie.setHttpOnly(false);
+        cookie.setSecure(false);
+
+        response.addCookie(cookie);
+        log.debug("토큰 쿠키 생성: {}, 쿠키 유효시간: 7일", name);
     }
 
     public static void addUserNicknameCookie(HttpServletResponse response, String nickname, int maxAge) {
@@ -55,7 +65,7 @@ public class CookieUtils {
                     Cookie clearCookie = new Cookie(cookie.getName(), "");
                     clearCookie.setPath("/");
                     clearCookie.setMaxAge(0);
-                    clearCookie.setHttpOnly(true);
+                    clearCookie.setHttpOnly(false);
                     response.addCookie(clearCookie);
                     log.debug("쿠키 삭제: {}", cookie.getName());
                 }
