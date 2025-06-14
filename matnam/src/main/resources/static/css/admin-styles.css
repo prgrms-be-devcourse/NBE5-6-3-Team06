@@ -554,6 +554,11 @@ h1 {
     color: var(--danger-color);
 }
 
+.status.approved {
+    background-color: #e3fcef;
+    color: var(--success-color);
+}
+
 .status.pending {
     background-color: #e3f2fd;
     color: #0d47a1;

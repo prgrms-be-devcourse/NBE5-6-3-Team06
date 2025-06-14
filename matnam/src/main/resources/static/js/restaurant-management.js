@@ -1,4 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
+    let suggestion = null;
+
     // 식당 추가 버튼 클릭 이벤트
     const addRestaurantBtn = document.getElementById('add-restaurant-btn');
     if (addRestaurantBtn) {
@@ -9,7 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // 폼 초기화
             document.getElementById('restaurantForm').reset();
             document.getElementById('restaurant-id').value = '';
-
+            suggestion = null;
             // 모달 표시
             document.getElementById('restaurantModal').style.display = 'block';
         });
@@ -36,6 +38,7 @@ document.addEventListener('DOMContentLoaded', function() {
     editButtons.forEach(button => {
         button.addEventListener('click', function () {
             const restaurantId = this.getAttribute('data-id');
+            suggestion = null;
 
             // 서버에서 식당 데이터 가져오기
             fetch(`/api/admin/restaurant/${restaurantId}`)
@@ -83,6 +86,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 식당 수정 - 저장 버튼 클릭 이벤트
     // 새 식당 추가 - 저장 버튼 클릭 이벤트
+    // 식당 제안 등록 - 저장 버튼 클릭 이벤트
     document.getElementById('save-button').addEventListener('click', function () {
         const restaurantId = document.getElementById('restaurant-id').value;
 
@@ -118,6 +122,10 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(async (response) => {
             const result = (await response.json()).data;
             if (response.ok) {
+                if (suggestion) {
+                    approveSuggestionStatus();
+                    return;
+                }
                 alert("식당이 저장되었습니다.")
                 // 모달 닫기 등 후처리
                 document.getElementById('restaurantModal').style.display = 'none';
@@ -196,4 +204,43 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+
+    // 식당 제안 저장 버튼 클릭 이벤트
+    const suggestionEditButtons = document.querySelectorAll('.action-btn.suggestion-edit');
+
+    suggestionEditButtons.forEach(button => {
+        button.addEventListener('click', function () {
+            const suggestionId = this.getAttribute('data-id');
+            const name = this.getAttribute('data-name');
+            const address = this.getAttribute('data-address');
+            const mainFood = this.getAttribute('data-main-food');
+            suggestion = suggestionId;
+
+            document.getElementById('restaurant-modal-title').textContent = '식당 제안 등록';
+            document.getElementById('restaurant-name').value = name;
+            document.getElementById('restaurant-address').value = address;
+            document.getElementById('restaurant-main-menu').value = mainFood;
+
+            // 모달 표시
+            document.getElementById('restaurantModal').style.display = 'block';
+        });
+    });
+
+    function approveSuggestionStatus() {
+        fetch(`/api/admin/restaurant/suggestion/approve/${suggestion}`, {
+            method: 'PATCH'
+        }).then(response => {
+            if (response.ok) {
+                alert("식당이 등록되었습니다.")
+                document.getElementById('restaurantModal').style.display = 'none';
+                window.location.href = "/admin/restaurant";
+            } else {
+                alert("등록 실패: 서버 오류");
+            }
+        })
+        .catch(error => {
+            console.error("에러 발생:", error);
+            alert("등록 중 문제가 발생했습니다.");
+        });
+    }
 });

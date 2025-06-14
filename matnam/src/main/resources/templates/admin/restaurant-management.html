@@ -133,9 +133,9 @@
             <td th:text="${suggestion.mainFood}"></td>
             <td th:text="${suggestion.submittedByUserId}"></td>
             <td th:text="${#temporals.format(suggestion.submittedAt, 'yyyy-MM-dd hh:mm')}"></td>
-            <td><span class="badge" th:text="${suggestion.status.koreanName}"></span></td>
+            <td><span th:class="'status ' + ${#strings.toLowerCase(suggestion.status.name())}" th:text="${suggestion.status.koreanName}"></span></td>
             <td>
-              <button class="action-btn suggestion-edit" th:data-id="${suggestion.id}"><i class="fas fa-edit"></i></button>
+              <button class="action-btn suggestion-edit" th:data-id="${suggestion.id}" th:data-name="${suggestion.name}" th:data-address="${suggestion.address}" th:data-main-food="${suggestion.mainFood}"><i class="fas fa-edit"></i></button>
               <button class="action-btn suggestion-delete" th:data-id="${suggestion.id}"><i class="fas fa-trash"></i></button>
             </td>
           </tr>

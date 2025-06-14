@@ -116,6 +116,7 @@ public class AdminRestaurantController {
         model.addAttribute("pageTitle", "식당 관리");
         model.addAttribute("currentPage", "restaurant-management");
         model.addAttribute("page", response);
+        model.addAttribute("categories", Category.values());
         model.addAttribute("status", statusName);
         model.addAttribute("sort", sort);
 

@@ -92,4 +92,11 @@ public class AdminRestaurantApiController {
         restaurantSuggestionService.unActivatedSuggestion(suggestionId);
         return ResponseEntity.ok(ApiResponse.noContent());
     }
+
+    @PatchMapping("/suggestion/approve/{suggestionId}")
+    @Operation(summary = "식당 제안 승인", description = "특정 식당 제안을 승인합니다.")
+    public ResponseEntity<ApiResponse<Void>> approveSuggestion(@PathVariable Long suggestionId) {
+        restaurantSuggestionService.approveSuggestion(suggestionId);
+        return ResponseEntity.ok(ApiResponse.noContent());
+    }
 }
