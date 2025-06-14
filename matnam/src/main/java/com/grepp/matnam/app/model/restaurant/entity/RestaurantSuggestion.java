@@ -1,5 +1,6 @@
 package com.grepp.matnam.app.model.restaurant.entity;
 
+import com.grepp.matnam.app.model.restaurant.code.SuggestionStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -34,7 +35,8 @@ public class RestaurantSuggestion {
     private String submittedByUserId;
 
     @Column(nullable = false)
-    private String status = "pending";
+    @Enumerated(EnumType.STRING)
+    private SuggestionStatus status = SuggestionStatus.PENDING;
 
     @Column(name = "submitted_at", nullable = false)
     private LocalDateTime submittedAt = LocalDateTime.now();

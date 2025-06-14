@@ -1,5 +1,6 @@
 package com.grepp.matnam.app.model.restaurant.service;
 
+import com.grepp.matnam.app.model.restaurant.code.SuggestionStatus;
 import com.grepp.matnam.app.model.restaurant.dto.RestaurantSuggestionDto;
 import com.grepp.matnam.app.model.restaurant.entity.RestaurantSuggestion;
 import com.grepp.matnam.app.model.restaurant.repository.RestaurantSuggestionRepository;
@@ -29,13 +30,13 @@ public class RestaurantSuggestionService {
     @Transactional
     public void approveSuggestion(Long suggestionId) {
         RestaurantSuggestion suggestion = getById(suggestionId);
-        suggestion.setStatus("approved");
+        suggestion.setStatus(SuggestionStatus.APPROVED);
     }
 
     @Transactional
     public void rejectSuggestion(Long suggestionId) {
         RestaurantSuggestion suggestion = getById(suggestionId);
-        suggestion.setStatus("rejected");
+        suggestion.setStatus(SuggestionStatus.REJECTED);
     }
 
     @Transactional
@@ -52,7 +53,7 @@ public class RestaurantSuggestionService {
         suggestion.setLatitude(dto.getLatitude());
         suggestion.setLongitude(dto.getLongitude());
         suggestion.setSubmittedByUserId(userId);
-        suggestion.setStatus("pending");
+        suggestion.setStatus(SuggestionStatus.PENDING);
         suggestion.setSubmittedAt(LocalDateTime.now());
 
         suggestionRepository.save(suggestion);
