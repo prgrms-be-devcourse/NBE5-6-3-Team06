@@ -1,14 +1,10 @@
 package com.grepp.matnam.infra.auth.jwt;
 
-import com.grepp.matnam.app.model.auth.token.dto.AccessTokenDto;
-import com.grepp.matnam.app.model.auth.token.entity.RefreshToken;
-import com.grepp.matnam.app.model.auth.token.entity.UserBlackList;
+import com.grepp.matnam.app.model.auth.service.AuthService;
+import com.grepp.matnam.app.model.auth.token.dto.TokenDto;
 import com.grepp.matnam.app.model.auth.token.repository.UserBlackListRepository;
-import com.grepp.matnam.app.model.auth.token.service.RefreshTokenService;
 import com.grepp.matnam.infra.auth.CookieUtils;
 import com.grepp.matnam.infra.auth.jwt.code.TokenType;
-import com.grepp.matnam.infra.error.exceptions.CommonException;
-import com.grepp.matnam.infra.response.ResponseCode;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
@@ -32,32 +28,23 @@ import java.util.List;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtProvider jwtProvider;
-    private final RefreshTokenService refreshTokenService;
     private final UserBlackListRepository userBlackListRepository;
+    private final AuthService authService;
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
         List<String> excludePath = new ArrayList<>();
         excludePath.addAll(List.of("/error", "/favicon.ico", "/css", "/img", "/js"));
         excludePath.addAll(List.of("/user/signup", "/user/signin", "/user/oauth2/signup"));
-
         excludePath.addAll(List.of("/api/auth/signin", "/api/auth/signup", "/api/auth/refresh"));
-
         excludePath.addAll(List.of("/signin/oauth2/code/", "/swagger-ui", "/v3/api-docs"));
         excludePath.addAll(List.of("/api/ai/chat", "/api/ai/restaurant/name"));
-
         excludePath.addAll(List.of("/api/test/redis"));
+        excludePath.addAll(List.of("/.well-known/"));
 
         String path = request.getRequestURI();
-        boolean shouldExclude = excludePath.stream().anyMatch(path::startsWith);
 
-        if (shouldExclude) {
-            log.debug("JWT 필터 제외 경로: {}", path);
-        } else {
-            log.debug("JWT 필터 적용 경로: {}", path);
-        }
-
-        return shouldExclude;
+        return excludePath.stream().anyMatch(path::startsWith);
     }
 
     @Override
@@ -66,175 +53,118 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String requestAccessToken = jwtProvider.resolveToken(request, TokenType.ACCESS_TOKEN);
         String refreshToken = jwtProvider.resolveToken(request, TokenType.REFRESH_TOKEN);
 
-        if (requestAccessToken == null) {
-            if (refreshToken != null) {
-                boolean renewalSuccess = attemptTokenRenewalWithRefreshOnly(refreshToken, response);
+        log.debug("토큰 상태 - Access Token: {}, Refresh Token: {}",
+                requestAccessToken != null ? "존재" : "없음",
+                refreshToken != null ? "존재" : "없음");
 
-                if (renewalSuccess) {
-                    log.debug("토큰 갱신 성공, 요청 계속 처리");
-                } else {
-                    log.debug("토큰 갱신 실패, 인증 없이 진행");
-                }
-            } else {
-                log.debug("Access Token과 Refresh Token 모두 없음 - 인증 없이 진행");
-            }
-            filterChain.doFilter(request, response);
-            return;
+        boolean tokenRenewed = false;
+
+        // 토큰이 모두 없는 경우
+        if (requestAccessToken == null && refreshToken == null) {
+            log.debug("토큰이 모두 없음 - 인증 없이 진행");
         }
-
-        Claims claims = jwtProvider.parseClaim(requestAccessToken);
-
-        try {
-            if(userBlackListRepository.existsById(claims.getSubject())){
-                log.warn("블랙리스트 사용자 접근 시도: {}", claims.getSubject());
-                filterChain.doFilter(request, response);
-                return;
-            }
-        } catch (Exception e) {
-            log.warn("블랙리스트 확인 실패 (무시하고 진행): {}", e.getMessage());
+        // Access Token은 없지만 Refresh Token은 있는 경우 (자동 갱신)
+        else if (requestAccessToken == null && refreshToken != null) {
+            log.debug("Access Token 없음, Refresh Token으로 자동 갱신 시도");
+            tokenRenewed = attemptTokenRenewal(refreshToken, response);
         }
-
-        try {
-            if(jwtProvider.validateToken(requestAccessToken)){
-                Authentication authentication = jwtProvider.generateAuthentication(requestAccessToken);
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-
-                log.debug("Access Token 인증 성공: {}", claims.getSubject());
-            } else {
-                log.debug("Access Token 검증 실패");
-            }
-        } catch (ExpiredJwtException ex) {
-            log.debug("Access Token 만료, 갱신 시도");
-            AccessTokenDto newAccessToken = renewingAccessToken(requestAccessToken, request);
-            if (newAccessToken == null) {
-                log.debug("토큰 갱신 실패");
-                filterChain.doFilter(request, response);
-                return;
-            }
-
-            RefreshToken newRefreshToken = renewingRefreshToken(claims.getId(), newAccessToken.getId());
-            if (newRefreshToken != null) {
-                responseToken(response, newAccessToken, newRefreshToken);
-
-                Authentication authentication = jwtProvider.generateAuthentication(newAccessToken.getToken());
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-                log.debug("토큰 갱신 및 인증 성공: {}", claims.getSubject());
-            } else {
-                log.debug("RefreshToken 갱신 실패");
-            }
-        }
-
-        Authentication finalAuth = SecurityContextHolder.getContext().getAuthentication();
-        if (finalAuth != null) {
-            log.debug("SecurityContext - 사용자: {}, 권한: {}, 인증됨: {}",
-                    finalAuth.getName(), finalAuth.getAuthorities(), finalAuth.isAuthenticated());
-        } else {
-            log.debug("SecurityContext에 인증 정보 없음");
-        }
-
-        filterChain.doFilter(request, response);
-    }
-
-    private boolean attemptTokenRenewalWithRefreshOnly(String refreshToken, HttpServletResponse response) {
-        try {
-            RefreshToken storedRefreshToken = refreshTokenService.findByToken(refreshToken);
-
-            if (storedRefreshToken == null) {
-                log.warn("유효하지 않은 Refresh Token");
-                return false;
-            }
-
-            String userId = storedRefreshToken.getUserId();
-            if (userId == null) {
-                log.warn("Refresh Token에서 사용자 정보를 찾을 수 없음");
-                return false;
-            }
-
+        // Access Token이 있는 경우
+        else if (requestAccessToken != null) {
+            // 토큰 유효성 검증
             try {
-                if(userBlackListRepository.existsById(userId)){
-                    log.warn("블랙리스트 사용자의 토큰 갱신 시도: {}", userId);
-                    return false;
+                if (jwtProvider.validateToken(requestAccessToken)) {
+                    Claims claims = jwtProvider.parseClaim(requestAccessToken);
+
+                    if (!isBlacklistedUser(claims.getSubject())) {
+                        Authentication authentication = jwtProvider.generateAuthentication(requestAccessToken);
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
+                        log.debug("Access Token 인증 성공: {}", claims.getSubject());
+                    } else {
+                        log.warn("블랙리스트 사용자 접근 시도: {}", claims.getSubject());
+                    }
+                } else {
+                    log.debug("Access Token 검증 실패");
+                }
+            } catch (ExpiredJwtException ex) {
+                log.debug("Access Token 만료, 자동 갱신 시도");
+                if (refreshToken != null) {
+                    tokenRenewed = attemptTokenRenewal(refreshToken, response);
                 }
             } catch (Exception e) {
-                log.warn("블랙리스트 확인 실패: {}", e.getMessage());
+                log.warn("Access Token 처리 중 오류: {}", e.getMessage());
+            }
+        }
+
+        if (!response.isCommitted()) {
+            Authentication finalAuth = SecurityContextHolder.getContext().getAuthentication();
+            if (finalAuth != null) {
+                log.debug("SecurityContext - 사용자: {}, 권한: {}, 인증됨: {}",
+                        finalAuth.getName(), finalAuth.getAuthorities(), finalAuth.isAuthenticated());
+            } else {
+                log.debug("SecurityContext에 인증 정보 없음");
             }
 
-            AccessTokenDto newAccessToken = jwtProvider.generateAccessToken(userId);
+            filterChain.doFilter(request, response);
+        } else {
+            log.warn("응답이 이미 커밋되어 필터 체인 진행 불가");
+        }
+    }
 
-            RefreshToken newRefreshToken = refreshTokenService.renewingToken(
-                    storedRefreshToken.getAccessTokenId(), newAccessToken.getId());
-
-            if (newRefreshToken != null) {
-                responseToken(response, newAccessToken, newRefreshToken);
-
-                Authentication authentication = jwtProvider.generateAuthentication(newAccessToken.getToken());
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-
-                return true;
-            } else {
-                log.error("RefreshToken 갱신 실패");
+    private boolean attemptTokenRenewal(String refreshToken, HttpServletResponse response) {
+        try {
+            if (response.isCommitted()) {
+                log.warn("응답이 이미 커밋되어 토큰 갱신 불가");
                 return false;
             }
 
+            TokenDto tokenDto = authService.refreshTokenWithValue(refreshToken);
+
+            if (tokenDto != null) {
+                if (!response.isCommitted()) {
+                    setTokenCookiesSafely(response, tokenDto);
+
+                    Authentication authentication = jwtProvider.generateAuthentication(tokenDto.getAccessToken());
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+
+                    log.info("토큰 갱신 및 인증 설정 성공");
+                    return true;
+                } else {
+                    log.warn("토큰 갱신은 성공했지만 응답이 커밋되어 쿠키 설정 불가");
+                    Authentication authentication = jwtProvider.generateAuthentication(tokenDto.getAccessToken());
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                    return true;
+                }
+            }
         } catch (Exception e) {
-            log.error("Refresh Token으로 토큰 갱신 중 오류: {}", e.getMessage());
+            log.warn("토큰 갱신 실패: {}", e.getMessage());
+        }
+        return false;
+    }
+
+    private boolean isBlacklistedUser(String userId) {
+        try {
+            return userBlackListRepository.existsById(userId);
+        } catch (Exception e) {
+            log.warn("블랙리스트 확인 실패 (무시하고 진행): {}", e.getMessage());
             return false;
         }
     }
 
-    private void responseToken(HttpServletResponse response, AccessTokenDto newAccessToken,
-                               RefreshToken newRefreshToken) {
-
-        CookieUtils.addCookie(response, "ACCESS_TOKEN", newAccessToken.getToken(),
-                Math.toIntExact(newAccessToken.getExpiresIn() / 1000), "/");
-        CookieUtils.addCookie(response, "REFRESH_TOKEN", newRefreshToken.getToken(),
-                Math.toIntExact(jwtProvider.getRtExpiration() / 1000), "/");
-    }
-
-    private RefreshToken renewingRefreshToken(String accessTokenId, String newTokenId) {
+    private void setTokenCookiesSafely(HttpServletResponse response, TokenDto tokenDto) {
         try {
-            return refreshTokenService.renewingToken(accessTokenId, newTokenId);
-        } catch (Exception e) {
-            log.error("RefreshToken 갱신 실패: {}", e.getMessage());
-            return null;
-        }
-    }
-
-    private AccessTokenDto renewingAccessToken(String requestAccessToken, HttpServletRequest request) {
-        try {
-            Authentication authentication = jwtProvider.generateAuthentication(requestAccessToken);
-            String refreshToken = jwtProvider.resolveToken(request, TokenType.REFRESH_TOKEN);
-            Claims claims = jwtProvider.parseClaim(requestAccessToken);
-
-            RefreshToken storedRefreshToken = refreshTokenService.findByAccessTokenId(claims.getId());
-
-            if(storedRefreshToken == null) {
-                log.warn("저장된 Refresh Token이 없음");
-                return null;
+            if (response.isCommitted()) {
+                log.warn("응답이 이미 커밋되어 쿠키 설정 불가");
+                return;
             }
 
-            if (!storedRefreshToken.getToken().equals(refreshToken)) {
-                log.error("Refresh Token 불일치 - 보안 위반 감지: {}", authentication.getName());
-                try {
-                    userBlackListRepository.save(new UserBlackList(authentication.getName()));
-                } catch (Exception e) {
-                    log.warn("블랙리스트 저장 실패: {}", e.getMessage());
-                }
-                throw new CommonException(ResponseCode.UNAUTHORIZED);
-            }
+            CookieUtils.addTokenCookie(response, "ACCESS_TOKEN", tokenDto.getAccessToken(), "/");
+            CookieUtils.addTokenCookie(response, "REFRESH_TOKEN", tokenDto.getRefreshToken(), "/");
 
-            return generateAccessToken(authentication);
-        } catch (CommonException e) {
-            throw e;
+            log.debug("토큰 쿠키 설정 완료");
+        } catch (IllegalStateException e) {
+            log.warn("응답 상태로 인한 쿠키 설정 실패: {}", e.getMessage());
         } catch (Exception e) {
-            log.error("Access Token 갱신 중 오류: {}", e.getMessage());
-            return null;
+            log.error("쿠키 설정 중 예외 발생: {}", e.getMessage());
         }
-    }
-
-    private AccessTokenDto generateAccessToken(Authentication authentication) {
-        AccessTokenDto newAccessToken = jwtProvider.generateAccessToken(authentication);
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        return newAccessToken;
     }
 }

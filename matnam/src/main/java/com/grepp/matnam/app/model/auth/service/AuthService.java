@@ -32,45 +32,22 @@ public class AuthService {
     @Transactional
     public TokenDto signup(User user) {
         User savedUser = userService.signup(user);
-
         return processTokenSignin(savedUser.getUserId());
     }
 
     @Transactional
     public TokenDto signin(String userId, String password) {
         User user = userService.signin(userId, password);
-
         return processTokenSignin(userId);
     }
 
     @Transactional
     public TokenDto processTokenSignin(String userId) {
         try {
-            try {
-                userBlackListRepository.deleteById(userId);
-            } catch (Exception e) {
-                log.warn("블랙리스트 제거 실패: {}", e.getMessage());
-            }
-
-            try {
-                refreshTokenService.deleteByUserId(userId);
-            } catch (Exception e) {
-                log.warn("기존 Refresh Token 삭제 실패: {}", e.getMessage());
-            }
+            cleanupExistingTokens(userId);
 
             AccessTokenDto accessTokenDto = jwtProvider.generateAccessToken(userId);
-
-            RefreshToken refreshToken = null;
-            try {
-                refreshToken = new RefreshToken(userId, accessTokenDto.getId());
-                refreshToken = refreshTokenService.save(refreshToken);
-            } catch (Exception e) {
-                log.error("RefreshToken Redis 저장 실패: {}", e.getMessage());
-
-                refreshToken = new RefreshToken(userId, accessTokenDto.getId());
-                refreshToken.setToken("temp_" + accessTokenDto.getId());
-                log.warn("임시 RefreshToken 생성: {}", userId);
-            }
+            RefreshToken refreshToken = createAndSaveRefreshToken(userId, accessTokenDto.getId());
 
             log.info("토큰 발급 완료: {}", userId);
 
@@ -92,17 +69,21 @@ public class AuthService {
     public TokenDto refreshToken(HttpServletRequest request) {
         log.info("토큰 갱신 요청");
 
-        String refreshToken = jwtProvider.resolveToken(request, TokenType.REFRESH_TOKEN);
-        if (refreshToken == null) {
+        String refreshTokenValue = jwtProvider.resolveToken(request, TokenType.REFRESH_TOKEN);
+        if (refreshTokenValue == null) {
             log.warn("Refresh Token이 없음");
             throw new CommonException(ResponseCode.UNAUTHORIZED);
         }
 
+        return refreshTokenWithValue(refreshTokenValue);
+    }
+
+    @Transactional
+    public TokenDto refreshTokenWithValue(String refreshTokenValue) {
         try {
-            RefreshToken storedRefreshToken = refreshTokenService.findByToken(refreshToken);
+            RefreshToken storedRefreshToken = refreshTokenService.findByToken(refreshTokenValue);
             if (storedRefreshToken == null) {
-                if (refreshToken.startsWith("temp_")) {
-                    log.warn("임시 토큰으로 갱신 시도 - Redis 연결 후 재로그인 필요");
+                if (refreshTokenValue.startsWith("temp_")) {
                     throw new CommonException(ResponseCode.UNAUTHORIZED);
                 }
 
@@ -110,12 +91,30 @@ public class AuthService {
                 throw new CommonException(ResponseCode.UNAUTHORIZED);
             }
 
-            AccessTokenDto newAccessToken = jwtProvider.generateAccessToken(storedRefreshToken.getUserId());
+            String userId = storedRefreshToken.getUserId();
+
+            try {
+                if (userBlackListRepository.existsById(userId)) {
+                    log.warn("블랙리스트 사용자의 토큰 갱신 시도: {}", userId);
+                    throw new CommonException(ResponseCode.UNAUTHORIZED);
+                }
+            } catch (CommonException e) {
+                throw e;
+            } catch (Exception e) {
+                log.warn("블랙리스트 확인 실패: {}", e.getMessage());
+            }
+
+            AccessTokenDto newAccessToken = jwtProvider.generateAccessToken(userId);
 
             RefreshToken newRefreshToken = refreshTokenService.renewingToken(
                     storedRefreshToken.getAccessTokenId(), newAccessToken.getId());
 
-            log.info("토큰 갱신 완료: {}", storedRefreshToken.getUserId());
+            if (newRefreshToken == null) {
+                log.error("Refresh Token 갱신 실패: {}", userId);
+                throw new CommonException(ResponseCode.INTERNAL_SERVER_ERROR);
+            }
+
+            log.info("토큰 갱신 완료: {}", userId);
 
             return TokenDto.builder()
                     .accessToken(newAccessToken.getToken())
@@ -149,5 +148,34 @@ public class AuthService {
     @Transactional
     public TokenDto processOAuth2Signin(String userId) {
         return processTokenSignin(userId);
+    }
+
+    private void cleanupExistingTokens(String userId) {
+        try {
+            userBlackListRepository.deleteById(userId);
+        } catch (Exception e) {
+            log.warn("블랙리스트 제거 실패: {}", e.getMessage());
+        }
+
+        try {
+            refreshTokenService.deleteByUserId(userId);
+        } catch (Exception e) {
+            log.warn("기존 Refresh Token 삭제 실패: {}", e.getMessage());
+        }
+    }
+
+    private RefreshToken createAndSaveRefreshToken(String userId, String accessTokenId) {
+        try {
+            RefreshToken refreshToken = new RefreshToken(userId, accessTokenId);
+            return refreshTokenService.save(refreshToken);
+        } catch (Exception e) {
+            log.error("RefreshToken Redis 저장 실패: {}", e.getMessage());
+
+            RefreshToken tempRefreshToken = new RefreshToken(userId, accessTokenId);
+            tempRefreshToken.setToken("temp_" + accessTokenId);
+            log.warn("임시 RefreshToken 생성: {}", userId);
+
+            return tempRefreshToken;
+        }
     }
 }

@@ -1,7 +1,7 @@
 (function(global) {
     const auth = {
         isLoggedIn() {
-            return this.getCookie('ACCESS_TOKEN') !== null && this.getCookie('REFRESH_TOKEN') !== null;
+            return this.getCookie('ACCESS_TOKEN') !== null || this.getCookie('REFRESH_TOKEN') !== null;
         },
 
         getUserInfo() {
@@ -29,9 +29,16 @@
 
                 return JSON.parse(jsonPayload);
             } catch (error) {
-                console.error('JWT 파싱 실패:', error);
                 return null;
             }
+        },
+
+        isTokenExpired() {
+            const payload = this.getTokenPayload();
+            if (!payload || !payload.exp) return true;
+
+            const currentTime = Math.floor(Date.now() / 1000);
+            return payload.exp < currentTime;
         },
 
         getNickname() {
@@ -51,6 +58,10 @@
 
         getAccessToken() {
             return this.getCookie('ACCESS_TOKEN');
+        },
+
+        getRefreshToken() {
+            return this.getCookie('REFRESH_TOKEN');
         },
 
         getCookie(name) {
@@ -79,7 +90,6 @@
                     }
                 });
             } catch (error) {
-                console.error('로그아웃 요청 중 오류:', error);
             } finally {
                 this.clearAllTokens();
                 window.location.href = redirectUrl;
@@ -97,6 +107,15 @@
         },
 
         async fetchWithAuth(url, options = {}) {
+            if (!this.getAccessToken() || this.isTokenExpired()) {
+                const refreshSuccess = await this.refreshAccessToken();
+
+                if (!refreshSuccess) {
+                    this.logout('/user/signin');
+                    return null;
+                }
+            }
+
             const headers = {
                 ...options.headers,
                 ...this.getAuthHeaders()
@@ -108,13 +127,11 @@
                 credentials: 'include'
             });
 
-            if (response.status === 4001) {
-                console.log('Access Token 만료, 갱신 시도');
+            if (response.status === 401) {
 
                 const refreshSuccess = await this.refreshAccessToken();
 
                 if (refreshSuccess) {
-                    console.log('토큰 갱신 성공, 요청 재시도');
 
                     const newHeaders = {
                         ...options.headers,
@@ -127,7 +144,6 @@
                         credentials: 'include'
                     });
                 } else {
-                    console.log('토큰 갱신 실패, 로그아웃');
                     this.logout('/user/signin');
                     return null;
                 }
@@ -138,6 +154,10 @@
 
         async refreshAccessToken() {
             try {
+                if (!this.getRefreshToken()) {
+                    return false;
+                }
+
                 const response = await fetch('/api/auth/refresh', {
                     method: 'POST',
                     credentials: 'include',
@@ -146,13 +166,13 @@
                     }
                 });
 
-                if (!response.ok) {
-                    console.error('토큰 갱신 실패:', response.status);
+                if (response.ok) {
+                    return true;
+                } else {
                     return false;
                 }
 
             } catch (error) {
-                console.error('토큰 갱신 중 오류:', error);
                 return false;
             }
         },
@@ -163,12 +183,23 @@
             }
 
             try {
-                const response = await this.fetchWithAuth('/api/user/mypage');
+                const response = await this.fetchWithAuth('/api/auth/validate');
                 return response && response.ok;
             } catch (error) {
-                console.error('토큰 검증 중 오류:', error);
                 return false;
             }
+        },
+
+        async checkAndRefreshToken() {
+            if (!this.isLoggedIn()) {
+                return false;
+            }
+
+            if (!this.getAccessToken() || this.isTokenExpired()) {
+                return await this.refreshAccessToken();
+            }
+
+            return true;
         }
     };
 
@@ -176,18 +207,22 @@
         global.auth = auth;
     }
 
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', async function() {
         if (auth.isLoggedIn()) {
-            console.log('로그인 상태 확인됨');
 
-            setInterval(() => {
-                auth.validateToken().then(isValid => {
-                    if (!isValid) {
-                        console.log('토큰이 유효하지 않음, 로그아웃 처리');
-                        auth.logout();
-                    }
-                });
-            }, 5 * 60 * 1000);
+            const tokenValid = await auth.checkAndRefreshToken();
+
+            if (!tokenValid) {
+                auth.logout('/user/signin');
+                return;
+            }
+
+            setInterval(async () => {
+                const isValid = await auth.validateToken();
+                if (!isValid) {
+                    auth.logout('/user/signin');
+                }
+            }, 10 * 60 * 1000);
         }
     });
 

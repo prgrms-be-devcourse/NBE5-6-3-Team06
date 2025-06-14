@@ -21,10 +21,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -41,49 +41,58 @@ public class AuthController {
     @PostMapping("/signup")
     @Operation(summary = "회원가입 + 자동 로그인", description = "회원가입과 동시에 토큰을 발급합니다.")
     public ResponseEntity<ApiResponse<TokenResponse>> signup(
-            @Validated @RequestBody SignupRequest req,
+            @Validated @RequestBody SignupRequest request,
             HttpServletResponse response
     ) {
-        TokenDto dto = authService.signup(req.toEntity());
+        try {
+            TokenDto dto = authService.signup(request.toEntity());
+            User user = userService.getUserById(request.getUserId());
 
-        User user = userService.getUserById(req.getUserId());
+            setAuthCookies(response, dto);
 
-        setAuthCookies(response, dto, user);
+            TokenResponse tokenResponse = TokenResponse.builder()
+                    .accessToken(dto.getAccessToken())
+                    .refreshToken(dto.getRefreshToken())
+                    .expiresIn(dto.getAtExpiresIn())
+                    .grantType(dto.getGrantType())
+                    .build();
 
-        TokenResponse tokenResponse = TokenResponse.builder()
-                .accessToken(dto.getAccessToken())
-                .refreshToken(dto.getRefreshToken())
-                .expiresIn(dto.getAtExpiresIn())
-                .grantType(dto.getGrantType())
-                .build();
+            return ResponseEntity.ok(ApiResponse.success(tokenResponse));
 
-        return ResponseEntity.ok(ApiResponse.success(tokenResponse));
+        } catch (Exception e) {
+            log.error("회원가입 처리 중 오류: {}", e.getMessage());
+            throw e;
+        }
     }
 
     @PostMapping("/signin")
     @Operation(summary = "로그인", description = "Access + Refresh Token을 발급합니다.")
     public ResponseEntity<ApiResponse<TokenResponse>> signin(
-            @Validated @RequestBody SigninRequest req,
+            @Validated @RequestBody SigninRequest request,
             HttpServletResponse response
     ) {
-        TokenDto dto = authService.signin(req.getUserId(), req.getPassword());
+        try {
+            TokenDto dto = authService.signin(request.getUserId(), request.getPassword());
+            User user = userService.getUserById(request.getUserId());
 
-        User user = userService.getUserById(req.getUserId());
+            setAuthCookies(response, dto);
 
-        setAuthCookies(response, dto, user);
+            userActivityLogService.logIfFirstToday(request.getUserId());
 
-        userActivityLogService.logIfFirstToday(req.getUserId());
+            TokenResponse tokenResponse = TokenResponse.builder()
+                    .accessToken(dto.getAccessToken())
+                    .refreshToken(dto.getRefreshToken())
+                    .expiresIn(dto.getAtExpiresIn())
+                    .grantType(dto.getGrantType())
+                    .build();
 
-        TokenResponse tokenResponse = TokenResponse.builder()
-                .accessToken(dto.getAccessToken())
-                .refreshToken(dto.getRefreshToken())
-                .expiresIn(dto.getAtExpiresIn())
-                .grantType(dto.getGrantType())
-                .build();
+            log.info("로그인 성공 - 사용자: {}, 역할: {}", user.getUserId(), user.getRole());
+            return ResponseEntity.ok(ApiResponse.success(tokenResponse));
 
-        log.info("로그인 성공 - 사용자: {}, 역할: {}", user.getUserId(), user.getRole());
-
-        return ResponseEntity.ok(ApiResponse.success(tokenResponse));
+        } catch (Exception e) {
+            log.error("로그인 처리 중 오류: {}", e.getMessage());
+            throw e;
+        }
     }
 
     @PostMapping("/logout")
@@ -91,17 +100,19 @@ public class AuthController {
     public ResponseEntity<ApiResponse<Void>> logout(
             HttpServletRequest request,
             HttpServletResponse response
-    ){
+    ) {
         try {
             String userId = AuthenticationUtils.getCurrentUserId();
             if (userId != null) {
                 authService.logout(userId);
+            } else {
+                log.warn("로그아웃 요청 오류: 현재 사용자 정보를 찾을 수 없음");
             }
         } catch (Exception e) {
             log.warn("로그아웃 처리 중 오류: {}", e.getMessage());
+        } finally {
+            CookieUtils.clearAllCookies(request, response);
         }
-
-        CookieUtils.clearAllCookies(request, response);
 
         return ResponseEntity.ok(ApiResponse.noContent());
     }
@@ -112,41 +123,65 @@ public class AuthController {
             HttpServletRequest request,
             HttpServletResponse response
     ) {
-        TokenDto dto = authService.refreshToken(request);
-
         try {
-            String userId = AuthenticationUtils.getCurrentUserId();
-            if (userId == null) {
-                Claims claims = jwtProvider.parseClaim(dto.getAccessToken());
-                userId = claims.getSubject();
+            TokenDto dto = authService.refreshToken(request);
+
+            String userId = extractUserIdFromToken(dto.getAccessToken());
+            if (userId != null) {
+                setAuthCookies(response, dto);
+                log.info("토큰 갱신 성공: {}", userId);
+            } else {
+                log.warn("토큰 갱신 성공했지만 사용자 정보 추출 실패");
+                setAuthCookies(response, dto);
             }
 
-            User user = userService.getUserById(userId);
+            TokenResponse tokenResponse = TokenResponse.builder()
+                    .accessToken(dto.getAccessToken())
+                    .refreshToken(dto.getRefreshToken())
+                    .expiresIn(dto.getAtExpiresIn())
+                    .grantType(dto.getGrantType())
+                    .build();
 
-            setAuthCookies(response, dto, user);
+            return ResponseEntity.ok(ApiResponse.success(tokenResponse));
+
         } catch (Exception e) {
-            log.warn("토큰 갱신 시 사용자 정보 쿠키 설정 실패: {}", e.getMessage());
-            CookieUtils.addCookie(response, "ACCESS_TOKEN", dto.getAccessToken(),
-                    Math.toIntExact(dto.getAtExpiresIn() / 1000), "/");
-            CookieUtils.addCookie(response, "REFRESH_TOKEN", dto.getRefreshToken(),
-                    Math.toIntExact(dto.getRtExpiresIn() / 1000), "/");
+            log.error("토큰 갱신 처리 중 오류: {}", e.getMessage());
+            throw e;
         }
-
-        TokenResponse tokenResponse = TokenResponse.builder()
-                .accessToken(dto.getAccessToken())
-                .refreshToken(dto.getRefreshToken())
-                .expiresIn(dto.getAtExpiresIn())
-                .grantType(dto.getGrantType())
-                .build();
-
-        return ResponseEntity.ok(ApiResponse.success(tokenResponse));
     }
 
-    private void setAuthCookies(HttpServletResponse response, TokenDto dto, User user) {
-        int accessTokenMaxAge = Math.toIntExact(dto.getAtExpiresIn() / 1000);
-        int refreshTokenMaxAge = Math.toIntExact(dto.getRtExpiresIn() / 1000);
+    private void setAuthCookies(HttpServletResponse response, TokenDto dto) {
+        try {
+            CookieUtils.addTokenCookie(response, "ACCESS_TOKEN", dto.getAccessToken(), "/");
+            CookieUtils.addTokenCookie(response, "REFRESH_TOKEN", dto.getRefreshToken(), "/");
 
-        CookieUtils.addCookie(response, "ACCESS_TOKEN", dto.getAccessToken(), accessTokenMaxAge, "/");
-        CookieUtils.addCookie(response, "REFRESH_TOKEN", dto.getRefreshToken(), refreshTokenMaxAge, "/");
+            log.debug("토큰 쿠키 설정 완료 - 쿠키 유효시간: 7일");
+        } catch (Exception e) {
+            log.error("토큰 쿠키 설정 실패: {}", e.getMessage());
+            throw e;
+        }
+    }
+
+    private String extractUserIdFromToken(String accessToken) {
+        try {
+            Claims claims = jwtProvider.parseClaim(accessToken);
+            return claims.getSubject();
+        } catch (Exception e) {
+            log.warn("토큰에서 사용자 ID 추출 실패: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    @GetMapping("/validate")
+    @Operation(summary = "토큰 유효성 검증", description = "현재 사용자의 토큰이 유효한지 확인합니다.")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> validateToken() {
+        String currentUserId = AuthenticationUtils.getCurrentUserId();
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("valid", true);
+        result.put("userId", currentUserId);
+        result.put("timestamp", System.currentTimeMillis());
+
+        return ResponseEntity.ok(ApiResponse.success(result));
     }
 }

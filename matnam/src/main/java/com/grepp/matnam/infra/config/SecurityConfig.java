@@ -127,8 +127,8 @@ public class SecurityConfig {
                 )
                 .successHandler(oAuth2AuthenticationSuccessHandler)
             )
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-            .addFilterBefore(logoutFilter, JwtAuthenticationFilter.class);
+            .addFilterBefore(logoutFilter, UsernamePasswordAuthenticationFilter.class)
+            .addFilterBefore(jwtAuthenticationFilter, LogoutFilter.class);
 
         return http.build();
     }
