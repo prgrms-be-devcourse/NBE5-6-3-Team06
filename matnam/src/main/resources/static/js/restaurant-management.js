@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 식당 추가 버튼 클릭 이벤트
     const addRestaurantBtn = document.getElementById('add-restaurant-btn');
+    const restaurantSearchModal = document.getElementById('restaurant-search-modal');
     if (addRestaurantBtn) {
         addRestaurantBtn.addEventListener('click', function() {
             // 모달 제목 설정
@@ -13,7 +14,13 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('restaurant-id').value = '';
             suggestion = null;
             // 모달 표시
-            document.getElementById('restaurantModal').style.display = 'block';
+            // document.getElementById('restaurantModal').style.display = 'block';
+            document.getElementById('restaurant-search-modal').style.display = 'block';
+
+            setTimeout(() => {
+                map.relayout(); // ✅ 강제 리사이즈
+                map.setCenter(new kakao.maps.LatLng(37.5665, 126.9780)); // ✅ 필요시 다시 센터 맞춤
+            }, 200);
         });
     }
 
@@ -272,4 +279,115 @@ document.addEventListener('DOMContentLoaded', function() {
             alert("등록 중 문제가 발생했습니다.");
         });
     }
+
+    initRestaurantSearchMap(); // 지도 초기화
+
+    setupRestaurantSearchModal(); // 새로 추가한 함수 호출
 });
+
+let map;
+let marker;
+let selectedRestaurant = null;
+
+function initRestaurantSearchMap() {
+    const container = document.getElementById('restaurant-map');
+    map = new kakao.maps.Map(container, {
+        center: new kakao.maps.LatLng(37.5665, 126.9780),
+        level: 3
+    });
+}
+
+function setupRestaurantSearchModal() {
+    const searchBtn = document.getElementById('restaurant-search-btn');
+    const searchInput = document.getElementById('restaurant-search-input');
+    const resultsList = document.getElementById('restaurant-results-list');
+    const addressDisplay = document.getElementById('selected-restaurant-address');
+    const repMenuInput = document.getElementById('representative-menu-input');
+
+    const ps = new kakao.maps.services.Places();
+
+    searchBtn.addEventListener('click', () => {
+        const keyword = searchInput.value.trim();
+        if (!keyword) {
+            alert('검색어를 입력하세요.');
+            return;
+        }
+
+        ps.keywordSearch(keyword, (data, status) => {
+            if (status === kakao.maps.services.Status.OK) {
+                renderSearchResults(data);
+            } else {
+                resultsList.innerHTML = '<div class="no-restaurant-results">검색 결과가 없습니다.</div>';
+            }
+        });
+    });
+
+    searchInput.addEventListener('keydown', function (event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            searchBtn.click();
+        }
+    });
+
+    function renderSearchResults(places) {
+        resultsList.innerHTML = '';
+        places.forEach(place => {
+            const item = document.createElement('div');
+            item.className = 'restaurant-result-item';
+            item.innerHTML = `
+        <div class="restaurant-result-info">
+          <div class="restaurant-result-name">${place.place_name}</div>
+          <div class="restaurant-result-address">${place.road_address_name || place.address_name}</div>
+        </div>
+      `;
+            item.addEventListener('click', () => selectPlace(place));
+            resultsList.appendChild(item);
+        });
+    }
+
+    function selectPlace(place) {
+        const lat = parseFloat(place.y);
+        const lng = parseFloat(place.x);
+        const position = new kakao.maps.LatLng(lat, lng);
+
+        map.setCenter(position);
+
+        if (!marker) {
+            marker = new kakao.maps.Marker({ map });
+        }
+        marker.setPosition(position);
+
+        addressDisplay.textContent = place.road_address_name || place.address_name;
+        document.getElementById('selected-restaurant-name').value = place.place_name;
+
+        selectedRestaurant = {
+            name: place.place_name,
+            address: place.road_address_name || place.address_name,
+            latitude: lat,
+            longitude: lng
+        };
+    }
+
+    document.getElementById('proceed-to-add-restaurant').addEventListener('click', () => {
+        if (!selectedRestaurant) {
+            alert('식당을 먼저 선택해주세요.');
+            return;
+        }
+
+        document.getElementById('restaurant-name').value = selectedRestaurant.name;
+        document.getElementById('restaurant-address').value = selectedRestaurant.address;
+        document.getElementById('restaurant-latitude').value = selectedRestaurant.latitude;
+        document.getElementById('restaurant-longitude').value = selectedRestaurant.longitude;
+        document.getElementById('restaurant-main-menu').value = repMenuInput.value;
+
+        document.getElementById('restaurant-search-modal').style.display = 'none';
+        document.getElementById('restaurantModal').style.display = 'block';
+    });
+
+    document.querySelectorAll('#restaurant-search-modal .cancel-btn, #restaurant-search-modal .close-modal')
+    .forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.getElementById('restaurant-search-modal').style.display = 'none';
+        });
+    });
+}

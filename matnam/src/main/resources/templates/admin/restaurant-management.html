@@ -3,6 +3,7 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{admin/layout}">
 <head>
   <title>식당 관리</title>
+  <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=9e9f7116c9bee853591bfa6e12c7fa5f&libraries=services" ></script>
 </head>
 <body>
 <div layout:fragment="content">
@@ -259,6 +260,79 @@
       <div class="modal-footer">
         <button class="secondary-btn cancel-btn">취소</button>
         <button class="primary-btn save-btn" id="save-button">저장</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 식당 이름 검색 모달 추가 -->
+  <div id="restaurant-search-modal" class="modal">
+    <div class="modal-content restaurant-search-modal-content">
+      <div class="modal-header">
+        <h2>식당 검색</h2>
+        <span class="close-modal">&times;</span>
+      </div>
+      <div class="modal-body restaurant-search-body">
+        <div class="restaurant-search-container">
+          <!-- 지도 영역 -->
+          <div class="map-container">
+            <div id="restaurant-map" class="restaurant-map">
+              <div class="map-placeholder">
+              </div>
+            </div>
+          </div>
+
+          <!-- 검색 및 정보 영역 -->
+          <div class="search-info-container">
+            <!-- 검색창 -->
+            <div class="restaurant-search-box">
+              <input type="text" id="restaurant-search-input" placeholder="식당 이름을 검색하세요" class="form-control">
+              <button type="button" id="restaurant-search-btn" class="btn primary-btn">
+                <i class="fas fa-search"></i>
+              </button>
+            </div>
+
+            <!-- 검색 결과 리스트 -->
+            <div class="restaurant-search-results">
+              <div class="search-results-header">
+                <h4>검색 결과</h4>
+              </div>
+              <div id="restaurant-results-list" class="restaurant-results-list">
+                <div class="no-restaurant-results">
+                  <div>
+                    <i class="fas fa-search"></i>
+                    <p>식당을 검색하세요</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 선택된 식당 정보 -->
+            <div class="selected-restaurant-info">
+              <div class="representative-menu-row">
+                <div class="selected-restaurant-name">
+                  <label for="selected-restaurant-name">선택한 식당</label>
+                  <input id="selected-restaurant-name" class="representative-menu-input" value="식당을 선택하세요" disabled>
+                </div>
+
+                <div class="representative-menu">
+                  <label for="representative-menu-input">대표 메뉴</label>
+                  <input type="text" id="representative-menu-input" placeholder="대표 메뉴를 입력하세요" class="representative-menu-input">
+                </div>
+              </div>
+
+              <div class="selected-restaurant-address">
+                <label>선택된 식당 주소</label>
+                <div id="selected-restaurant-address" class="address-display">
+                  식당을 선택하세요
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn cancel-btn">취소</button>
+        <button class="btn primary-btn" id="proceed-to-add-restaurant">추가</button>
       </div>
     </div>
   </div>
