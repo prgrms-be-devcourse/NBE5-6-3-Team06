@@ -18,8 +18,8 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('restaurant-search-modal').style.display = 'block';
 
             setTimeout(() => {
-                map.relayout(); // ✅ 강제 리사이즈
-                map.setCenter(new kakao.maps.LatLng(37.5665, 126.9780)); // ✅ 필요시 다시 센터 맞춤
+                map.relayout();
+                map.setCenter(new kakao.maps.LatLng(37.5665, 126.9780));
             }, 200);
         });
     }
