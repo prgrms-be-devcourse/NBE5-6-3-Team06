@@ -62,7 +62,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('restaurant-main-menu').value = result.mainFood;
                 document.getElementById('restaurant-description').value = result.summary;
                 document.getElementById('restaurant-google-rating').value = result.googleRating;
-
+                document.getElementById('restaurant-latitude').value = result.latitude;
+                document.getElementById('restaurant-longitude').value = result.longitude;
 
                 // 분위기 체크박스 설정
                 moodCheckboxes.forEach(checkbox => {
