@@ -31,7 +31,7 @@ public class RestaurantSuggestion {
     private Double longitude;
 
     @Column(name = "submitted_by_user_id")
-    private Long submittedByUserId;
+    private String submittedByUserId;
 
     @Column(nullable = false)
     private String status = "pending";

@@ -177,7 +177,7 @@ VALUES
 
 -- 식당 추가 제안 더미 데이터
 INSERT INTO restaurant_suggestions (name, address, main_food, latitude, longitude, submitted_by_user_id, status, submitted_at)
-VALUES ('맛남식당', '서울 강남구 테헤란로21길 6', '된장찌개', 37.5006989321566, 127.034653018054, 1, 'pending', NOW());
+VALUES ('맛남식당', '서울 강남구 테헤란로21길 6', '된장찌개', 37.5006989321566, 127.034653018054, 'user1', 'pending', NOW());
 
 -- 최근 8개월 팀/모임(team) 더미 데이터 (2024년 10월 ~ 2025년 5월 15일)
 INSERT INTO team (

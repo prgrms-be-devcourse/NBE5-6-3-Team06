@@ -44,7 +44,7 @@ public class RestaurantSuggestionService {
     }
 
     @Transactional
-    public void saveSuggestion(RestaurantSuggestionDto dto, Long userId) {
+    public void saveSuggestion(RestaurantSuggestionDto dto, String userId) {
         RestaurantSuggestion suggestion = new RestaurantSuggestion();
         suggestion.setName(dto.getName());
         suggestion.setAddress(dto.getAddress());
