@@ -281,16 +281,6 @@ public class TeamController {
         return "team/teamPage";
     }
 
-    // 모임 나가기
-//    @PostMapping("/team/{teamId}/leave")
-//    public String leaveTeam(@PathVariable Long teamId) {
-//        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
-//        teamService.leaveTeam(userId, teamId);
-//        return "redirect:user/mypage";
-//    }
-
-
-
     // 모임 완료 후 리뷰 작성 페이지 표시
     @GetMapping("/{teamId}/reviews")
     public String showTeamReviewPage(@PathVariable Long teamId, Model model) {

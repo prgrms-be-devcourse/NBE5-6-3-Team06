@@ -196,6 +196,18 @@ public class TeamApiController {
         }
     }
 
+    @PostMapping("/{teamId}/leave")
+    public ResponseEntity<ApiResponse<String>> leaveTeam(@PathVariable Long teamId) {
+        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+        try {
+            teamService.leaveTeam(userId, teamId);
+            return ResponseEntity.ok(ApiResponse.success("모임에서 나갔습니다."));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest()
+                .body(ApiResponse.error(ResponseCode.BAD_REQUEST, e.getMessage()));
+        }
+    }
+
     private TeamDto convertToTeamDto(Team team) {
         TeamDto teamDto = new TeamDto();
         teamDto.setTeamTitle(team.getTeamTitle());

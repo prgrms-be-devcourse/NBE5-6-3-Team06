@@ -518,10 +518,14 @@
           취소된 모임입니다
         </button>
       </div>
-      <form th:if="${#strings.toString(participantStatus) == 'APPROVED'}"
-            th:action="@{/team/{teamId}/leave(teamId=${team.teamId})}" method="post">
-        <button type="submit">나가기</button>
-      </form>
+      <button type="button"
+              id="leaveTeamButton"
+              th:if="${ not isLeader}"
+              th:data-team-id="${team.teamId}"
+              class="btn btn-danger">
+        모임 나가기
+      </button>
+
     </div>
 
     <div class="participant-list">
@@ -926,6 +930,35 @@
         }
       });
     });
+  });
+
+  document.addEventListener("DOMContentLoaded", () =>{
+    const leaveBtn = document.getElementById("leaveTeamButton");
+    if(!leaveBtn) return;
+
+    leaveBtn.addEventListener("click", function () {
+      const teamId = this.dataset.teamId;
+      if (!confirm("정말 모임에서 나가시겠습니까?")) return;
+
+      fetch(`/api/team/${teamId}/leave`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({})
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.code === '0000') {
+          alert(data.data);
+          location.href = "/user/mypage";
+        } else {
+          alert("나가기 실패: " + data.message);
+        }
+      })
+      .catch(err => {
+        alert("오류 발생: " + err.message);
+      });
+    });
+
   });
 
   function openReportModal(reportedUserId, reportedUserNickname, chatId) {

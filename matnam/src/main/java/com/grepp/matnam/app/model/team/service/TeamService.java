@@ -320,18 +320,28 @@ public class TeamService {
         }
     }
 
-//    @Transactional
-//    public void leaveTeam(String userId, Long teamId) {
-//        Participant participant = participantRepository.findByUser_UserIdAndTeam_TeamId(userId, teamId);
-//        if (participant == null) {
-//            throw new IllegalStateException("참가 신청 내역이 없습니다.");
-//        }
-//
-//        if (participant.getParticipantStatus() != ParticipantStatus.APPROVED) {
-//            throw new IllegalStateException("수락된 상태에서만 나갈 수 있습니다");
-//        }
-//        participantRepository.delete(participant);
-//    }
+    @Transactional
+    public void leaveTeam(String userId, Long teamId) {
+        Team team = teamRepository.findById(teamId)
+            .orElseThrow(() -> new EntityNotFoundException("팀이 존재하지 않습니다."));
+
+        if (team.getUser().getUserId().equals(userId)) {
+            throw new IllegalStateException("모임 주최자는 나갈 수 없습니다.");
+        }
+
+        Participant participant = participantRepository.findByUser_UserIdAndTeam_TeamId(userId, teamId);
+        if (participant == null) {
+            throw new IllegalStateException("참가 신청 내역이 없습니다.");
+        }
+
+        if (participant.getParticipantStatus() != ParticipantStatus.APPROVED) {
+            throw new IllegalStateException("수락된 상태에서만 나갈 수 있습니다");
+        }
+        participantRepository.delete(participant);
+
+        int currentPeople = team.getNowPeople();
+        team.setNowPeople(Math.max(0, currentPeople - 1));
+    }
 
 
     private void increaseTemperatureForCompletedTeam(Team team) {
