@@ -226,6 +226,28 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // 식당 제안 거절 버튼 클릭 이벤트
+    document.querySelectorAll('.action-btn.suggestion-reject').forEach(button => {
+        button.addEventListener('click', function () {
+            const suggestionId = this.getAttribute('data-id');
+
+            fetch(`/api/admin/restaurant/suggestion/reject/${suggestionId}`, {
+                method: 'PATCH'
+            }).then(response => {
+                if (response.ok) {
+                    alert("식당 제안이 거절되었습니다.")
+                    window.location.href = "/admin/restaurant/suggestion";
+                } else {
+                    alert("거절 실패: 서버 오류");
+                }
+            })
+            .catch(error => {
+                console.error("에러 발생:", error);
+                alert("거절 중 문제가 발생했습니다.");
+            });
+        });
+    });
+
     function approveSuggestionStatus() {
         fetch(`/api/admin/restaurant/suggestion/approve/${suggestion}`, {
             method: 'PATCH'

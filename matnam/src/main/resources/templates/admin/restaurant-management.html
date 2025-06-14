@@ -136,6 +136,7 @@
             <td><span th:class="'status ' + ${#strings.toLowerCase(suggestion.status.name())}" th:text="${suggestion.status.koreanName}"></span></td>
             <td>
               <button class="action-btn suggestion-edit" th:data-id="${suggestion.id}" th:data-name="${suggestion.name}" th:data-address="${suggestion.address}" th:data-main-food="${suggestion.mainFood}"><i class="fas fa-edit"></i></button>
+              <button class="action-btn suggestion-reject" th:data-id="${suggestion.id}" th:if="${suggestion.status.name() != 'APPROVED'}"><i class="fas fa-ban" ></i></button>
               <button class="action-btn suggestion-delete" th:data-id="${suggestion.id}"><i class="fas fa-trash"></i></button>
             </td>
           </tr>
