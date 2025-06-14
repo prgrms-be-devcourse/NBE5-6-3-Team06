@@ -9,13 +9,14 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.web.multipart.MultipartFile;
 
 @Getter
 @Setter
 public class TeamRequest {
 
     @NotBlank(message = "제목은 필수 입력 값입니다.")
-    @Size(max = 15, message = "제목은 15자를 초과할 수 없습니다.")
+    @Size(max = 20, message = "제목은 20자를 초과할 수 없습니다.")
     private String title;
     @NotBlank(message = "설명은 필수 입력 값입니다.")
     @Size(max = 300, message = "설명은 300자를 초과할 수 없습니다.")
@@ -37,9 +38,9 @@ public class TeamRequest {
     @NotBlank(message = "식당 주소는 필수 입력 값입니다.")
     private String restaurantAddress;
 
-    private String imageUrl;
+    private MultipartFile imageUrl;
 
-    public Team toEntity(User user) {
+    public Team toEntity(User user, String imageUrl) {
         Team team = new Team();
         team.setUser(user);
         team.setTeamTitle(this.title);
@@ -50,7 +51,7 @@ public class TeamRequest {
         team.setStatus(Status.RECRUITING);
         team.setRestaurantName(this.restaurantName);
         team.setRestaurantAddress(this.restaurantAddress);
-        team.setImageUrl(this.imageUrl);
+        team.setImageUrl(imageUrl);
         return team;
     }
 

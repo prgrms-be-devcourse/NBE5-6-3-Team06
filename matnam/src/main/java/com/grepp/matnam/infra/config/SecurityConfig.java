@@ -6,6 +6,7 @@ import com.grepp.matnam.infra.auth.jwt.LogoutFilter;
 import com.grepp.matnam.infra.auth.oauth2.OAuth2AuthenticationSuccessHandler;
 import com.grepp.matnam.infra.auth.security.CustomAccessDeniedHandler;
 import com.grepp.matnam.infra.auth.security.CustomAuthenticationEntryPoint;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,8 +21,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -39,96 +38,97 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(AbstractHttpConfigurer::disable)
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            .csrf(AbstractHttpConfigurer::disable)
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .sessionManagement(session -> session
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
+            .headers(headers -> headers
+                .frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin)
+            )
+            .authorizeHttpRequests(auth -> auth
+                // 1. 인증이 필요하지 않은 경로
+                .requestMatchers(
+                    "/", "/error", "/favicon.ico",
+                    "/css/**", "/js/**", "/img/**", "/images/**", "/fonts/**", "/assets/**", "/download/**"
+                ).permitAll()
+
+                // 2. 인증 관련 API
+                .requestMatchers(
+                    "/api/auth/signin",
+                    "/api/auth/signup",
+                    "/api/auth/refresh"
+                ).permitAll()
+
+                // 회원가입/로그인 관련
+                .requestMatchers(
+                    "/user/signup", "/user/signin", "/user/oauth2/signup"
+                ).permitAll()
+
+                // OAuth2 관련
+                .requestMatchers("/signin/oauth2/code/**").permitAll()
+
+                // Swagger/API 문서 관련
+                .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**")
+                .permitAll()
+
+                // AI 테스트 관련
+                .requestMatchers("/api/ai/chat", "/api/ai/restaurant/name").permitAll()
+
+                // 팀 관련 공개 페이지
+                .requestMatchers("/team/search", "/team/detail/**").permitAll()
+
+                // 3. 관리자 권한이 필요한 경로
+                .requestMatchers("/admin/**", "/api/admin/**").hasRole("ADMIN")
+
+                // 4. 사용자 권한이 필요한 경로
+                .requestMatchers("/user/**").hasRole("USER")
+
+                // 로그아웃
+                .requestMatchers("/api/auth/logout").hasAnyRole("USER", "ADMIN")
+
+                // 사용자 전용 API (로그인 제외)
+                .requestMatchers(
+                    "/api/user/preference/**", "/api/user/password",
+                    "/api/user/{userId}/temperature",   // 매너온도 조회
+                    "/map/**", "/api/mymap/**",       // 지도 관련
+                    "/api/reviews/**",                  // 리뷰 관련
+                    "/api/reports/**"                   // 신고 관련
+                ).hasRole("USER")
+
+                // AI 추천 관련 (사용자)
+                .requestMatchers("/api/ai/recommend/**", "/api/ai/reRecommend/**")
+                .hasRole("USER")
+
+                // 사용자 + 관리자 공통 API
+                .requestMatchers(
+                    "/api/chat/**",              // 채팅
+                    "/api/sse/subscribe",        // SSE 구독
+                    "/api/notification/**",      // 알림
+                    "/api/content-rankings/**"   // 랭킹
+                ).hasAnyRole("USER", "ADMIN")
+
+                // 팀 관련 (인증된 사용자)
+                .requestMatchers("/team/**", "/api/team/**").authenticated()
+
+                // 5. 그 외 모든 요청은 인증 필요
+                .anyRequest().authenticated()
+            )
+            .exceptionHandling(exceptionHandling -> exceptionHandling
+                .authenticationEntryPoint(customAuthenticationEntryPoint)
+                .accessDeniedHandler(customAccessDeniedHandler)
+            )
+            .oauth2Login(oauth2 -> oauth2
+                .userInfoEndpoint(endpoint -> endpoint
+                    .userService(customOauth2UserService)
                 )
-                .headers(headers -> headers
-                        .frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin)
+                .redirectionEndpoint(endpoint -> endpoint
+                    .baseUri("/signin/oauth2/code/*")
                 )
-                .authorizeHttpRequests(auth -> auth
-                        // 1. 인증이 필요하지 않은 경로
-                        .requestMatchers(
-                                "/", "/error", "/favicon.ico",
-                                "/css/**", "/js/**", "/img/**", "/images/**", "/fonts/**", "/assets/**"
-                        ).permitAll()
-
-                        // 2. 인증 관련 API
-                        .requestMatchers(
-                                "/api/auth/signin",
-                                "/api/auth/signup",
-                                "/api/auth/refresh"
-                        ).permitAll()
-
-                        // 회원가입/로그인 관련
-                        .requestMatchers(
-                                "/user/signup", "/user/signin", "/user/oauth2/signup"
-                        ).permitAll()
-
-                        // OAuth2 관련
-                        .requestMatchers("/signin/oauth2/code/**").permitAll()
-
-                        // Swagger/API 문서 관련
-                        .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
-
-                        // AI 테스트 관련
-                        .requestMatchers("/api/ai/chat", "/api/ai/restaurant/name").permitAll()
-
-                        // 팀 관련 공개 페이지
-                        .requestMatchers("/team/search", "/team/detail/**").permitAll()
-
-                        // 3. 관리자 권한이 필요한 경로
-                        .requestMatchers("/admin/**", "/api/admin/**").hasRole("ADMIN")
-
-                        // 4. 사용자 권한이 필요한 경로
-                        .requestMatchers("/user/**").hasRole("USER")
-
-                        // 로그아웃
-                        .requestMatchers("/api/auth/logout").hasAnyRole("USER", "ADMIN")
-
-                        // 사용자 전용 API (로그인 제외)
-                        .requestMatchers(
-                                "/api/user/preference/**", "/api/user/password",
-                                "/api/user/{userId}/temperature",   // 매너온도 조회
-                                "/map/**", "/api/mymap/**",       // 지도 관련
-                                "/api/reviews/**",                  // 리뷰 관련
-                                "/api/reports/**"                   // 신고 관련
-                        ).hasRole("USER")
-
-                        // AI 추천 관련 (사용자)
-                        .requestMatchers("/api/ai/recommend/**", "/api/ai/reRecommend/**")
-                        .hasRole("USER")
-
-                        // 사용자 + 관리자 공통 API
-                        .requestMatchers(
-                                "/api/chat/**",              // 채팅
-                                "/api/sse/subscribe",        // SSE 구독
-                                "/api/notification/**",      // 알림
-                                "/api/content-rankings/**"   // 랭킹
-                        ).hasAnyRole("USER", "ADMIN")
-
-                        // 팀 관련 (인증된 사용자)
-                        .requestMatchers("/team/**", "/api/team/**").authenticated()
-
-                        // 5. 그 외 모든 요청은 인증 필요
-                        .anyRequest().authenticated()
-                )
-                .exceptionHandling(exceptionHandling -> exceptionHandling
-                        .authenticationEntryPoint(customAuthenticationEntryPoint)
-                        .accessDeniedHandler(customAccessDeniedHandler)
-                )
-                .oauth2Login(oauth2 -> oauth2
-                        .userInfoEndpoint(endpoint -> endpoint
-                                .userService(customOauth2UserService)
-                        )
-                        .redirectionEndpoint(endpoint -> endpoint
-                                .baseUri("/signin/oauth2/code/*")
-                        )
-                        .successHandler(oAuth2AuthenticationSuccessHandler)
-                )
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(logoutFilter, JwtAuthenticationFilter.class);
+                .successHandler(oAuth2AuthenticationSuccessHandler)
+            )
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+            .addFilterBefore(logoutFilter, JwtAuthenticationFilter.class);
 
         return http.build();
     }
@@ -143,12 +143,12 @@ public class SecurityConfig {
 //        ));
 
         configuration.setAllowedMethods(List.of(
-                "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"
+            "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"
         ));
 
         configuration.setAllowedHeaders(List.of(
-                "Authorization", "Content-Type", "X-Requested-With", "Accept",
-                "Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers"
+            "Authorization", "Content-Type", "X-Requested-With", "Accept",
+            "Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers"
         ));
 
         configuration.setAllowCredentials(true);

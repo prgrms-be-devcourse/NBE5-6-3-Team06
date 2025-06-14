@@ -48,16 +48,16 @@
       resize: vertical;
       min-height: 100px;
     }
-    .map-placeholder,
-    .image-upload-box {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #aaa;
-      background-color: #fafafa;
-      height: 150px;
-      border: 1px dashed #ccc;
-    }
+    /*.map-placeholder,*/
+    /*.image-upload-box {*/
+    /*  display: flex;*/
+    /*  align-items: center;*/
+    /*  justify-content: center;*/
+    /*  color: #aaa;*/
+    /*  background-color: #fafafa;*/
+    /*  height: 150px;*/
+    /*  border: 1px dashed #ccc;*/
+    /*}*/
     .section {
       margin-bottom: 2rem;
     }
@@ -96,6 +96,32 @@
       border: 1px solid #e74c3c !important;
       box-shadow: 0 0 3px rgba(231,76,60,0.5);
     }
+
+    .image-upload-box {
+      position: relative;
+      width: 200px; height: 200px;
+      border: 2px dashed #ccc;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+    }
+    .image-upload-box.drag-over {
+      border-color: #007bff;
+      background-color: rgba(0,123,255,0.1);
+    }
+    .preview-img {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .hidden-file-input {
+      display: none;
+    }
+    .error-msg {
+      color: red; font-size: 0.9rem;
+    }
+
   </style>
   <link rel="stylesheet" th:href="@{/css/notification.css}">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -216,11 +242,26 @@
     </div>
 
     <div class="section">
-      <h2>모임 이미지</h2>
-      <div class="image-upload-box">
-        클릭하여 업로드 또는 드래그 앤 드롭 (JPG, PNG, JPEG 파일 / 최대 10MB)
+      <label for="imageUrl">모임 이미지</label>
+      <div class="image-upload-box"
+           id="uploadBox"
+           th:classappend="${#fields.hasErrors('imageUrl')}? 'error'">
+        <img id="preview"
+             th:src="@{${defaultImageUrl}}"
+             alt="모임 이미지 미리보기"
+             class="preview-img" />
+        <input type="file"
+               id="imageUrl"
+               name="imageUrl"
+               accept="image/*"
+               th:field="*{imageUrl}"
+               class="hidden-file-input" />
+
+        <div th:if="${#fields.hasErrors('imageUrl')}"
+             th:errors="*{imageUrl}"
+             class="error-msg"></div>
       </div>
-      <input type="file" name="image" accept="image/*" />
+      <p>(클릭하거나 드래그 앤 드롭하여 이미지 업로드)</p>
     </div>
 
     <div class="btn-row">
@@ -245,6 +286,41 @@
       level: 4
     };
     new kakao.maps.Map(container, options);
+  });
+
+  const uploadBox = document.getElementById('uploadBox');
+  const fileInput = document.getElementById('imageUrl');
+  const preview   = document.getElementById('preview');
+
+  uploadBox.addEventListener('click', () => fileInput.click());
+
+  fileInput.addEventListener('change', e => {
+    if (e.target.files.length) {
+      const file = e.target.files[0];
+      preview.src = URL.createObjectURL(file);
+    }
+  });
+
+  ['dragenter','dragover'].forEach(ev =>
+      uploadBox.addEventListener(ev, e => {
+        e.preventDefault();
+        uploadBox.classList.add('drag-over');
+      })
+  );
+  ['dragleave','drop'].forEach(ev =>
+      uploadBox.addEventListener(ev, e => {
+        e.preventDefault();
+        uploadBox.classList.remove('drag-over');
+      })
+  );
+
+  uploadBox.addEventListener('drop', e => {
+    const dt = e.dataTransfer;
+    if (dt.files.length) {
+      fileInput.files = dt.files;
+      const file = dt.files[0];
+      preview.src = URL.createObjectURL(file);
+    }
   });
 </script>
 

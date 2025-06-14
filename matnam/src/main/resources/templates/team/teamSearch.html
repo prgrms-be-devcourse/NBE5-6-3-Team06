@@ -63,8 +63,11 @@
     .meeting-card {
       border: 1px solid #eee;
       border-radius: 8px;
-      padding: 1rem;
+      overflow: hidden;
       background-color: #fff;
+    }
+    .team-details{
+      padding: 1rem;
     }
     .meeting-card h3 {
       font-size: 1.1rem;
@@ -209,12 +212,19 @@
 
   <div class="meetings-grid">
     <div class="meeting-card" th:each="team : ${teams}">
-      <h3 th:text="${team.teamTitle}"></h3>
-      <p>📅 <span th:text="${#temporals.format(team.teamDate, 'yyyy-MM-dd HH:mm')}"></span></p>
-      <p>📍 <span th:text="${team.restaurantName}"></span></p>
-      <p>👥 <span th:text="${team.nowPeople}"></span>/ <span th:text="${team.maxPeople}"></span>명 참여중</p>
-      <p th:if="${sort == 'favoriteCount'}">⭐️ <span th:text="${team.favoriteCount}"></span>명</p>
-      <a class="link-button" th:href="@{/team/detail/{teamId}(teamId=${team.teamId})}">자세히 보기</a>
+      <div class="image-wrapper" style="width:100%; height:150px; overflow:hidden;">
+        <img th:src="@{${team.imageUrl != null ? team.imageUrl : '/img/food.jpg'}}"
+             alt="모임 이미지"
+             style="width:100%; height:100%; object-fit:cover;" />
+      </div>
+      <div class="team-details">
+        <h3 th:text="${team.teamTitle}"></h3>
+        <p>📅 <span th:text="${#temporals.format(team.teamDate, 'yyyy-MM-dd HH:mm')}"></span></p>
+        <p>📍 <span th:text="${team.restaurantName}"></span></p>
+        <p>👥 <span th:text="${team.nowPeople}"></span>/ <span th:text="${team.maxPeople}"></span>명 참여중</p>
+        <p th:if="${sort == 'favoriteCount'}">⭐️ <span th:text="${team.favoriteCount}"></span>명</p>
+        <a class="link-button" th:href="@{/team/detail/{teamId}(teamId=${team.teamId})}">자세히 보기</a>
+      </div>
     </div>
     <div th:if="${teams.isEmpty()}">
       <p>현재 등록된 모임이 없습니다.</p>
