@@ -2,14 +2,18 @@ package com.grepp.matnam.app.model.restaurant.service;
 
 import com.grepp.matnam.app.model.restaurant.code.SuggestionStatus;
 import com.grepp.matnam.app.model.restaurant.dto.RestaurantSuggestionDto;
+import com.grepp.matnam.app.model.restaurant.entity.Restaurant;
 import com.grepp.matnam.app.model.restaurant.entity.RestaurantSuggestion;
 import com.grepp.matnam.app.model.restaurant.repository.RestaurantSuggestionRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import org.springframework.util.StringUtils;
 
 @Service
 @RequiredArgsConstructor
@@ -57,5 +61,17 @@ public class RestaurantSuggestionService {
         suggestion.setSubmittedAt(LocalDateTime.now());
 
         suggestionRepository.save(suggestion);
+    }
+
+    public Page<RestaurantSuggestion> findByFilter(String status, String keyword, Pageable pageable) {
+        if (!status.isBlank() && StringUtils.hasText(keyword)) {
+            return suggestionRepository.findByStatusAndKeywordContaining(status, keyword, pageable);
+        } else if (StringUtils.hasText(status)) {
+            return suggestionRepository.findByStatus(status, pageable);
+        } else if (StringUtils.hasText(keyword)) {
+            return suggestionRepository.findByKeywordContaining(keyword, pageable);
+        } else {
+            return suggestionRepository.findAllSuggestion(pageable);
+        }
     }
 }

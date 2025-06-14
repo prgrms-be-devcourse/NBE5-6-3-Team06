@@ -9,14 +9,18 @@
   <h1>식당 관리</h1>
   <div class="tab-container">
     <div class="tabs">
-      <div class="tab active" data-tab="restaurant-list">식당 목록</div>
-      <div class="tab" data-tab="restaurant-suggestion-list">신규 등록 제안</div>
+      <a th:href="@{/admin/restaurant/list}" class="tab"
+         th:classappend="${activeTab == 'restaurant-list'} ? 'active'"
+         data-tab="restaurant-list">식당 목록</a>
+      <a th:href="@{/admin/restaurant/suggestion}" class="tab"
+         th:classappend="${activeTab == 'restaurant-suggestion'} ? 'active'" data-tab="restaurant-suggestion">신규 등록 제안</a>
     </div>
 
-    <div class="tab-content active" id="restaurant-list">
+    <div class="tab-content" id="restaurant-list" th:classappend="${activeTab == 'restaurant-list'} ? 'active'"
+         th:if="${activeTab == 'restaurant-list'}">
       <div class="action-bar">
         <button class="primary-btn" id="add-restaurant-btn"><i class="fas fa-plus"></i> 새 식당 추가</button>
-        <form method="get" action="/admin/restaurant">
+        <form method="get" action="/admin/restaurant/list">
           <div class="form-row">
             <div class="search-filter">
               <input type="text" name="keyword" placeholder="식당명을 입력하세요" th:value="${param.keyword}"/>
@@ -83,38 +87,61 @@
       </div>
       <div th:replace="~{admin/fragments/pagination :: pagination}"></div>
     </div>
-    <div class="tab-content" id="restaurant-suggestion-list" style="display: none;">
-      <table class="data-table">
-        <thead>
-        <tr>
-          <th>번호</th>
-          <th>식당명</th>
-          <th>주소</th>
-          <th>대표 메뉴</th>
-          <th>제안일</th>
-          <th>액션</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr th:each="suggestion, iterStat : ${suggestions}">
-          <td th:text="${iterStat.count}"></td>
-          <td th:text="${suggestion.name}" class="suggestion-row"
-              th:data-id="${suggestion.id}"
-              th:data-name="${suggestion.name}"
-              th:data-address="${suggestion.address}"
-              th:data-mainfood="${suggestion.mainFood}"
-              th:data-latitude="${suggestion.latitude}"
-              th:data-longitude="${suggestion.longitude}"></td>
-          <td th:text="${suggestion.address}"></td>
-          <td th:text="${suggestion.mainFood}"></td>
-          <td th:text="${#temporals.format(suggestion.submittedAt, 'yyyy-MM-dd')}"></td>
-          <td>
-            <button class="primary-btn approve-btn" th:data-id="${suggestion.id}">승인</button>
-            <button class="secondary-btn reject-btn" th:data-id="${suggestion.id}">거절</button>
-          </td>
-        </tr>
-        </tbody>
-      </table>
+
+    <div class="tab-content" id="restaurant-suggestion"
+         th:classappend="${activeTab == 'restaurant-suggestion'} ? 'active'"
+         th:if="${activeTab == 'restaurant-suggestion'}">
+      <form method="get" action="/admin/restaurant/suggestion">
+        <div class="filter-container">
+          <div class="search-filter">
+            <input type="text" name="keyword" placeholder="식당명, 제안자 아이디로 검색" th:value="${param.keyword}"/>
+            <button class="search-btn" type="submit"><i class="fas fa-search"></i></button>
+          </div>
+          <div class="filter-options">
+            <select name="status" id="restaurant-suggestion-filter" onchange="this.form.submit()">
+              <option value="" th:selected="${status == ''}">모든 상태</option>
+              <option value="APPROVED" th:selected="${status == 'APPROVED'}">승인</option>
+              <option value="REJECTED" th:selected="${status == 'REJECTED'}">거절</option>
+              <option value="PENDING" th:selected="${status == 'PENDING'}">대기</option>
+            </select>
+            <select name="sort" id="restaurant-suggestion-sort" onchange="this.form.submit()">
+              <option value="newest" th:selected="${sort == 'newest'}">최신순</option>
+              <option value="oldest" th:selected="${sort == 'oldest'}">오래된순</option>
+            </select>
+          </div>
+        </div>
+      </form>
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+          <tr>
+            <th>번호</th>
+            <th>식당명</th>
+            <th>주소</th>
+            <th>대표 메뉴</th>
+            <th>제안자</th>
+            <th>제안일</th>
+            <th>상태</th>
+            <th>액션</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr th:each="suggestion, iterStat : ${page.content()}">
+            <td th:text="${iterStat.count + (5 * (page.currentNumber()-1))}"></td>
+            <td th:text="${suggestion.name}"></td>
+            <td th:text="${suggestion.address}"></td>
+            <td th:text="${suggestion.mainFood}"></td>
+            <td th:text="${suggestion.submittedByUserId}"></td>
+            <td th:text="${#temporals.format(suggestion.submittedAt, 'yyyy-MM-dd hh:mm')}"></td>
+            <td><span class="badge" th:text="${suggestion.status.koreanName}"></span></td>
+            <td>
+              <button class="action-btn suggestion-edit" th:data-id="${suggestion.id}"><i class="fas fa-edit"></i></button>
+              <button class="action-btn suggestion-delete" th:data-id="${suggestion.id}"><i class="fas fa-trash"></i></button>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
       <div th:replace="~{admin/fragments/pagination :: pagination}"></div>
     </div>
   </div>
@@ -221,6 +248,7 @@
               <div class="checkbox-item">
                 <input type="checkbox" id="bigStore" name="restaurant-mood" value="bigStore">
                 <label for="bigStore">매장이 넓은</label>
+              </div>
             </div>
           </div>
         </form>
@@ -234,58 +262,6 @@
 </div>
 <th:block layout:fragment="script">
   <script th:src="@{/js/restaurant-management.js}"></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const tabs = document.querySelectorAll('.tab');
-      const contents = document.querySelectorAll('.tab-content');
-
-      tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-          tabs.forEach(t => t.classList.remove('active'));
-          tab.classList.add('active');
-
-          const target = tab.dataset.tab;
-          contents.forEach(c => {
-            if (c.id === target) {
-              c.style.display = 'block';
-              c.classList.add('active');
-            } else {
-              c.style.display = 'none';
-              c.classList.remove('active');
-            }
-          });
-        });
-      });
-
-      contents.forEach(content => {
-        content.style.display = content.classList.contains('active') ? 'block' : 'none';
-      });
-
-      document.querySelectorAll('.suggestion-row').forEach(row => {
-        row.addEventListener('click', () => {
-          document.getElementById('restaurantModal').style.display = 'block';
-          document.getElementById('restaurant-id').value = row.dataset.id;
-          document.getElementById('restaurant-name').value = row.dataset.name;
-          document.getElementById('restaurant-address').value = row.dataset.address;
-          document.getElementById('restaurant-main-menu').value = row.dataset.mainfood;
-
-          ['restaurant-category', 'restaurant-phone', 'restaurant-hours', 'restaurant-description', 'restaurant-google-rating'].forEach(id => {
-            document.getElementById(id).value = '';
-          });
-
-          document.querySelectorAll('input[name="restaurant-mood"]').forEach(cb => cb.checked = false);
-          document.getElementById('restaurant-modal-title').innerText = '식당 제안 승인';
-        });
-      });
-
-      document.querySelector('.close-modal').addEventListener('click', () => {
-        document.getElementById('restaurantModal').style.display = 'none';
-      });
-      document.querySelector('.cancel-btn').addEventListener('click', () => {
-        document.getElementById('restaurantModal').style.display = 'none';
-      });
-    });
-  </script>
 </th:block>
 </body>
 </html>

@@ -40,4 +40,6 @@ public class RestaurantSuggestion {
 
     @Column(name = "submitted_at", nullable = false)
     private LocalDateTime submittedAt = LocalDateTime.now();
+
+    private Boolean activated = true;
 }
