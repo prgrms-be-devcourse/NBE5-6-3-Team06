@@ -99,6 +99,8 @@ document.addEventListener('DOMContentLoaded', function() {
             mainFood: document.getElementById('restaurant-main-menu').value,
             summary: document.getElementById('restaurant-description').value,
             googleRating: parseFloat(document.getElementById('restaurant-google-rating').value),
+            latitude: document.getElementById('restaurant-latitude').value,
+            longitude: document.getElementById('restaurant-longitude').value
         };
 
         // 분위기 체크박스를 기반으로 각 mood 항목을 boolean으로 추가
@@ -214,12 +216,16 @@ document.addEventListener('DOMContentLoaded', function() {
             const name = this.getAttribute('data-name');
             const address = this.getAttribute('data-address');
             const mainFood = this.getAttribute('data-main-food');
+            const latitude = this.getAttribute('data-latitude');
+            const longitude = this.getAttribute('data-longitude');
             suggestion = suggestionId;
 
             document.getElementById('restaurant-modal-title').textContent = '식당 제안 등록';
             document.getElementById('restaurant-name').value = name;
             document.getElementById('restaurant-address').value = address;
             document.getElementById('restaurant-main-menu').value = mainFood;
+            document.getElementById('restaurant-latitude').value = latitude;
+            document.getElementById('restaurant-longitude').value = longitude;
 
             // 모달 표시
             document.getElementById('restaurantModal').style.display = 'block';
