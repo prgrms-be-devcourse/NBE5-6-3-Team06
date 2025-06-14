@@ -176,8 +176,8 @@ VALUES
     (1, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0,70, '5.0','2024-04-10 09:00:00', '2024-05-01 10:30:00', '서울 강남구 테헤란로21길 6', '분식', '96프로 어묵+곤약 떡볶이', '에그키친', '월 - 토 09:00 - 19:30', '분식임에도 건강을 생각한 메뉴구성으로 곤약떡볶이와 키토김밥, 저당 국물 닭발이 이곳의 주메뉴이다. 키토김밥 중에서도 저당 와사비 마요를 사용하여 저당 식단을 유지하고 싶은 사람들에게 좋은 분식집이다.', '0507-1377-7531', 37.500811, 127.034573);
 
 -- 식당 추가 제안 더미 데이터
-INSERT INTO restaurant_suggestions (name, address, main_food, latitude, longitude, submitted_by_user_id, status, submitted_at)
-VALUES ('맛남식당', '서울 강남구 테헤란로21길 6', '된장찌개', 37.5006989321566, 127.034653018054, 1, 'pending', NOW());
+INSERT INTO restaurant_suggestions (name, address, main_food, latitude, longitude, submitted_by_user_id, status, submitted_at, activated)
+VALUES ('맛남식당', '서울 강남구 테헤란로21길 6', '된장찌개', 37.5006989321566, 127.034653018054, 'user1', 'PENDING', NOW(), true);
 
 -- 최근 8개월 팀/모임(team) 더미 데이터 (2024년 10월 ~ 2025년 5월 15일)
 INSERT INTO team (

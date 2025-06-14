@@ -11,7 +11,7 @@ public class RestaurantSuggestionDto {
     private String mainFood;
     private Double latitude;
     private Double longitude;
-    private Long submittedByUserId;
+    private String submittedByUserId;
 
     public RestaurantSuggestionDto() {
     }
