@@ -10,6 +10,7 @@ import com.grepp.matnam.infra.response.ApiResponse;
 import com.grepp.matnam.infra.response.ResponseCode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -110,6 +111,19 @@ public class TeamApiController {
         }
     }
 
+    // 신청 취소
+    @PostMapping("/{teamId}/cancel-request")
+    public ResponseEntity<ApiResponse<String>> cancelRequest(@PathVariable Long teamId) {
+        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+        try {
+            teamService.cancelRequest(userId, teamId);
+            return ResponseEntity.ok(ApiResponse.success("신청이 취소되었습니다."));
+        } catch (Exception e) {
+            log.error("모임 신청 취소 실패: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error(ResponseCode.BAD_REQUEST, e.getMessage()));
+        }
+    }
 
     // 승인 처리
     @PostMapping("/{teamId}/approve/{participantId}")

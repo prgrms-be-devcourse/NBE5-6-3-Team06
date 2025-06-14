@@ -352,7 +352,8 @@
         <h4>모임 참여하기</h4>
         <span class="status-badge"
               th:if="${team.status.name() == 'RECRUITING'}">모집 중</span>
-        <span class="status-badge" th:if="${team.status.name() == 'FULL'}">모집 마감</span>
+        <span class="status-badge"
+              th:if="${team.status.name() == 'FULL'}">모집 마감</span>
         <span class="status-badge"
               th:if="${team.status.name() == 'COMPLETED'}">종료된 모임</span>
         <span class="status-badge"
@@ -370,6 +371,14 @@
               th:text="${isParticipant ? '이미 신청한 모임입니다.' : alreadyApplied ? '신청 대기 중' : '신청하기'}">
         신청하기
       </button>
+      <th:block
+          th:if="${participant != null and participant.participantStatus.name() == 'PENDING'}">
+        <button type="button" class="btn" id="cancelRequestButton"
+                th:data-team-id="${team.teamId}">
+          신청 취소
+        </button>
+      </th:block>
+
     </div>
     <div class="card">
       <h4>방장 정보</h4>
@@ -411,7 +420,7 @@
           </div>
 
           <div class="participant-info" th:unless="${participant.user != null}">
-            <span>탈퇴한 사용자</span>
+            <span>취소한 사용자</span>
           </div>
         </div>
         <hr/>
@@ -512,7 +521,7 @@
 
     // 참여자 승인 처리
     $('.approve-button').click(function (event) {
-      event.preventDefault(); // 기본 폼 제출 막기
+      event.preventDefault();
       var teamId = $(this).data('team-id');
       var participantId = $(this).data('participant-id');
       var form = $(this).closest('form');
@@ -581,6 +590,7 @@
     });
   });
 
+  // 즐겨찾기 기능
   document.addEventListener('DOMContentLoaded', () => {
     const btn = document.getElementById('favorite-btn');
     if (!btn) {
@@ -592,28 +602,24 @@
       const isFav = btn.classList.contains('favorited');
       try {
         if (isFav) {
-          // 즐겨찾기 취소
           const res = await fetch(`/api/favorite/remove/${teamId}`, {
             method: 'DELETE',
           });
           if (!res.ok) {
             throw new Error('취소 실패');
           }
-          // UI 토글
           btn.classList.remove('favorited');
           btn.querySelector('i').classList.replace('fa-star', 'fa-star-o');
           btn.querySelector('span').textContent = '즐겨찾기';
         } else {
-          // 즐겨찾기 추가
           const res = await fetch(`/api/favorite/add`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ teamId })
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({teamId})
           });
           if (!res.ok) {
             throw new Error('추가 실패');
           }
-          // UI 토글
           btn.classList.add('favorited');
           btn.querySelector('i').classList.replace('fa-star-o', 'fa-star');
           btn.querySelector('span').textContent = '즐겨찾기 취소';
@@ -621,6 +627,39 @@
       } catch (e) {
         alert(e.message || '오류가 발생했습니다.');
       }
+    });
+  });
+
+  // 신청 취소
+  document.addEventListener("DOMContentLoaded", () => {
+    const cancelBtn = document.getElementById("cancelRequestButton");
+    if (!cancelBtn) {
+      return;
+    }
+
+    cancelBtn.addEventListener("click", function () {
+      const teamId = this.dataset.teamId;
+
+      fetch(`/api/team/${teamId}/cancel-request`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({})
+      })
+      .then(res => res.json())
+      .then(data => {
+        console.log("응답 데이터:", data);
+        if (data.code === 'SUCCESS' || data.code === '0000') {
+          alert(data.data);
+          location.reload();
+        } else {
+          alert("신청 취소 실패: " + data.message);
+        }
+      })
+      .catch(err => {
+        alert("요청 처리 중 오류 발생: " + err.message);
+      });
     });
   });
 

@@ -518,6 +518,10 @@
           취소된 모임입니다
         </button>
       </div>
+      <form th:if="${#strings.toString(participantStatus) == 'APPROVED'}"
+            th:action="@{/team/{teamId}/leave(teamId=${team.teamId})}" method="post">
+        <button type="submit">나가기</button>
+      </form>
     </div>
 
     <div class="participant-list">

@@ -211,6 +211,7 @@ public class TeamController {
 
         String userId = authentication.getName();
         User user = userService.getUserById(userId);
+        model.addAttribute("user", user);
 
         boolean isLeader = team.getUser().getUserId().equals(userId);
         model.addAttribute("isLeader", isLeader);
@@ -224,14 +225,15 @@ public class TeamController {
 
         model.addAttribute("isParticipant", isParticipant);
         model.addAttribute("alreadyApplied", alreadyApplied);
-        model.addAttribute("user", user);
         model.addAttribute("isAnonymous", false);
+
+        Participant participant = participantRepository.findByUser_UserIdAndTeam_TeamId(userId, teamId);
+        model.addAttribute("participant", participant);
 
         model.addAttribute("isFavorite", favoriteService.existsByUserAndTeam(userId, teamId));
 
         return "team/teamDetail";
     }
-
 
     // 팀 페이지 조회
     @GetMapping("/page/{teamId}")
@@ -278,6 +280,15 @@ public class TeamController {
 
         return "team/teamPage";
     }
+
+    // 모임 나가기
+//    @PostMapping("/team/{teamId}/leave")
+//    public String leaveTeam(@PathVariable Long teamId) {
+//        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+//        teamService.leaveTeam(userId, teamId);
+//        return "redirect:user/mypage";
+//    }
+
 
 
     // 모임 완료 후 리뷰 작성 페이지 표시

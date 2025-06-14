@@ -320,6 +320,20 @@ public class TeamService {
         }
     }
 
+//    @Transactional
+//    public void leaveTeam(String userId, Long teamId) {
+//        Participant participant = participantRepository.findByUser_UserIdAndTeam_TeamId(userId, teamId);
+//        if (participant == null) {
+//            throw new IllegalStateException("참가 신청 내역이 없습니다.");
+//        }
+//
+//        if (participant.getParticipantStatus() != ParticipantStatus.APPROVED) {
+//            throw new IllegalStateException("수락된 상태에서만 나갈 수 있습니다");
+//        }
+//        participantRepository.delete(participant);
+//    }
+
+
     private void increaseTemperatureForCompletedTeam(Team team) {
         List<Participant> participants = participantRepository.findByTeam_TeamId(team.getTeamId());
 
@@ -645,5 +659,19 @@ public class TeamService {
 
     public List<SearchUserResponse> getUserByUserId(String keyword) {
         return userRepository.findUserByKeyword(keyword);
+    }
+
+    @Transactional
+    public void cancelRequest(String userId, Long teamId) {
+        Participant participant = participantRepository.findByUser_UserIdAndTeam_TeamId(userId, teamId);
+        if (participant == null) {
+            throw new IllegalStateException("참가 신청 내역이 없습니다.");
+        }
+
+        if (participant.getParticipantStatus() != ParticipantStatus.PENDING) {
+            throw new IllegalStateException("이미 수락된 경우 취소 불가");
+        }
+
+        participantRepository.delete(participant);
     }
 }

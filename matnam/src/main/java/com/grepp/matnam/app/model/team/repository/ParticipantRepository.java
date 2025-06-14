@@ -2,6 +2,7 @@ package com.grepp.matnam.app.model.team.repository;
 
 import com.grepp.matnam.app.model.team.code.ParticipantStatus;
 import com.grepp.matnam.app.model.team.entity.Participant;
+import com.grepp.matnam.app.model.team.entity.Team;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -30,5 +31,4 @@ public interface ParticipantRepository extends JpaRepository<Participant, Long>,
 
     // 특정 팀에 속하고 상태가 승인 상태인 사용자 조회
     List<Participant> findByTeam_TeamIdAndParticipantStatus(Long teamId, ParticipantStatus participantStatus);
-
 }
