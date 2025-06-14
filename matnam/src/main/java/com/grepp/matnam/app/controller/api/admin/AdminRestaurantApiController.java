@@ -4,6 +4,7 @@ import com.grepp.matnam.app.controller.api.admin.payload.RestaurantRankingRespon
 import com.grepp.matnam.app.controller.api.admin.payload.RestaurantRequest;
 import com.grepp.matnam.app.model.restaurant.service.RestaurantService;
 import com.grepp.matnam.app.model.restaurant.entity.Restaurant;
+import com.grepp.matnam.app.model.restaurant.service.RestaurantSuggestionService;
 import com.grepp.matnam.infra.error.exceptions.CommonException;
 import com.grepp.matnam.infra.response.ApiResponse;
 import com.grepp.matnam.infra.response.ResponseCode;
@@ -32,6 +33,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminRestaurantApiController {
 
     private final RestaurantService restaurantService;
+    private final RestaurantSuggestionService restaurantSuggestionService;
 
     @GetMapping("/{restaurantId}")
     @Operation(summary = "식당 상세 조회", description = "특정 식당의 상세를 조회합니다.")
@@ -82,5 +84,12 @@ public class AdminRestaurantApiController {
     public ResponseEntity<ApiResponse<List<RestaurantRankingResponse>>> getTop5Recommended() {
         List<RestaurantRankingResponse> top5Restaurants = restaurantService.getTop5RecommendedRestaurants();
         return ResponseEntity.ok(ApiResponse.success(top5Restaurants));
+    }
+
+    @DeleteMapping("/suggestion/{suggestionId}")
+    @Operation(summary = "식당 제안 비활성화", description = "특정 식당 제안을 비활성화합니다.")
+    public ResponseEntity<ApiResponse<Void>> unActivatedSuggestion(@PathVariable Long suggestionId) {
+        restaurantSuggestionService.unActivatedSuggestion(suggestionId);
+        return ResponseEntity.ok(ApiResponse.noContent());
     }
 }

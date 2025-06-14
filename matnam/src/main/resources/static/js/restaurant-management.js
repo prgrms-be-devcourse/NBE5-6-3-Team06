@@ -168,4 +168,32 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+
+    // 식당 제안 삭제 버튼 클릭 이벤트
+    document.querySelectorAll('.action-btn.suggestion-delete').forEach(button => {
+        button.addEventListener('click', function () {
+            const suggestionId = this.getAttribute('data-id');
+
+            if (confirm("정말 이 식당 제안을 삭제하시겠습니까?")) {
+                fetch(`/api/admin/restaurant/suggestion/${suggestionId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        alert("식당 제안이 삭제되었습니다.")
+                        window.location.href = "/admin/restaurant/suggestion";
+                    } else {
+                        alert("삭제 실패: 서버 오류");
+                    }
+                })
+                .catch(error => {
+                    console.error("에러 발생:", error);
+                    alert("삭제 중 문제가 발생했습니다.");
+                });
+            }
+        });
+    });
 });

@@ -1,6 +1,7 @@
 package com.grepp.matnam.app.model.restaurant.service;
 
 import com.grepp.matnam.app.model.restaurant.code.SuggestionStatus;
+import com.grepp.matnam.app.model.restaurant.document.RestaurantEmbedding;
 import com.grepp.matnam.app.model.restaurant.dto.RestaurantSuggestionDto;
 import com.grepp.matnam.app.model.restaurant.entity.Restaurant;
 import com.grepp.matnam.app.model.restaurant.entity.RestaurantSuggestion;
@@ -73,5 +74,12 @@ public class RestaurantSuggestionService {
         } else {
             return suggestionRepository.findAllSuggestion(pageable);
         }
+    }
+
+    @Transactional
+    public void unActivatedSuggestion(Long suggestionId) {
+        RestaurantSuggestion suggestion = suggestionRepository.findById(suggestionId)
+            .orElseThrow(() -> new IllegalArgumentException("식당을 찾을 수 없습니다."));
+        suggestion.setActivated(false);
     }
 }
