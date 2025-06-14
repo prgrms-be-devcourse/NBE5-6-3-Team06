@@ -33,6 +33,8 @@ public class User extends BaseEntity {
 
     private String nickname;
 
+    private Boolean activated = false;
+
     private int age;
 
     @Enumerated(EnumType.STRING)

@@ -47,10 +47,6 @@ public class RestaurantEmbedding {
     // 업데이트를 위해 활성화 값 넣음
     private Boolean activated = true;
 
-    private Double latitude;
-
-    private Double longitude;
-
     //평점
     private Float googleRating;
 
