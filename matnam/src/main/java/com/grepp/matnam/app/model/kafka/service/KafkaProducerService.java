@@ -23,7 +23,8 @@ public class KafkaProducerService {
             .templatePath("/mail/signup-verification")
             .properties(Map.of(
                 "nickname", signupRequest.getNickname(),
-                "userId", signupRequest.getUserId()
+                "userId", signupRequest.getUserId(),
+                "domain", "http://localhost:8080"
             ))
             .build();
 

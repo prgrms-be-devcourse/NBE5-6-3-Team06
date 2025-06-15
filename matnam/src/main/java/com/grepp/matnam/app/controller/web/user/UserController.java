@@ -11,12 +11,10 @@ import com.grepp.matnam.app.model.user.service.UserService;
 import com.grepp.matnam.app.model.user.entity.User;
 import com.grepp.matnam.infra.auth.AuthenticationUtils;
 import com.grepp.matnam.infra.auth.CookieUtils;
-import com.grepp.matnam.infra.auth.jwt.JwtProvider;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
@@ -247,5 +245,11 @@ public class UserController {
         }
 
         return "user/passwordChange";
+    }
+
+    // todo 수정 필요 -> 이메일 인증으로
+    @GetMapping("/verify")
+    public String verify(){
+        return "user/verify";
     }
 }
