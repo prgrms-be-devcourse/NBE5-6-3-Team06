@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>맛남 | 쿠폰 받기</title>
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <script th:src="@{/js/common-toast.js}"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/header.css}">
+    <link rel="stylesheet" th:href="@{/css/notification.css}">
+
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .page-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 8px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .page-header h1 {
+            margin: 0 0 0.5rem 0;
+            font-size: 2.5rem;
+        }
+
+        .page-header p {
+            margin: 0;
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .search-section {
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .search-form {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .search-input {
+            flex: 1;
+            min-width: 200px;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.25);
+        }
+
+        .search-btn {
+            background-color: #667eea;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        .search-btn:hover {
+            background-color: #5a6fd8;
+        }
+
+        .sort-select {
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background-color: white;
+            cursor: pointer;
+        }
+
+        .coupon-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .coupon-item {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+        }
+
+        .coupon-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .coupon-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            position: relative;
+        }
+
+        .coupon-header::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 10px solid #764ba2;
+        }
+
+        .restaurant-name {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .coupon-name {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        .discount-badge {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .coupon-body {
+            padding: 1.5rem;
+        }
+
+        .coupon-description {
+            color: #666;
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+
+        .coupon-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .detail-item {
+            text-align: center;
+            padding: 0.75rem;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+        }
+
+        .detail-label {
+            font-size: 0.8rem;
+            color: #666;
+            margin-bottom: 0.25rem;
+        }
+
+        .detail-value {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .progress-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+        }
+
+        .apply-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .apply-btn:hover:not(:disabled) {
+            background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+            transform: translateY(-2px);
+        }
+
+        .apply-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .deadline-warning {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 0.5rem;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .deadline-urgent {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            color: #dee2e6;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state h3 {
+            color: #6c757d;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state p {
+            color: #adb5bd;
+            margin: 0;
+        }
+
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+
+        .pagination {
+            display: flex;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            background-color: #fff;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .page-link {
+            display: inline-block;
+            padding: 0.7rem 1rem;
+            color: #333;
+            text-decoration: none;
+            border-right: 1px solid #eee;
+            min-width: 2rem;
+            text-align: center;
+            transition: background-color 0.2s;
+        }
+
+        .page-link:last-child {
+            border-right: none;
+        }
+
+        .page-link:hover {
+            background-color: #f5f5f5;
+        }
+
+        .page-link.active {
+            background-color: #667eea;
+            color: #fff;
+            font-weight: 500;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 0.5rem;
+            }
+
+            .coupon-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .search-form {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .search-input {
+                min-width: auto;
+            }
+
+            .coupon-details {
+                grid-template-columns: 1fr;
+            }
+
+            .page-header h1 {
+                font-size: 2rem;
+            }
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            color: #666;
+            text-decoration: none;
+            margin-bottom: 1rem;
+            font-weight: 500;
+        }
+
+        .back-link:hover {
+            color: #333;
+        }
+
+        .back-link i {
+            margin-right: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+<header th:replace="~{fragments/header :: siteHeader}"></header>
+
+<div class="container">
+    <a href="/" class="back-link">
+        <i class="fas fa-arrow-left"></i>
+        홈으로 돌아가기
+    </a>
+
+    <div class="page-header">
+        <h1><i class="fas fa-gift"></i> 쿠폰 받기</h1>
+        <p>다양한 식당의 할인 쿠폰을 받아보세요!</p>
+    </div>
+
+    <div class="search-section">
+        <form class="search-form" method="get" action="/coupons">
+            <input type="text"
+                   name="keyword"
+                   class="search-input"
+                   placeholder="쿠폰명 또는 식당명으로 검색..."
+                   th:value="${keyword}">
+
+            <select name="sort" class="sort-select" onchange="this.form.submit()">
+                <option value="newest" th:selected="${sort == 'newest'}">최신순</option>
+                <option value="name" th:selected="${sort == 'name'}">쿠폰명순</option>
+                <option value="restaurant" th:selected="${sort == 'restaurant'}">식당명순</option>
+                <option value="endAt" th:selected="${sort == 'endAt'}">마감임박순</option>
+            </select>
+
+            <button type="submit" class="search-btn">
+                <i class="fas fa-search"></i> 검색
+            </button>
+        </form>
+    </div>
+
+    <div th:if="${#lists.isEmpty(page.content())}" class="empty-state">
+        <i class="fas fa-ticket-alt"></i>
+        <h3>현재 발급 가능한 쿠폰이 없습니다</h3>
+        <p>새로운 쿠폰이 등록되면 알려드릴게요!</p>
+    </div>
+
+    <div th:if="${!#lists.isEmpty(page.content())}" class="coupon-grid">
+        <div th:each="coupon : ${page.content()}" class="coupon-item">
+
+            <div class="coupon-header">
+                <div class="restaurant-name" th:text="${coupon.restaurant.name}">식당명</div>
+                <div class="coupon-name" th:text="${coupon.name}">쿠폰명</div>
+                <div class="discount-badge">
+                    <span th:text="${coupon.discountValue}">10</span><span th:text="${coupon.discountType.name() == 'PERCENTAGE' ? '%' : '원'}">%</span> 할인
+                </div>
+            </div>
+
+            <div class="coupon-body">
+                <div th:if="${coupon.description}" class="coupon-description" th:text="${coupon.description}">
+                    쿠폰 설명
+                </div>
+
+                <div th:with="hoursLeft=${T(java.time.temporal.ChronoUnit).HOURS.between(T(java.time.LocalDateTime).now(), coupon.endAt)}"
+                     th:if="${hoursLeft <= 24 and hoursLeft > 0}"
+                     class="deadline-warning"
+                     th:classappend="${hoursLeft <= 6 ? 'deadline-urgent' : ''}">
+                    <i class="fas fa-clock"></i>
+                    <span th:text="${hoursLeft <= 6 ? '⚠️ 마감 임박! ' + hoursLeft + '시간 남음' : '📅 ' + hoursLeft + '시간 남음'}"></span>
+                </div>
+
+                <div class="coupon-details">
+                    <div class="detail-item">
+                        <div class="detail-label">유효기간</div>
+                        <div class="detail-value" th:text="${coupon.validDays} + '일'">30일</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">발급마감</div>
+                        <div class="detail-value" th:text="${#temporals.format(coupon.endAt, 'MM/dd HH:mm')}">12/31 23:59</div>
+                    </div>
+                </div>
+
+                <div class="progress-section">
+                    <div class="progress-label">
+                        <span>발급 현황</span>
+                        <span th:text="${coupon.issuedQuantity} + '/' + ${coupon.totalQuantity}">50/100</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill"
+                             th:style="'width: ' + ${coupon.totalQuantity > 0 ? (coupon.issuedQuantity * 100 / coupon.totalQuantity) : 0} + '%'">
+                        </div>
+                    </div>
+                </div>
+
+                <button class="apply-btn"
+                        th:if="${coupon.issuedQuantity < coupon.totalQuantity}"
+                        th:onclick="'applyCoupon(' + ${coupon.templateId} + ')'">
+                    <i class="fas fa-ticket-alt"></i> 쿠폰 받기
+                </button>
+
+                <button class="apply-btn" disabled th:if="${coupon.issuedQuantity >= coupon.totalQuantity}">
+                    <i class="fas fa-times"></i> 발급 완료
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div th:if="${page.content().size() > 0}" class="pagination-container">
+        <div class="pagination">
+            <a th:if="${page.currentNumber() > 1}"
+               th:href="@{/coupons(page=${page.prevPage()}, keyword=${keyword}, sort=${sort})}"
+               class="page-link">&laquo; 이전</a>
+
+            <span th:each="i : ${#numbers.sequence(page.startNumber(), page.endNumber())}">
+        <a th:if="${i != page.currentNumber()}"
+           th:href="@{/coupons(page=${i}, keyword=${keyword}, sort=${sort})}"
+           class="page-link" th:text="${i}">1</a>
+        <span th:if="${i == page.currentNumber()}"
+              class="page-link active" th:text="${i}">1</span>
+      </span>
+
+            <a th:if="${page.currentNumber() < page.endNumber()}"
+               th:href="@{/coupons(page=${page.nextPage()}, keyword=${keyword}, sort=${sort})}"
+               class="page-link">다음 &raquo;</a>
+        </div>
+    </div>
+</div>
+
+<script src="/js/auth.js"></script>
+<script src="/js/header.js"></script>
+<script src="/js/notification-common.js"></script>
+<script>
+    async function applyCoupon(templateId) {
+        if (!auth.isLoggedIn()) {
+            showToast('로그인이 필요합니다.', 'error');
+            setTimeout(() => {
+                window.location.href = '/user/signin';
+            }, 1000);
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/user/coupons/${templateId}/apply`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${auth.getAccessToken()}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                showToast('쿠폰 신청이 완료되었습니다! 선착순 결과를 확인해보세요.', 'success');
+
+                const button = event.target.closest('.apply-btn');
+                button.disabled = true;
+                button.innerHTML = '<i class="fas fa-check"></i> 신청 완료';
+
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+            } else {
+                showToast(result.message || '쿠폰 신청에 실패했습니다.', 'error');
+            }
+        } catch (error) {
+            console.error('Error applying coupon:', error);
+            showToast('네트워크 오류가 발생했습니다.', 'error');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+    });
+</script>
+</body>
+</html>

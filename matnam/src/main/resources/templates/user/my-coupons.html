@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>맛남 | 내 쿠폰</title>
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <script th:src="@{/js/common-toast.js}"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/header.css}">
+    <link rel="stylesheet" th:href="@{/css/notification.css}">
+
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .page-header {
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .page-header h1 {
+            margin: 0 0 0.5rem 0;
+            color: #333;
+        }
+
+        .page-header p {
+            margin: 0;
+            color: #666;
+        }
+
+        .coupon-tabs {
+            display: flex;
+            background-color: #fff;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .coupon-tab {
+            flex: 1;
+            padding: 1rem;
+            background-color: #f8f9fa;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #666;
+            border-right: 1px solid #e9ecef;
+            transition: all 0.2s ease;
+        }
+
+        .coupon-tab:last-child {
+            border-right: none;
+        }
+
+        .coupon-tab.active {
+            background-color: #000;
+            color: #fff;
+        }
+
+        .coupon-tab:hover:not(.active) {
+            background-color: #e9ecef;
+        }
+
+        .coupon-tab .count {
+            display: block;
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-top: 0.5rem;
+        }
+
+        .coupon-content {
+            display: none;
+        }
+
+        .coupon-content.active {
+            display: block;
+        }
+
+        .coupon-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .coupon-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            padding: 1.5rem;
+            color: white;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .coupon-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .coupon-card.used {
+            background: linear-gradient(135deg, #bdc3c7 0%, #95a5a6 100%);
+        }
+
+        .coupon-card.expired {
+            background: linear-gradient(135deg, #f39c12 0%, #e74c3c 100%);
+        }
+
+        .coupon-card::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            right: -10px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: #f9f9f9;
+            transform: translateY(-50%);
+        }
+
+        .coupon-card::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: -10px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: #f9f9f9;
+            transform: translateY(-50%);
+        }
+
+        .coupon-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .restaurant-name {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .coupon-name {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .discount-value {
+            font-size: 2rem;
+            font-weight: bold;
+            text-align: right;
+        }
+
+        .discount-type {
+            font-size: 0.8rem;
+            opacity: 0.8;
+            text-align: right;
+            margin-top: 0.2rem;
+        }
+
+        .coupon-body {
+            margin-bottom: 1rem;
+        }
+
+        .coupon-code {
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 0.5rem;
+            border-radius: 6px;
+            text-align: center;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            letter-spacing: 2px;
+        }
+
+        .coupon-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            opacity: 0.9;
+        }
+
+        .status-badge {
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .status-badge.issued {
+            background-color: rgba(40, 167, 69, 0.9);
+        }
+
+        .status-badge.used {
+            background-color: rgba(108, 117, 125, 0.9);
+        }
+
+        .status-badge.expired {
+            background-color: rgba(220, 53, 69, 0.9);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            color: #dee2e6;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state h3 {
+            color: #6c757d;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state p {
+            color: #adb5bd;
+            margin: 0;
+        }
+
+        .qr-button {
+            background-color: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            margin-top: 1rem;
+            width: 100%;
+        }
+
+        .qr-button:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.8);
+        }
+
+        .qr-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* QR 모달 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background-color: #fff;
+            margin: 10% auto;
+            padding: 2rem;
+            border-radius: 12px;
+            width: 400px;
+            max-width: 90%;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-header h2 {
+            margin: 0 0 0.5rem 0;
+            color: #333;
+        }
+
+        .modal-header p {
+            margin: 0;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .qr-code-container {
+            background-color: #fff;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border: 2px solid #e9ecef;
+        }
+
+        .qr-code {
+            width: 200px;
+            height: 200px;
+            margin: 0 auto;
+            background-color: #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+        }
+
+        .coupon-details {
+            background-color: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            text-align: left;
+        }
+
+        .coupon-details .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .coupon-details .detail-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .close-modal {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            margin-top: 1rem;
+        }
+
+        .close-modal:hover {
+            background-color: #5a6268;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 0.5rem;
+            }
+
+            .coupon-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .coupon-tabs {
+                flex-direction: column;
+            }
+
+            .coupon-tab {
+                border-right: none;
+                border-bottom: 1px solid #e9ecef;
+            }
+
+            .coupon-tab:last-child {
+                border-bottom: none;
+            }
+
+            .modal-content {
+                margin: 5% auto;
+                width: 95%;
+            }
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            color: #666;
+            text-decoration: none;
+            margin-bottom: 1rem;
+            font-weight: 500;
+        }
+
+        .back-link:hover {
+            color: #333;
+        }
+
+        .back-link i {
+            margin-right: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+<header th:replace="~{fragments/header :: siteHeader}"></header>
+
+<div class="container">
+    <a href="/user/mypage" class="back-link">
+        <i class="fas fa-arrow-left"></i>
+        마이페이지로 돌아가기
+    </a>
+
+    <div class="page-header">
+        <h1><i class="fas fa-ticket-alt"></i> 내 쿠폰</h1>
+        <p>보유하고 있는 쿠폰을 확인하고 사용하세요</p>
+    </div>
+
+    <div class="coupon-tabs">
+        <button class="coupon-tab active" data-tab="all">
+            전체
+            <span class="count" th:text="${#lists.size(allCoupons)}">0</span>
+        </button>
+        <button class="coupon-tab" data-tab="available">
+            사용 가능
+            <span class="count" th:text="${#lists.size(availableCoupons)}">0</span>
+        </button>
+        <button class="coupon-tab" data-tab="used">
+            사용 완료
+            <span class="count" th:text="${#lists.size(usedCoupons)}">0</span>
+        </button>
+        <button class="coupon-tab" data-tab="expired">
+            만료됨
+            <span class="count" th:text="${#lists.size(expiredCoupons)}">0</span>
+        </button>
+    </div>
+
+    <div id="all-content" class="coupon-content active">
+        <div th:if="${#lists.isEmpty(allCoupons)}" class="empty-state">
+            <i class="fas fa-ticket-alt"></i>
+            <h3>아직 보유한 쿠폰이 없습니다</h3>
+            <p>쿠폰 이벤트에 참여하여 할인 혜택을 받아보세요!</p>
+        </div>
+
+        <div th:if="${!#lists.isEmpty(allCoupons)}" class="coupon-grid">
+            <div th:each="coupon : ${allCoupons}"
+                 class="coupon-card"
+                 th:classappend="${#strings.toLowerCase(coupon.status.name())}">
+
+                <div class="coupon-header">
+                    <div>
+                        <div class="restaurant-name" th:text="${coupon.restaurantName}">식당명</div>
+                        <div class="coupon-name" th:text="${coupon.couponName}">쿠폰명</div>
+                    </div>
+                    <div>
+                        <div class="discount-value">
+                            <span th:text="${coupon.discountValue}">10</span><span th:text="${coupon.discountType.name() == 'PERCENTAGE' ? '%' : '원'}">%</span>
+                        </div>
+                        <div class="discount-type" th:text="${coupon.discountType.name() == 'PERCENTAGE' ? '할인' : '할인'}">할인</div>
+                    </div>
+                </div>
+
+                <div class="coupon-body">
+                    <div class="coupon-code" th:text="${coupon.couponCode}">ABC123DEF456</div>
+                </div>
+
+                <div class="coupon-footer">
+                    <div>
+                        <div th:text="'발급: ' + ${#temporals.format(coupon.issuedAt, 'MM/dd')}">발급: 01/15</div>
+                        <div th:text="'만료: ' + ${#temporals.format(coupon.expiresAt, 'MM/dd')}">만료: 02/15</div>
+                    </div>
+                    <span class="status-badge"
+                          th:classappend="${#strings.toLowerCase(coupon.status.name())}"
+                          th:text="${coupon.status.name() == 'ISSUED' ? '사용가능' : (coupon.status.name() == 'USED' ? '사용완료' : '만료됨')}">
+            사용가능
+          </span>
+                </div>
+
+                <button th:if="${coupon.status.name() == 'ISSUED'}"
+                        class="qr-button show-qr-btn"
+                        th:data-coupon-code="${coupon.couponCode}"
+                        th:data-restaurant-name="${coupon.restaurantName}"
+                        th:data-coupon-name="${coupon.couponName}"
+                        th:data-discount-value="${coupon.discountValue}"
+                        th:data-discount-type="${coupon.discountType.name()}">
+                    <i class="fas fa-qrcode"></i> QR코드 보기
+                </button>
+
+                <button th:if="${coupon.status.name() != 'ISSUED'}"
+                        class="qr-button" disabled>
+                    <i class="fas fa-ban"></i>
+                    <span th:text="${coupon.status.name() == 'USED' ? '사용 완료' : '만료됨'}">사용 불가</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="available-content" class="coupon-content">
+        <div th:if="${#lists.isEmpty(availableCoupons)}" class="empty-state">
+            <i class="fas fa-ticket-alt"></i>
+            <h3>사용 가능한 쿠폰이 없습니다</h3>
+            <p>새로운 쿠폰을 발급받아보세요!</p>
+        </div>
+
+        <div th:if="${!#lists.isEmpty(availableCoupons)}" class="coupon-grid">
+            <div th:each="coupon : ${availableCoupons}" class="coupon-card available">
+                <div class="coupon-header">
+                    <div>
+                        <div class="restaurant-name" th:text="${coupon.restaurantName}">식당명</div>
+                        <div class="coupon-name" th:text="${coupon.couponName}">쿠폰명</div>
+                    </div>
+                    <div>
+                        <div class="discount-value">
+                            <span th:text="${coupon.discountValue}">10</span><span th:text="${coupon.discountType.name() == 'PERCENTAGE' ? '%' : '원'}">%</span>
+                        </div>
+                        <div class="discount-type">할인</div>
+                    </div>
+                </div>
+
+                <div class="coupon-body">
+                    <div class="coupon-code" th:text="${coupon.couponCode}">ABC123DEF456</div>
+                </div>
+
+                <div class="coupon-footer">
+                    <div>
+                        <div th:text="'발급: ' + ${#temporals.format(coupon.issuedAt, 'MM/dd')}">발급: 01/15</div>
+                        <div th:text="'만료: ' + ${#temporals.format(coupon.expiresAt, 'MM/dd')}">만료: 02/15</div>
+                    </div>
+                    <span class="status-badge available">사용가능</span>
+                </div>
+
+                <button class="qr-button show-qr-btn"
+                        th:data-coupon-code="${coupon.couponCode}"
+                        th:data-restaurant-name="${coupon.restaurantName}"
+                        th:data-coupon-name="${coupon.couponName}"
+                        th:data-discount-value="${coupon.discountValue}"
+                        th:data-discount-type="${coupon.discountType.name()}">
+                    <i class="fas fa-qrcode"></i> QR코드 보기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="used-content" class="coupon-content">
+        <div th:if="${#lists.isEmpty(usedCoupons)}" class="empty-state">
+            <i class="fas fa-check-circle"></i>
+            <h3>사용 완료된 쿠폰이 없습니다</h3>
+            <p>쿠폰을 사용하면 여기에 표시됩니다</p>
+        </div>
+
+        <div th:if="${!#lists.isEmpty(usedCoupons)}" class="coupon-grid">
+            <div th:each="coupon : ${usedCoupons}" class="coupon-card used">
+                <div class="coupon-header">
+                    <div>
+                        <div class="restaurant-name" th:text="${coupon.restaurantName}">식당명</div>
+                        <div class="coupon-name" th:text="${coupon.couponName}">쿠폰명</div>
+                    </div>
+                    <div>
+                        <div class="discount-value">
+                            <span th:text="${coupon.discountValue}">10</span><span th:text="${coupon.discountType.name() == 'PERCENTAGE' ? '%' : '원'}">%</span>
+                        </div>
+                        <div class="discount-type">할인</div>
+                    </div>
+                </div>
+
+                <div class="coupon-body">
+                    <div class="coupon-code" th:text="${coupon.couponCode}">ABC123DEF456</div>
+                </div>
+
+                <div class="coupon-footer">
+                    <div>
+                        <div th:text="'발급: ' + ${#temporals.format(coupon.issuedAt, 'MM/dd')}">발급: 01/15</div>
+                        <div th:text="'만료: ' + ${#temporals.format(coupon.expiresAt, 'MM/dd')}">만료: 02/15</div>
+                    </div>
+                    <span class="status-badge used">사용완료</span>
+                </div>
+
+                <button class="qr-button" disabled>
+                    <i class="fas fa-check"></i> 사용 완료
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="expired-content" class="coupon-content">
+        <div th:if="${#lists.isEmpty(expiredCoupons)}" class="empty-state">
+            <i class="fas fa-clock"></i>
+            <h3>만료된 쿠폰이 없습니다</h3>
+            <p>유효 기간이 지난 쿠폰이 여기에 표시됩니다</p>
+        </div>
+
+        <div th:if="${!#lists.isEmpty(expiredCoupons)}" class="coupon-grid">
+            <div th:each="coupon : ${expiredCoupons}" class="coupon-card expired">
+                <div class="coupon-header">
+                    <div>
+                        <div class="restaurant-name" th:text="${coupon.restaurantName}">식당명</div>
+                        <div class="coupon-name" th:text="${coupon.couponName}">쿠폰명</div>
+                    </div>
+                    <div>
+                        <div class="discount-value">
+                            <span th:text="${coupon.discountValue}">10</span><span th:text="${coupon.discountType.name() == 'PERCENTAGE' ? '%' : '원'}">%</span>
+                        </div>
+                        <div class="discount-type">할인</div>
+                    </div>
+                </div>
+
+                <div class="coupon-body">
+                    <div class="coupon-code" th:text="${coupon.couponCode}">ABC123DEF456</div>
+                </div>
+
+                <div class="coupon-footer">
+                    <div>
+                        <div th:text="'발급: ' + ${#temporals.format(coupon.issuedAt, 'MM/dd')}">발급: 01/15</div>
+                        <div th:text="'만료: ' + ${#temporals.format(coupon.expiresAt, 'MM/dd')}">만료: 02/15</div>
+                    </div>
+                    <span class="status-badge expired">만료됨</span>
+                </div>
+
+                <button class="qr-button" disabled>
+                    <i class="fas fa-times"></i> 만료됨
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="qrModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>쿠폰 QR 코드</h2>
+            <p>음식점에서 이 QR 코드를 보여주세요</p>
+        </div>
+
+        <div class="qr-code-container">
+            <div class="qr-code" id="qrCodeDisplay">
+                <i class="fas fa-qrcode" style="font-size: 3rem; color: #ccc;"></i>
+            </div>
+        </div>
+
+        <div class="coupon-details" id="couponDetails">
+        </div>
+
+        <button class="close-modal" onclick="closeQRModal()">닫기</button>
+    </div>
+</div>
+
+<script src="/js/auth.js"></script>
+<script src="/js/header.js"></script>
+<script src="/js/notification-common.js"></script>
+<script th:src="@{/js/user-coupons.js}"></script>
+</body>
+</html>
