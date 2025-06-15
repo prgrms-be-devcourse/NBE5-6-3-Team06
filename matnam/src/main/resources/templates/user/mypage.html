@@ -630,6 +630,47 @@
       </div>
     </div>
 
+    <div class="profile-section">
+      <h4>내 쿠폰</h4>
+      <div class="info-item">
+        <strong>보유 쿠폰:</strong>
+        <span th:text="${couponStats != null ? couponStats.totalCount : 0}">0</span>개
+      </div>
+      <div class="info-item" style="font-size: 0.9rem; color: #666;">
+        사용가능 <span th:text="${couponStats != null ? couponStats.availableCount : 0}">0</span>개 ·
+        사용완료 <span th:text="${couponStats != null ? couponStats.usedCount : 0}">0</span>개 ·
+        만료 <span th:text="${couponStats != null ? couponStats.expiredCount : 0}">0</span>개
+      </div>
+      <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
+        <button onclick="location.href='/user/coupons'"
+                style="
+              flex: 1;
+              background: #000;
+              color: #fff;
+              border: none;
+              padding: 10px;
+              font-weight: bold;
+              border-radius: 4px;
+              cursor: pointer;
+              transition: background 0.2s ease;">
+          내 쿠폰 보기
+        </button>
+        <button onclick="location.href='/coupons'"
+                style="
+              flex: 1;
+              background: #667eea;
+              color: #fff;
+              border: none;
+              padding: 10px;
+              font-weight: bold;
+              border-radius: 4px;
+              cursor: pointer;
+              transition: background 0.2s ease;">
+          새 쿠폰 받기
+        </button>
+      </div>
+    </div>
+
     <div class="stats-section">
       <h4>활동 통계</h4>
       <p>주최한 모임: <span th:text="${stats.leaderCount}">5</span>회</p>
