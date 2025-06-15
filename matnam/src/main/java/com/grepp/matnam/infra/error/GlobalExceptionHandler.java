@@ -1,5 +1,6 @@
 package com.grepp.matnam.infra.error;
 
+import com.grepp.matnam.infra.error.exceptions.CommonException;
 import com.grepp.matnam.infra.response.ApiResponse;
 import com.grepp.matnam.infra.response.Messages;
 import com.grepp.matnam.infra.response.ResponseCode;
@@ -87,9 +88,24 @@ public class GlobalExceptionHandler {
         }
     }
 
+    @ExceptionHandler(CommonException.class)
+    public ResponseEntity<ApiResponse> handleCommonException(CommonException e) {
+        log.info("CommonException 발생: {}", e.getMessage());
+        return ResponseEntity
+            .status(e.code().status())
+            .body(new ApiResponse(e.code().code(), e.getMessage(), null));
+    }
+
+
     @ExceptionHandler(Exception.class)
     public Object handleException(Exception ex, HttpServletRequest request) {
-        log.error("서버 오류 발생: {}", ex.getMessage(), ex);
+        if (ex instanceof CommonException commonEx) {
+            log.info("🔥 CommonException (from Exception.class) 처리됨: {}", commonEx.getMessage());
+            return ResponseEntity
+                .status(commonEx.code().status())
+                .body(new ApiResponse(commonEx.code().code(), commonEx.getMessage(), null));
+        }
+
 
         String acceptHeader = request.getHeader("Accept");
 

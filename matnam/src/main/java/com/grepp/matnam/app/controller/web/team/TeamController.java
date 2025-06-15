@@ -20,6 +20,7 @@ import jakarta.validation.Valid;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,6 +29,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
@@ -194,7 +196,10 @@ public class TeamController {
 
         // approved 상태인 참가자들만 가져와서 리스트로 변환 - 뷰로 사용
         List<Participant> approvedParticipants = team.getParticipants().stream()
-            .filter(participant -> participant.getParticipantStatus() == ParticipantStatus.APPROVED)
+            .filter(participant ->
+                participant.getParticipantStatus() == ParticipantStatus.APPROVED &&
+                    participant.isActivated()
+            )
             .toList();
         model.addAttribute("participants", approvedParticipants);
 
@@ -211,27 +216,33 @@ public class TeamController {
 
         String userId = authentication.getName();
         User user = userService.getUserById(userId);
+        model.addAttribute("user", user);
 
         boolean isLeader = team.getUser().getUserId().equals(userId);
         model.addAttribute("isLeader", isLeader);
 
         // 현재 사용자가 이미 팀에 참여했는지
-        boolean isParticipant = participantRepository.existsByUser_UserIdAndTeam_TeamIdAndParticipantStatus(
+        boolean isParticipant = participantRepository
+            .existsByUser_UserIdAndTeam_TeamIdAndParticipantStatusAndActivatedTrue(
             userId, teamId, ParticipantStatus.APPROVED);
         // 현재 사용자가 이미 신청했는지
-        boolean alreadyApplied = participantRepository.existsByUser_UserIdAndTeam_TeamIdAndParticipantStatus(
+        boolean alreadyApplied = participantRepository
+            .existsByUser_UserIdAndTeam_TeamIdAndParticipantStatus(
             userId, teamId, ParticipantStatus.PENDING);
 
         model.addAttribute("isParticipant", isParticipant);
         model.addAttribute("alreadyApplied", alreadyApplied);
-        model.addAttribute("user", user);
         model.addAttribute("isAnonymous", false);
+
+        Optional<Participant> optionalParticipant = participantRepository.findByUser_UserIdAndTeam_TeamIdAndActivatedTrue(userId, teamId);
+        Participant participant = optionalParticipant.orElse(null);
+        model.addAttribute("participant", participant);
+
 
         model.addAttribute("isFavorite", favoriteService.existsByUserAndTeam(userId, teamId));
 
         return "team/teamDetail";
     }
-
 
     // 팀 페이지 조회
     @GetMapping("/page/{teamId}")
@@ -256,8 +267,12 @@ public class TeamController {
         }
 
         List<Participant> approvedParticipants = team.getParticipants().stream()
-            .filter(participant -> participant.getRole() == Role.MEMBER)
+            .filter(participant ->
+                participant.getRole() == Role.MEMBER &&
+                    participant.isActivated()
+            )
             .toList();
+
         model.addAttribute("participants", approvedParticipants);
 
         // 주최자인지 확인
@@ -268,17 +283,14 @@ public class TeamController {
             .equals(com.grepp.matnam.app.model.user.code.Role.ROLE_ADMIN);
 
         if (!isAdmin) {
-            log.info("Checking if user {} is a participant in team {}", userId, teamId);
-            Participant participant = participantRepository.findByUser_UserIdAndTeam_TeamId(userId,
+            Optional<Participant> participant = participantRepository.findByUser_UserIdAndTeam_TeamIdAndActivatedTrue(userId,
                 teamId);
-            if (participant == null) {
-                return "redirect:/team/" + teamId + "?error=notParticipant";
-            }
-        }
+            participant.orElseThrow(() ->
+                new AccessDeniedException("모임 참여자가 아닙니다."));
 
+        }
         return "team/teamPage";
     }
-
 
     // 모임 완료 후 리뷰 작성 페이지 표시
     @GetMapping("/{teamId}/reviews")

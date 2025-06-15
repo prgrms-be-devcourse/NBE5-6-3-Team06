@@ -10,6 +10,8 @@ import com.grepp.matnam.infra.response.ApiResponse;
 import com.grepp.matnam.infra.response.ResponseCode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -19,6 +21,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -110,6 +113,19 @@ public class TeamApiController {
         }
     }
 
+    // 신청 취소
+    @PostMapping("/{teamId}/cancel-request")
+    public ResponseEntity<ApiResponse<String>> cancelRequest(@PathVariable Long teamId) {
+        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+        try {
+            teamService.cancelRequest(userId, teamId);
+            return ResponseEntity.ok(ApiResponse.success("신청이 취소되었습니다."));
+        } catch (Exception e) {
+            log.error("모임 신청 취소 실패: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error(ResponseCode.BAD_REQUEST, e.getMessage()));
+        }
+    }
 
     // 승인 처리
     @PostMapping("/{teamId}/approve/{participantId}")
@@ -136,6 +152,24 @@ public class TeamApiController {
                 .body(ApiResponse.error(ResponseCode.INTERNAL_SERVER_ERROR, e.getMessage()));
         }
     }
+
+    // 선택 승인 처리
+    @PostMapping("/{teamId}/approve-selected")
+    public ResponseEntity<ApiResponse<String>> approveSelectedParticipants(
+        @PathVariable Long teamId,
+        @RequestBody List<Long> participantIds) {
+
+        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        try {
+            int count = teamService.approveSelectedParticipants(userId, teamId, participantIds);
+            return ResponseEntity.ok(ApiResponse.success(count + "명 수락 완료"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest()
+                .body(ApiResponse.error(ResponseCode.BAD_REQUEST, e.getMessage()));
+        }
+    }
+
 
     // 거절 처리
     @PostMapping("/{teamId}/reject/{participantId}")
@@ -181,6 +215,29 @@ public class TeamApiController {
                 .body(ApiResponse.error(ResponseCode.INTERNAL_SERVER_ERROR, e.getMessage()));
         }
     }
+
+    // 모임 나가기
+    @PostMapping("/{teamId}/leave")
+    public ResponseEntity<ApiResponse<String>> leaveTeam(@PathVariable Long teamId) {
+        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+        try {
+            teamService.leaveTeam(userId, teamId);
+            return ResponseEntity.ok(ApiResponse.success("모임에서 나갔습니다."));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest()
+                .body(ApiResponse.error(ResponseCode.BAD_REQUEST, e.getMessage()));
+        }
+    }
+
+    // 강제 탈퇴
+    @PostMapping("/{teamId}/kick/{participantId}")
+    public ResponseEntity<ApiResponse<String>> kickParticipant(
+        @PathVariable Long participantId) {
+        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+        teamService.kickParticipant(participantId, userId);
+        return ResponseEntity.ok(ApiResponse.success("참여자를 강제 탈퇴시켰습니다."));
+    }
+
 
     private TeamDto convertToTeamDto(Team team) {
         TeamDto teamDto = new TeamDto();

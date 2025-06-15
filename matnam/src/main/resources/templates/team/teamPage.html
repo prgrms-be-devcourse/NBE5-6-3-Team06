@@ -518,6 +518,14 @@
           취소된 모임입니다
         </button>
       </div>
+      <button type="button"
+              id="leaveTeamButton"
+              th:if="${ not isLeader}"
+              th:data-team-id="${team.teamId}"
+              class="btn btn-danger">
+        모임 나가기
+      </button>
+
     </div>
 
     <div class="participant-list">
@@ -585,12 +593,17 @@
     </div>
     <div class="participant-list">
       <div class="participant" th:each="participant : ${participants}"
-           th:if="${participant.participantStatus != null && #strings.toString(participant.participantStatus) == 'APPROVED'}">
+           th:if="${participant.participantStatus != null && #strings.toString(participant.participantStatus) == 'APPROVED' and participant.activated}">
         <div class="participant-info">
           <!-- 사용자 닉네임 -->
           <div class="info-item">
             <strong>닉네임:</strong>
             <span th:text="${participant.user.nickname}">참여자 닉네임</span>
+            <button class="kick-button"
+                    th:if="${isLeader}"
+                    th:attr="data-participant-id=${participant.participantId}, data-team-id=${team.teamId}">
+              강제 탈퇴
+            </button>
           </div>
 
           <!-- 사용자 나이 -->
@@ -629,7 +642,7 @@
         </div>
       </div>
 
-      <div class="participant" th:if="${#lists.isEmpty(participants)}">
+      <div class="participant" th:if="${participants == null or #lists.isEmpty(participants.?[participantStatus.name() == 'APPROVED' and activated])}">
         <span>현재 참여자가 없습니다.</span>
       </div>
     </div>
@@ -920,6 +933,64 @@
 
           button.prop('disabled', false).text('모임 완료하기');
         }
+      });
+    });
+  });
+
+  document.addEventListener("DOMContentLoaded", () =>{
+    const leaveBtn = document.getElementById("leaveTeamButton");
+    if(!leaveBtn) return;
+
+    leaveBtn.addEventListener("click", function () {
+      const teamId = this.dataset.teamId;
+      if (!confirm("정말 모임에서 나가시겠습니까?")) return;
+
+      fetch(`/api/team/${teamId}/leave`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({})
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.code === '0000') {
+          alert(data.data);
+          location.href = "/user/mypage";
+        } else {
+          alert("나가기 실패: " + data.message);
+        }
+      })
+      .catch(err => {
+        alert("오류 발생: " + err.message);
+      });
+    });
+  });
+
+  document.addEventListener("DOMContentLoaded", () => {
+    document.body.addEventListener("click", function (event) {
+      const button = event.target.closest(".kick-button");
+      if (!button) return;
+
+      const teamId = button.dataset.teamId;
+      const participantId = button.dataset.participantId;
+
+      if (!confirm("정말 이 참가자를 강제 탈퇴시키겠습니까?")) return;
+
+      fetch(`/api/team/${teamId}/kick/${participantId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({})
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.code === '0000') {
+          alert(data.data);
+          location.reload();
+        } else {
+          alert("탈퇴 실패: " + data.message);
+        }
+      })
+      .catch(err => {
+        alert("오류 발생: " + err.message);
       });
     });
   });
