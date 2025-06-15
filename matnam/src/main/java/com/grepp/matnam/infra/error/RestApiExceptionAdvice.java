@@ -6,6 +6,7 @@ import com.grepp.matnam.infra.response.ResponseCode;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authorization.AuthorizationDeniedException;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice(basePackages = "com.grepp.matnam.app.controller.api")
 @Slf4j
+@Order(1)
 public class RestApiExceptionAdvice {
     
     @ExceptionHandler(MethodArgumentNotValidException.class)

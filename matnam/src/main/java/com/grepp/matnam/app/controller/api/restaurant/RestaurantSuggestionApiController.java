@@ -32,7 +32,7 @@ public class RestaurantSuggestionApiController {
             return ResponseEntity.status(401).build();
         }
 
-        Long userId = Long.parseLong(auth.getName());
+        String userId = auth.getName();
 
         service.saveSuggestion(dto, userId);
         return ResponseEntity.ok().build();

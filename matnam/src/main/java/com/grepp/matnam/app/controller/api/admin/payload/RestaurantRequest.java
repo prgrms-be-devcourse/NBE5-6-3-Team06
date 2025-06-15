@@ -39,6 +39,11 @@ public class RestaurantRequest {
     @Max(value = 5, message = "평점은 최대 5점입니다.")
     private Float googleRating;
 
+    @NotNull
+    private Double latitude;
+    @NotNull
+    private Double longitude;
+
     private boolean goodTalk;
     private boolean manyDrink;
     private boolean goodMusic;
@@ -89,6 +94,8 @@ public class RestaurantRequest {
         restaurant.setLongStay(longStay);
         restaurant.setBigStore(bigStore);
         restaurant.setGoogleRating(googleRating);
+        restaurant.setLatitude(latitude);
+        restaurant.setLongitude(longitude);
 
         return restaurant;
     }
