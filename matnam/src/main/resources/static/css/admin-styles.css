@@ -2269,3 +2269,200 @@ h1 {
     width: 100%;
     flex: 1;
 }
+
+/* 쿠폰 관리 페이지 스타일 */
+.progress-bar {
+    width: 60px;
+    height: 8px;
+    background-color: #e9ecef;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 4px;
+}
+
+.progress-fill {
+    height: 100%;
+    background-color: #28a745;
+    transition: width 0.3s ease;
+}
+
+.date-range {
+    font-size: 12px;
+    line-height: 1.3;
+}
+
+.date-range div:nth-child(2) {
+    text-align: center;
+    color: #6c757d;
+    margin: 2px 0;
+}
+
+.badge-blue {
+    background-color: #007bff;
+    color: white;
+}
+
+.badge-green {
+    background-color: #28a745;
+    color: white;
+}
+
+.input-with-suffix {
+    display: flex;
+    align-items: center;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.input-with-suffix input {
+    border: none;
+    flex: 1;
+    padding: 8px 12px;
+    outline: none;
+}
+
+.input-with-suffix span {
+    background-color: #f8f9fa;
+    padding: 8px 12px;
+    border-left: 1px solid #ddd;
+    color: #6c757d;
+    font-weight: 500;
+    min-width: 40px;
+    text-align: center;
+}
+
+.status {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.status.active {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.status.inactive {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.status.deleted {
+    background-color: #d1ecf1;
+    color: #0c5460;
+}
+
+.large-modal {
+    max-width: 800px;
+    width: 90%;
+}
+
+.form-row {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.form-row .form-group {
+    flex: 1;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: #333;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.required {
+    color: #dc3545;
+}
+
+.error-message {
+    color: #dc3545;
+    font-size: 12px;
+    margin-top: 4px;
+    display: block;
+}
+
+.warning-text {
+    color: #856404;
+    background-color: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 4px;
+    padding: 8px 12px;
+    margin-top: 10px;
+    font-size: 14px;
+}
+
+.danger-btn {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+.danger-btn:hover {
+    background-color: #c82333;
+}
+
+.danger-btn:active {
+    background-color: #bd2130;
+}
+
+@media (max-width: 768px) {
+    .form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .large-modal {
+        width: 95%;
+        margin: 20px auto;
+    }
+
+    .progress-bar {
+        width: 50px;
+    }
+
+    .date-range {
+        font-size: 11px;
+    }
+}
+
+.data-table td .progress-bar {
+    margin: 4px auto 0;
+}
+
+.action-btn + .action-btn {
+    margin-left: 5px;
+}
