@@ -105,4 +105,8 @@ public class CouponManageService {
 
         return couponTemplateRepository.findByFilter(couponStatus, keyword, pageable);
     }
+
+    public Page<CouponTemplate> findAvailableCoupons(String keyword, Pageable pageable) {
+        return couponTemplateRepository.findAvailableCoupons(keyword, pageable);
+    }
 }

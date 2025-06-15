@@ -27,4 +27,12 @@ public interface CouponTemplateRepository extends JpaRepository<CouponTemplate, 
     Page<CouponTemplate> findByFilter(@Param("status") CouponTemplateStatus status,
                                       @Param("keyword") String keyword,
                                       Pageable pageable);
+
+    @Query("SELECT ct FROM CouponTemplate ct JOIN FETCH ct.restaurant r " +
+            "WHERE ct.status = 'ACTIVE' " +
+            "AND ct.startAt <= CURRENT_TIMESTAMP " +
+            "AND ct.endAt > CURRENT_TIMESTAMP " +
+            "AND ct.issuedQuantity < ct.totalQuantity " +
+            "AND (:keyword = '' OR ct.name LIKE %:keyword% OR r.name LIKE %:keyword%)")
+    Page<CouponTemplate> findAvailableCoupons(@Param("keyword") String keyword, Pageable pageable);
 }
