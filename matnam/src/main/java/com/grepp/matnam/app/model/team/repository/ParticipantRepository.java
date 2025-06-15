@@ -13,15 +13,12 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ParticipantRepository extends JpaRepository<Participant, Long>, ParticipantRepositoryCustom  {
 
-
-    // userId와 teamId로 Participant 조회
     Participant findByUser_UserIdAndTeam_TeamId(String userId, Long teamId);
 
     boolean existsByUser_UserIdAndTeam_TeamId(String userId, Long teamId);
 
     List<Participant> findByTeam_TeamId(Long teamId);
 
-    // 특정 팀에 참여한 사용자 조회
     List<Participant> findByUser_UserId(String userId);
 
     @Query("SELECT p FROM Participant p JOIN FETCH p.user WHERE p.team.teamId = :teamId")
@@ -29,6 +26,5 @@ public interface ParticipantRepository extends JpaRepository<Participant, Long>,
 
     boolean existsByUser_UserIdAndTeam_TeamIdAndParticipantStatus(String userId, Long teamId, ParticipantStatus participantStatus);
 
-    // 특정 팀에 속하고 상태가 승인 상태인 사용자 조회
     List<Participant> findByTeam_TeamIdAndParticipantStatus(Long teamId, ParticipantStatus participantStatus);
 }

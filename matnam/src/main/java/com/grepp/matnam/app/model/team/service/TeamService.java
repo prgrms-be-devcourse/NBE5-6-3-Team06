@@ -27,6 +27,8 @@ import com.grepp.matnam.app.model.user.repository.PreferenceRepository;
 import com.grepp.matnam.app.model.user.repository.UserRepository;
 import com.grepp.matnam.app.model.user.entity.Preference;
 import com.grepp.matnam.app.model.user.entity.User;
+import com.grepp.matnam.infra.error.exceptions.CommonException;
+import com.grepp.matnam.infra.response.ResponseCode;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import java.time.LocalDate;
@@ -137,15 +139,57 @@ public class TeamService {
             team.setNowPeople(team.getNowPeople() + 1);
         }
 
-        if (team.getNowPeople().equals(team.getMaxPeople()) && team.getStatus() != Status.FULL) {
-            team.setStatus(Status.FULL);
-        }
+//        if (team.getNowPeople().equals(team.getMaxPeople()) && team.getStatus() != Status.FULL) {
+//            team.setStatus(Status.FULL);
+//        }
+        updateTeamStatus(team);
 
         notificationSender.sendNotificationToUser(participant.getUser().getUserId(),
                 NotificationType.PARTICIPANT_STATUS, "[" + team.getTeamTitle() + "] 모임에 승인되었습니다!",
                 "/team/detail/" + team.getTeamId());
 
         teamRepository.save(team);
+    }
+
+    @Transactional
+    public int approveSelectedParticipants(String userId, Long teamId, List<Long> participantIds) {
+        Team team = teamRepository.findById(teamId)
+            .orElseThrow(() -> new EntityNotFoundException("모임이 존재하지 않습니다."));
+
+        if (!team.getUser().getUserId().equals(userId)) {
+            throw new AccessDeniedException("방장만 수락할 수 있습니다.");
+        }
+
+        int nowPeople = team.getNowPeople();
+        int maxPeople = team.getMaxPeople();
+
+        int availableSpots = maxPeople - nowPeople;
+        int requestCount = participantIds.size();
+
+        if (requestCount > availableSpots) {
+            log.info("🔥 초과 인원 발생 - 예외 던지기 직전");
+            throw new CommonException(ResponseCode.BAD_REQUEST,
+                (requestCount - availableSpots) + "명이 초과되었습니다. 다시 선택해주세요.");
+        }
+
+        int approvedCount = 0;
+
+        for (Long participantId : participantIds) {
+            if (nowPeople >= maxPeople) break;
+            Participant participant = participantRepository.findById(participantId)
+                .orElseThrow(() -> new EntityNotFoundException("참여자를 찾을 수 없습니다."));
+
+            if (participant.getParticipantStatus() == ParticipantStatus.PENDING) {
+                participant.setParticipantStatus(ParticipantStatus.APPROVED);
+                participant.setRole(Role.MEMBER);
+                approvedCount++;
+                nowPeople++;
+            }
+        }
+        team.setNowPeople(nowPeople);
+        updateTeamStatus(team);
+        teamRepository.save(team);
+        return approvedCount;
     }
 
     // 모임 참여 거절
@@ -168,7 +212,6 @@ public class TeamService {
             throw new IllegalStateException("대기 중인 참여자만 거절 가능합니다.");
         }
     }
-
 
     // 모임 업데이트
     @Transactional
@@ -320,6 +363,7 @@ public class TeamService {
         }
     }
 
+    // 모임 나가기
     @Transactional
     public void leaveTeam(String userId, Long teamId) {
         Team team = teamRepository.findById(teamId)
@@ -341,8 +385,22 @@ public class TeamService {
 
         int currentPeople = team.getNowPeople();
         team.setNowPeople(Math.max(0, currentPeople - 1));
+
+        updateTeamStatus(team);
     }
 
+    // 상태 자동 관리
+    @Transactional
+    public void updateTeamStatus(Team team) {
+        int now = team.getNowPeople() == null ? 0 : team.getNowPeople();
+        int max = team.getMaxPeople() == null ? Integer.MAX_VALUE : team.getMaxPeople();
+
+        if (now >= max && team.getStatus() != Status.FULL) {
+            team.setStatus(Status.FULL);
+        } else if (now < max && team.getStatus() == Status.FULL) {
+            team.setStatus(Status.RECRUITING);
+        }
+    }
 
     private void increaseTemperatureForCompletedTeam(Team team) {
         List<Participant> participants = participantRepository.findByTeam_TeamId(team.getTeamId());
