@@ -55,6 +55,11 @@ public class CouponManageService {
         return savedTemplate;
     }
 
+    public CouponTemplate getCouponTemplate(Long templateId) {
+        return couponTemplateRepository.findById(templateId)
+                .orElseThrow(() -> new EntityNotFoundException("해당 쿠폰 템플릿을 찾을 수 없습니다. id: " + templateId));
+    }
+
     @Transactional
     public CouponTemplate updateCouponTemplate(Long templateId, CouponTemplateUpdateDto dto) {
         CouponTemplate template = couponTemplateRepository.findById(templateId)
@@ -86,5 +91,18 @@ public class CouponManageService {
 
     public Page<CouponTemplate> getCouponTemplates(Pageable pageable) {
         return couponTemplateRepository.findAll(pageable);
+    }
+
+    public Page<CouponTemplate> findByFilter(String status, String keyword, Pageable pageable) {
+        CouponTemplateStatus couponStatus = null;
+        if (!status.isEmpty()) {
+            try {
+                couponStatus = CouponTemplateStatus.valueOf(status);
+            } catch (IllegalArgumentException e) {
+                // 잘못된 상태값인 경우 null
+            }
+        }
+
+        return couponTemplateRepository.findByFilter(couponStatus, keyword, pageable);
     }
 }
