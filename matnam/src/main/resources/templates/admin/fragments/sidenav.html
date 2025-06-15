@@ -33,6 +33,11 @@
                     <span>식당 관리</span>
                 </a>
             </li>
+            <li class="nav-item" th:classappend="${currentPage == 'coupon-management'} ? 'active' : ''">
+                <a class="nav-link" th:href="@{/admin/coupons}">
+                    <i class="fas fa-fw fa-ticket-alt"></i>
+                    <span>쿠폰 관리</span></a>
+            </li>
             <li class="nav-item" th:classappend="${currentPage == 'content-rankings'} ? 'active' : ''">
                 <a th:href="@{/admin/content-rankings}">
                     <i class="fas fa-list-ol"></i>

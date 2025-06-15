@@ -2,21 +2,16 @@ package com.grepp.matnam.app.model.restaurant.service;
 
 import com.grepp.matnam.app.controller.api.admin.payload.RestaurantRankingResponse;
 import com.grepp.matnam.app.controller.api.admin.payload.RestaurantRequest;
-import com.grepp.matnam.app.model.restaurant.document.RestaurantEmbedding;
-import com.grepp.matnam.app.model.restaurant.repository.RestaurantEmbeddingRepository;
-import com.grepp.matnam.app.model.restaurant.repository.RestaurantRepository;
-import com.grepp.matnam.app.model.restaurant.dto.RestaurantDto;
 import com.grepp.matnam.app.controller.web.admin.payload.RestaurantStatsResponse;
 import com.grepp.matnam.app.model.restaurant.code.Category;
+import com.grepp.matnam.app.model.restaurant.document.RestaurantEmbedding;
+import com.grepp.matnam.app.model.restaurant.dto.RestaurantDto;
 import com.grepp.matnam.app.model.restaurant.entity.Restaurant;
+import com.grepp.matnam.app.model.restaurant.repository.RestaurantEmbeddingRepository;
+import com.grepp.matnam.app.model.restaurant.repository.RestaurantRepository;
 import com.grepp.matnam.infra.error.exceptions.CommonException;
 import com.grepp.matnam.infra.response.ResponseCode;
 import dev.langchain4j.model.embedding.EmbeddingModel;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -26,6 +21,12 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -206,5 +207,10 @@ public class RestaurantService {
         statsResponse.setCategoryTotalRecommendedCounts(categoryTotalRecommendedCounts);
 
         return statsResponse;
+    }
+
+    public List<Restaurant> findAllActive() {
+        Pageable pageable = PageRequest.of(0, Integer.MAX_VALUE, Sort.by("name"));
+        return restaurantRepository.findAllByActivatedTrue(pageable).getContent();
     }
 }
