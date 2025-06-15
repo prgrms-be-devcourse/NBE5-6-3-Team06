@@ -21,6 +21,8 @@ public class TeamDto {
     private String imageUrl;
     private Status status;
     private long favoriteCount;
+    private Double latitude;
+    private Double longitude;
 
     public static TeamDto from(Team team) {
         TeamDto dto = new TeamDto();
@@ -36,6 +38,8 @@ public class TeamDto {
         dto.setImageUrl(team.getImageUrl());
         dto.setStatus(team.getStatus());
         dto.setFavoriteCount(team.getFavoriteCount());
+        dto.setLatitude(team.getLatitude());
+        dto.setLongitude(team.getLongitude());
         return dto;
     }
 

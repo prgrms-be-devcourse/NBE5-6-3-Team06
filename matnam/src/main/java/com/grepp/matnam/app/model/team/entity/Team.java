@@ -65,6 +65,10 @@ public class Team extends BaseEntity {
 
     private String restaurantName;
 
+    private Double latitude;
+
+    private Double longitude;
+
     public boolean isActivated() {
         return this.activated;
     }

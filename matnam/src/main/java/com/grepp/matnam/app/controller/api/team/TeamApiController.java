@@ -249,6 +249,9 @@ public class TeamApiController {
         teamDto.setNowPeople(team.getNowPeople());
         teamDto.setCategory(team.getCategory());
         teamDto.setImageUrl(team.getImageUrl());
+        teamDto.setLatitude(team.getLatitude());
+        teamDto.setLongitude(team.getLongitude());
+        teamDto.setRestaurantAddress(team.getRestaurantAddress());
         return teamDto;
     }
 

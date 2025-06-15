@@ -80,17 +80,6 @@
       min-height: 100px;
     }
 
-    .map-placeholder,
-    .image-upload-box {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #aaa;
-      background-color: #fafafa;
-      height: 150px;
-      border: 1px dashed #ccc;
-    }
-
     .section {
       margin-bottom: 2rem;
     }
@@ -170,6 +159,57 @@
       border: 1px solid #e74c3c !important;
       box-shadow: 0 0 3px rgba(231, 76, 60, 0.5);
     }
+
+    .map-and-list {
+      display: flex;
+      gap: 1rem;
+    }
+
+    #map-placeholder {
+      width: 70%;
+      height: 300px;
+      border: 1px solid #ccc;
+    }
+
+    .result-box {
+      width: 30%;
+      height: 300px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      overflow-y: auto;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .no-result {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #888;
+      padding: 1rem;
+      text-align: center;
+      font-size: 0.95rem;
+    }
+
+    #place-result-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: none;
+    }
+
+    #place-result-list li:hover {
+      background-color: #f0f0f0;
+    }
+
+    .search-hint {
+      margin-top: 0.2rem;
+      margin-bottom: 1rem;
+      color: slategray;
+      font-size: 0.9rem;
+    }
   </style>
   <link rel="stylesheet" th:href="@{/css/notification.css}">
   <link rel="stylesheet"
@@ -245,26 +285,30 @@
            class="error-message"></div>
     </div>
 
+
     <div class="section">
       <h2>식당 정보</h2>
-      <label>식당 이름</label>
-      <input type="text" th:field="*{restaurantName}"
-             th:classappend="${#fields.hasErrors('restaurantName')} ? 'input-error' : ''"
-             placeholder="식당 이름을 입력하세요" required>
-      <div th:if="${#fields.hasErrors('restaurantName')}"
-           th:errors="*{restaurantName}"
-           class="error-message"></div>
+      <label for="restaurantName">상호명</label>
+      <div style="display: flex; gap: 0.5rem;">
+        <input type="text" id="restaurantName" th:field="*{restaurantName}" placeholder="식당명을 검색하세요" style="flex: 1;" th:classappend="${#fields.hasErrors('restaurantName')} ? 'input-error' : ''" />
+        <button type="button" class="btn" onclick="searchPlace()">검색</button>
+      </div>
+      <p class="search-hint">강남 맛집, 성심당 등 다양한 형태로 검색이 가능합니다. 결과 중 원하는 장소를 선택하세요.</p>
 
-      <label>주소</label>
-      <input type="text" th:field="*{restaurantAddress}"
-             th:classappend="${#fields.hasErrors('restaurantAddress')} ? 'input-error' : ''"
-             placeholder="식당 주소를 입력하세요" required>
-      <div th:if="${#fields.hasErrors('restaurantAddress')}"
-           th:errors="*{restaurantAddress}"
-           class="error-message"></div>
+      <div th:if="${#fields.hasErrors('restaurantName')}" th:errors="*{restaurantName}" class="error-message"></div>
+
+      <label for="restaurantAddress">주소</label>
+      <input type="text" id="restaurantAddress" th:field="*{restaurantAddress}" th:classappend="${#fields.hasErrors('restaurantAddress')} ? 'input-error' : ''" placeholder="식당 주소를 입력하세요" />
+      <div th:if="${#fields.hasErrors('restaurantAddress')}" th:errors="*{restaurantAddress}" class="error-message"></div>
 
       <label>위치 선택</label>
-      <div id="map-placeholder" style="width:100%; height:300px; border:1px solid #ccc;"></div>
+      <div class="map-and-list">
+        <div id="map-placeholder"></div>
+        <div class="result-box">
+          <div id="no-result-message" class="no-result">검색 결과가 이곳에 표시됩니다.</div>
+          <ul id="place-result-list"></ul>
+        </div>
+      </div>
     </div>
 
     <div class="section">
@@ -289,6 +333,8 @@
       </div>
       <p>(클릭하거나 드래그 앤 드롭하여 이미지 업로드)</p>
     </div>
+    <input type="hidden" id="latitude" name="latitude" th:field="*{latitude}" />
+    <input type="hidden" id="longitude" name="longitude" th:field="*{longitude}" />
 
     <div class="btn-row">
       <button type="button" class="btn cancel" onclick="history.back()">취소</button>
@@ -301,16 +347,84 @@
 </footer>
 <script
     src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=9e9f7116c9bee853591bfa6e12c7fa5f&libraries=services"></script>
-
 <script>
+  let map, markers = [], ps;
   kakao.maps.load(function () {
     const container = document.getElementById('map-placeholder');
-    const options = {
+    map = new kakao.maps.Map(container, {
       center: new kakao.maps.LatLng(37.5665, 126.9780),
       level: 4
-    };
-    new kakao.maps.Map(container, options);
+    });
+    ps = new kakao.maps.services.Places();
   });
+
+  function searchPlace() {
+    const keyword = document.getElementById('restaurantName').value;
+    if (!keyword.trim()) return alert('식당명을 입력해주세요.');
+    ps.keywordSearch(keyword, placesSearchCB);
+  }
+
+  function placesSearchCB(data, status) {
+    const listEl = document.getElementById('place-result-list');
+    const messageEl = document.getElementById('no-result-message');
+    listEl.innerHTML = '';
+    listEl.style.display = 'none';
+    messageEl.style.display = 'flex';
+
+    if (status !== kakao.maps.services.Status.OK || !data.length) {
+      messageEl.textContent = '검색 결과가 없습니다.';
+      return;
+    }
+
+    clearMarkers();
+    const allowed = ['FD6', 'CE7', 'Q12'];
+    const filtered = data.filter(p => allowed.includes(p.category_group_code));
+
+    if (!filtered.length) {
+      messageEl.textContent = '검색 결과 내 음식점/카페/술집이 없습니다.';
+      return;
+    }
+
+    messageEl.style.display = 'none';
+    listEl.style.display = 'block';
+    const bounds = new kakao.maps.LatLngBounds();
+
+    filtered.forEach(place => {
+      const pos = new kakao.maps.LatLng(place.y, place.x);
+      const marker = new kakao.maps.Marker({ map, position: pos });
+      markers.push(marker);
+      bounds.extend(pos);
+
+      const item = document.createElement('li');
+      item.textContent = `${place.place_name} (${place.road_address_name || place.address_name})`;
+      item.style.padding = '0.5rem';
+      item.style.cursor = 'pointer';
+      item.style.borderBottom = '1px solid #eee';
+
+      const handleClick = () => {
+        map.setCenter(pos);
+        map.setLevel(3);
+        document.getElementById('restaurantName').value = place.place_name;
+        document.getElementById('restaurantAddress').value = place.road_address_name || place.address_name;
+        document.getElementById('latitude').value = place.y;
+        document.getElementById('longitude').value = place.x;
+        marker.setAnimation(kakao.maps.Animation.BOUNCE);
+        setTimeout(() => marker.setAnimation(null), 1000);
+      };
+
+      kakao.maps.event.addListener(marker, 'click', handleClick);
+      item.addEventListener('click', handleClick);
+
+      listEl.appendChild(item);
+    });
+
+    map.setBounds(bounds);
+  }
+
+  function clearMarkers() {
+    markers.forEach(marker => marker.setMap(null));
+    markers = [];
+  }
 
   const uploadBox = document.getElementById('uploadBox');
   const fileInput = document.getElementById('imageUrl');
