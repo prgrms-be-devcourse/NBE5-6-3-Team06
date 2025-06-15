@@ -29,6 +29,8 @@ public class UpdatedTeamRequest {
     private String restaurantName;
     @NotBlank(message = "식당 주소는 필수 입력 값입니다.")
     private String restaurantAddress;
+    private Double latitude;
+    private Double longitude;
     private MultipartFile imageUrl;
 
     public static UpdatedTeamRequest fromEntity(Team team) {
@@ -39,6 +41,8 @@ public class UpdatedTeamRequest {
         dto.setMaxPeople(       team.getMaxPeople());
         dto.setRestaurantName(  team.getRestaurantName());
         dto.setRestaurantAddress(team.getRestaurantAddress());
+        dto.setLatitude(        team.getLatitude());
+        dto.setLongitude(        team.getLongitude());
         if (team.getTeamDate() != null) {
             LocalDateTime dt = team.getTeamDate();
             dto.setDate( dt.toLocalDate().toString() );
@@ -55,6 +59,8 @@ public class UpdatedTeamRequest {
         team.setCategory(this.category);
         team.setRestaurantName(this.restaurantName);
         team.setRestaurantAddress(this.restaurantAddress);
+        team.setLatitude(this.latitude);
+        team.setLongitude(this.longitude);
         team.setImageUrl(imageUrl);
 
         if (this.date != null && this.time != null) {

@@ -30,5 +30,7 @@ public class TeamUpdateRequest {
 
     private String imageUrl;
 
+    private Double latitude;
 
+    private Double longitude;
 }

@@ -40,6 +40,10 @@ public class TeamRequest {
 
     private MultipartFile imageUrl;
 
+    private Double latitude;
+
+    private Double longitude;
+
     public Team toEntity(User user, String imageUrl) {
         Team team = new Team();
         team.setUser(user);
@@ -51,6 +55,8 @@ public class TeamRequest {
         team.setStatus(Status.RECRUITING);
         team.setRestaurantName(this.restaurantName);
         team.setRestaurantAddress(this.restaurantAddress);
+        team.setLatitude(this.latitude);
+        team.setLongitude(this.longitude);
         team.setImageUrl(imageUrl);
         return team;
     }

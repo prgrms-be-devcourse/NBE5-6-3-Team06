@@ -35,7 +35,6 @@
     input[type="time"],
     textarea,
     select,
-    .map-placeholder,
     .image-upload-box {
       width: 100%;
       padding: 0.7rem;
@@ -48,16 +47,6 @@
       resize: vertical;
       min-height: 100px;
     }
-    /*.map-placeholder,*/
-    /*.image-upload-box {*/
-    /*  display: flex;*/
-    /*  align-items: center;*/
-    /*  justify-content: center;*/
-    /*  color: #aaa;*/
-    /*  background-color: #fafafa;*/
-    /*  height: 150px;*/
-    /*  border: 1px dashed #ccc;*/
-    /*}*/
     .section {
       margin-bottom: 2rem;
     }
@@ -72,8 +61,6 @@
       font-size: 1rem;
       cursor: pointer;
       border: none;
-    }
-    .btn.cancel {
       background-color: #f5f5f5;
       color: #333;
     }
@@ -81,7 +68,12 @@
       background-color: #000;
       color: #fff;
     }
-    input[type=\"file\"] {
+    .btn:hover {
+      background-color: lightgray;
+      color: #000;
+      transition: all 0.2s ease;
+    }
+    input[type="file"] {
       border: none;
       padding: 0;
     }
@@ -94,24 +86,29 @@
 
     .input-error {
       border: 1px solid #e74c3c !important;
-      box-shadow: 0 0 3px rgba(231,76,60,0.5);
+      box-shadow: 0 0 3px rgba(231, 76, 60, 0.5);
     }
 
     .image-upload-box {
       position: relative;
-      width: 200px; height: 200px;
+      width: 200px;
+      height: 200px;
       border: 2px dashed #ccc;
-      display: flex; align-items: center; justify-content: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       cursor: pointer;
     }
     .image-upload-box.drag-over {
       border-color: #007bff;
-      background-color: rgba(0,123,255,0.1);
+      background-color: rgba(0, 123, 255, 0.1);
     }
     .preview-img {
       position: absolute;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
       object-fit: cover;
       display: block;
     }
@@ -119,9 +116,60 @@
       display: none;
     }
     .error-msg {
-      color: red; font-size: 0.9rem;
+      color: red;
+      font-size: 0.9rem;
     }
 
+    .map-and-list {
+      display: flex;
+      gap: 1rem;
+    }
+
+    #map-placeholder {
+      width: 70%;
+      height: 300px;
+      border: 1px solid #ccc;
+    }
+
+    .result-box {
+      width: 30%;
+      height: 300px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      overflow-y: auto;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #place-result-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: none;
+    }
+
+    #place-result-list li:hover {
+      background-color: #f0f0f0;
+    }
+
+    .no-result {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #888;
+      padding: 1rem;
+      text-align: center;
+      font-size: 0.95rem;
+    }
+
+    .search-hint {
+      margin-top: 0.2rem;
+      margin-bottom: 1rem;
+      color: slategray;
+      font-size: 0.9rem;
+    }
   </style>
   <link rel="stylesheet" th:href="@{/css/notification.css}">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -132,59 +180,27 @@
 
 <div class="container">
   <h1>모임 만들기</h1>
-  <form th:action="@{/team/create}"
-        th:object="${teamRequest}"
-        method="post"
-        enctype="multipart/form-data"
-        novalidate>
+  <form th:action="@{/team/create}" th:object="${teamRequest}" method="post" enctype="multipart/form-data" novalidate>
 
     <div class="section">
       <label for="title">모임 제목</label>
-      <input type="text"
-             id="title"
-             class=""
-             th:field="*{title}"
-             th:classappend="${#fields.hasErrors('title')} ? 'input-error' : ''"
-             placeholder="모임 제목을 입력하세요" />
-      <div th:if="${#fields.hasErrors('title')}"
-           th:errors="*{title}"
-           class="error-message"></div>
+      <input type="text" id="title" th:field="*{title}" th:classappend="${#fields.hasErrors('title')} ? 'input-error' : ''" placeholder="모임 제목을 입력하세요" />
+      <div th:if="${#fields.hasErrors('title')}" th:errors="*{title}" class="error-message"></div>
 
       <label for="description">모임 설명</label>
-      <textarea id="description"
-                class=""
-                th:field="*{description}"
-                th:classappend="${#fields.hasErrors('description')} ? 'input-error' : ''"
-                placeholder="간단한 모임 설명을 입력하세요"></textarea>
-      <div th:if="${#fields.hasErrors('description')}"
-           th:errors="*{description}"
-           class="error-message"></div>
+      <textarea id="description" th:field="*{description}" th:classappend="${#fields.hasErrors('description')} ? 'input-error' : ''" placeholder="간단한 모임 설명을 입력하세요"></textarea>
+      <div th:if="${#fields.hasErrors('description')}" th:errors="*{description}" class="error-message"></div>
 
       <label for="date">날짜</label>
-      <input type="date"
-             id="date"
-             class=""
-             th:field="*{date}"
-             th:classappend="${#fields.hasErrors('date')} ? 'input-error' : ''" />
-      <div th:if="${#fields.hasErrors('date')}"
-           th:errors="*{date}"
-           class="error-message"></div>
+      <input type="date" id="date" th:field="*{date}" th:classappend="${#fields.hasErrors('date')} ? 'input-error' : ''" />
+      <div th:if="${#fields.hasErrors('date')}" th:errors="*{date}" class="error-message"></div>
 
       <label for="time">시간</label>
-      <input type="time"
-             id="time"
-             class=""
-             th:field="*{time}"
-             th:classappend="${#fields.hasErrors('time')} ? 'input-error' : ''" />
-      <div th:if="${#fields.hasErrors('time')}"
-           th:errors="*{time}"
-           class="error-message"></div>
+      <input type="time" id="time" th:field="*{time}" th:classappend="${#fields.hasErrors('time')} ? 'input-error' : ''" />
+      <div th:if="${#fields.hasErrors('time')}" th:errors="*{time}" class="error-message"></div>
 
       <label for="category">음식 카테고리</label>
-      <select id="category"
-              class=""
-              th:field="*{category}"
-              th:classappend="${#fields.hasErrors('category')} ? 'input-error' : ''">
+      <select id="category" th:field="*{category}" th:classappend="${#fields.hasErrors('category')} ? 'input-error' : ''">
         <option value="" disabled>카테고리 선택</option>
         <option value="한식">한식</option>
         <option value="일식">일식</option>
@@ -193,104 +209,158 @@
         <option value="분식">분식</option>
         <option value="디저트">디저트</option>
       </select>
-      <div th:if="${#fields.hasErrors('category')}"
-           th:errors="*{category}"
-           class="error-message"></div>
+      <div th:if="${#fields.hasErrors('category')}" th:errors="*{category}" class="error-message"></div>
 
       <label for="maxPeople">최대 인원</label>
-      <select id="maxPeople"
-              class=""
-              th:field="*{maxPeople}"
-              th:classappend="${#fields.hasErrors('maxPeople')} ? 'input-error' : ''">
+      <select id="maxPeople" th:field="*{maxPeople}" th:classappend="${#fields.hasErrors('maxPeople')} ? 'input-error' : ''">
         <option value="" disabled>인원 선택</option>
-        <option th:each="n : ${#numbers.sequence(2,10)}"
-                th:value="${n}"
-                th:text="${n + '명'}"></option>
+        <option th:each="n : ${#numbers.sequence(2,10)}" th:value="${n}" th:text="${n + '명'}"></option>
       </select>
-      <div th:if="${#fields.hasErrors('maxPeople')}"
-           th:errors="*{maxPeople}"
-           class="error-message"></div>
+      <div th:if="${#fields.hasErrors('maxPeople')}" th:errors="*{maxPeople}" class="error-message"></div>
     </div>
 
     <div class="section">
       <h2>식당 정보</h2>
-      <label for="restaurantName">식당 이름</label>
-      <input type="text"
-             id="restaurantName"
-             class=""
-             th:field="*{restaurantName}"
-             th:classappend="${#fields.hasErrors('restaurantName')} ? 'input-error' : ''"
-             placeholder="식당 이름을 입력하세요" />
-      <div th:if="${#fields.hasErrors('restaurantName')}"
-           th:errors="*{restaurantName}"
-           class="error-message"></div>
+      <label for="restaurantName">상호명</label>
+      <div style="display: flex; gap: 0.5rem;">
+        <input type="text" id="restaurantName" th:field="*{restaurantName}" placeholder="식당명을 검색하세요" style="flex: 1;" th:classappend="${#fields.hasErrors('restaurantName')} ? 'input-error' : ''" />
+        <button type="button" class="btn" onclick="searchPlace()">검색</button>
+      </div>
+      <p class="search-hint">강남 맛집, 성심당 등 다양한 형태로 검색이 가능합니다. 검색 결과 리스트 중 희망 장소를 선택해주세요.</p>
+      <div th:if="${#fields.hasErrors('restaurantName')}" th:errors="*{restaurantName}" class="error-message"></div>
 
       <label for="restaurantAddress">주소</label>
-      <input type="text"
-             id="restaurantAddress"
-             class=""
-             th:field="*{restaurantAddress}"
-             th:classappend="${#fields.hasErrors('restaurantAddress')} ? 'input-error' : ''"
-             placeholder="식당 주소를 입력하세요" />
-      <div th:if="${#fields.hasErrors('restaurantAddress')}"
-           th:errors="*{restaurantAddress}"
-           class="error-message"></div>
+      <input type="text" id="restaurantAddress" th:field="*{restaurantAddress}" th:classappend="${#fields.hasErrors('restaurantAddress')} ? 'input-error' : ''" placeholder="식당 주소를 입력하세요" />
+      <div th:if="${#fields.hasErrors('restaurantAddress')}" th:errors="*{restaurantAddress}" class="error-message"></div>
 
       <label>위치 선택</label>
-      <div id="map-placeholder"
-           style="width:100%; height:300px; border:1px solid #ccc;"></div>
+      <div class="map-and-list">
+        <div id="map-placeholder"></div>
+        <div class="result-box">
+          <div id="no-result-message" class="no-result">
+            검색 결과가 이곳에 표시됩니다.
+          </div>
+          <ul id="place-result-list" style="display: none;"></ul>
+        </div>
+      </div>
     </div>
+    <input type="hidden" id="latitude" name="latitude" th:field="*{latitude}" />
+    <input type="hidden" id="longitude" name="longitude" th:field="*{longitude}" />
 
     <div class="section">
       <label for="imageUrl">모임 이미지</label>
-      <div class="image-upload-box"
-           id="uploadBox"
-           th:classappend="${#fields.hasErrors('imageUrl')}? 'error'">
-        <img id="preview"
-             th:src="@{${defaultImageUrl}}"
-             alt="모임 이미지 미리보기"
-             class="preview-img" />
-        <input type="file"
-               id="imageUrl"
-               name="imageUrl"
-               accept="image/*"
-               th:field="*{imageUrl}"
-               class="hidden-file-input" />
-
-        <div th:if="${#fields.hasErrors('imageUrl')}"
-             th:errors="*{imageUrl}"
-             class="error-msg"></div>
+      <div class="image-upload-box" id="uploadBox" th:classappend="${#fields.hasErrors('imageUrl')}? 'error'">
+        <img id="preview" th:src="@{${defaultImageUrl}}" alt="모임 이미지 미리보기" class="preview-img" />
+        <input type="file" id="imageUrl" name="imageUrl" accept="image/*" th:field="*{imageUrl}" class="hidden-file-input" />
+        <div th:if="${#fields.hasErrors('imageUrl')}" th:errors="*{imageUrl}" class="error-msg"></div>
       </div>
       <p>(클릭하거나 드래그 앤 드롭하여 이미지 업로드)</p>
     </div>
 
     <div class="btn-row">
-      <button type="button"
-              class="btn cancel"
-              onclick="history.back()">취소</button>
-      <button type="submit"
-              class="btn submit">모임 생성하기</button>
+      <button type="button" class="btn cancel" onclick="history.back()">취소</button>
+      <button type="submit" class="btn submit">모임 생성하기</button>
     </div>
   </form>
 </div>
+
 <script src="/js/auth.js"></script>
 <script src="/js/header.js"></script>
 <script src="/js/notification-common.js"></script>
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=9e9f7116c9bee853591bfa6e12c7fa5f&libraries=services"></script>
 
 <script>
-  kakao.maps.load(function() {
+  let map;
+  let markers = [];
+  let ps;
+
+  kakao.maps.load(function () {
     const container = document.getElementById('map-placeholder');
     const options = {
       center: new kakao.maps.LatLng(37.5665, 126.9780),
       level: 4
     };
-    new kakao.maps.Map(container, options);
+    map = new kakao.maps.Map(container, options);
+    ps = new kakao.maps.services.Places();
   });
+  function searchPlace() {
+    const keyword = document.getElementById('restaurantName').value;
+    if (!keyword.trim()) {
+      alert('식당명을 입력해주세요.');
+      return;
+    }
+
+    ps.keywordSearch(keyword, placesSearchCB);
+  }
+
+  function placesSearchCB(data, status) {
+    const listEl = document.getElementById('place-result-list');
+    const messageEl = document.getElementById('no-result-message');
+
+    listEl.innerHTML = '';
+    listEl.style.display = 'none';
+    messageEl.style.display = 'flex';
+    messageEl.textContent = '검색 결과가 없습니다. 다른 키워드를 시도해보세요.';
+
+    if (status !== kakao.maps.services.Status.OK || !data.length) {
+      return;
+    }
+
+    clearMarkers();
+
+    const allowedCategories = ['FD6', 'CE7', 'Q12'];
+    const filteredData = data.filter(place => allowedCategories.includes(place.category_group_code));
+
+    if (filteredData.length === 0) {
+      messageEl.textContent = '검색 결과 중 음식점에 해당하는 항목이 없습니다.';
+      return;
+    }
+
+    listEl.style.display = 'block';
+    messageEl.style.display = 'none';
+
+    const bounds = new kakao.maps.LatLngBounds();
+
+    filteredData.forEach(place => {
+      const position = new kakao.maps.LatLng(place.y, place.x);
+      const marker = new kakao.maps.Marker({ map, position });
+      markers.push(marker);
+      bounds.extend(position);
+
+      const item = document.createElement('li');
+      item.textContent = `${place.place_name} (${place.road_address_name || place.address_name})`;
+      item.style.padding = '0.5rem';
+      item.style.cursor = 'pointer';
+      item.style.borderBottom = '1px solid #eee';
+
+      const handleClick = () => {
+        map.setCenter(position);
+        map.setLevel(3);
+        document.getElementById('restaurantName').value = place.place_name;
+        document.getElementById('restaurantAddress').value = place.road_address_name || place.address_name;
+        document.getElementById('latitude').value = place.y;
+        document.getElementById('longitude').value = place.x;
+
+        marker.setAnimation(kakao.maps.Animation.BOUNCE);
+        setTimeout(() => marker.setAnimation(null), 1000);
+      };
+
+      kakao.maps.event.addListener(marker, 'click', handleClick);
+      item.addEventListener('click', handleClick);
+      listEl.appendChild(item);
+    });
+
+    map.setBounds(bounds);
+  }
+
+  function clearMarkers() {
+    markers.forEach(marker => marker.setMap(null));
+    markers = [];
+  }
 
   const uploadBox = document.getElementById('uploadBox');
   const fileInput = document.getElementById('imageUrl');
-  const preview   = document.getElementById('preview');
+  const preview = document.getElementById('preview');
 
   uploadBox.addEventListener('click', () => fileInput.click());
 
@@ -301,17 +371,17 @@
     }
   });
 
-  ['dragenter','dragover'].forEach(ev =>
-      uploadBox.addEventListener(ev, e => {
-        e.preventDefault();
-        uploadBox.classList.add('drag-over');
-      })
+  ['dragenter', 'dragover'].forEach(ev =>
+          uploadBox.addEventListener(ev, e => {
+            e.preventDefault();
+            uploadBox.classList.add('drag-over');
+          })
   );
-  ['dragleave','drop'].forEach(ev =>
-      uploadBox.addEventListener(ev, e => {
-        e.preventDefault();
-        uploadBox.classList.remove('drag-over');
-      })
+  ['dragleave', 'drop'].forEach(ev =>
+          uploadBox.addEventListener(ev, e => {
+            e.preventDefault();
+            uploadBox.classList.remove('drag-over');
+          })
   );
 
   uploadBox.addEventListener('drop', e => {
@@ -323,7 +393,6 @@
     }
   });
 </script>
-
 
 </body>
 </html>
