@@ -705,16 +705,40 @@
       });
     });
   });
+</script>
+<script th:inline="javascript">
+
+  const lat = [[${team.latitude}]];
+  const lng = [[${team.longitude}]];
+  const name = '[[${team.restaurantName}]]';
+
   kakao.maps.load(function () {
     const container = document.getElementById('map-placeholder');
-    const options = {
-      center: new kakao.maps.LatLng(37.5665, 126.9780),
-      level: 4
-    };
-    new kakao.maps.Map(container, options);
-  });
+    if (!container) return;
 
+    const map = new kakao.maps.Map(container, {
+      center: new kakao.maps.LatLng(lat, lng),
+      level: 3,
+      draggable: false,
+      scrollwheel: false,
+      disableDoubleClickZoom: true
+    });
+
+    const marker = new kakao.maps.Marker({
+      position: new kakao.maps.LatLng(lat, lng),
+      map: map
+    });
+
+    const infowindow = new kakao.maps.InfoWindow({
+      content: `<div style="padding:5px;">${name}</div>`
+    });
+
+    kakao.maps.event.addListener(marker, 'click', function () {
+      infowindow.open(map, marker);
+    });
+  });
 </script>
+
 <script src="/js/auth.js"></script>
 <script src="/js/header.js"></script>
 <script src="/js/notification-common.js"></script>
