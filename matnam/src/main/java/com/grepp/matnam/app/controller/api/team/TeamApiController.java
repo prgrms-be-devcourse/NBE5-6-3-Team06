@@ -216,6 +216,7 @@ public class TeamApiController {
         }
     }
 
+    // 모임 나가기
     @PostMapping("/{teamId}/leave")
     public ResponseEntity<ApiResponse<String>> leaveTeam(@PathVariable Long teamId) {
         String userId = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -227,6 +228,16 @@ public class TeamApiController {
                 .body(ApiResponse.error(ResponseCode.BAD_REQUEST, e.getMessage()));
         }
     }
+
+    // 강제 탈퇴
+    @PostMapping("/{teamId}/kick/{participantId}")
+    public ResponseEntity<ApiResponse<String>> kickParticipant(
+        @PathVariable Long participantId) {
+        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+        teamService.kickParticipant(participantId, userId);
+        return ResponseEntity.ok(ApiResponse.success("참여자를 강제 탈퇴시켰습니다."));
+    }
+
 
     private TeamDto convertToTeamDto(Team team) {
         TeamDto teamDto = new TeamDto();

@@ -90,7 +90,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(CommonException.class)
     public ResponseEntity<ApiResponse> handleCommonException(CommonException e) {
-        log.info("#####################CommonException 발생: {}", e.getMessage());
+        log.info("CommonException 발생: {}", e.getMessage());
         return ResponseEntity
             .status(e.code().status())
             .body(new ApiResponse(e.code().code(), e.getMessage(), null));

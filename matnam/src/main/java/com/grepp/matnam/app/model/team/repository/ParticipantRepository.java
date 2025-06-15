@@ -2,8 +2,8 @@ package com.grepp.matnam.app.model.team.repository;
 
 import com.grepp.matnam.app.model.team.code.ParticipantStatus;
 import com.grepp.matnam.app.model.team.entity.Participant;
-import com.grepp.matnam.app.model.team.entity.Team;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,6 +15,8 @@ public interface ParticipantRepository extends JpaRepository<Participant, Long>,
 
     Participant findByUser_UserIdAndTeam_TeamId(String userId, Long teamId);
 
+    Optional<Participant> findByUser_UserIdAndTeam_TeamIdAndActivatedTrue(String userId, Long teamId);
+
     boolean existsByUser_UserIdAndTeam_TeamId(String userId, Long teamId);
 
     List<Participant> findByTeam_TeamId(Long teamId);
@@ -23,6 +25,8 @@ public interface ParticipantRepository extends JpaRepository<Participant, Long>,
 
     @Query("SELECT p FROM Participant p JOIN FETCH p.user WHERE p.team.teamId = :teamId")
     List<Participant> findParticipantsWithUserByTeamId(@Param("teamId") Long teamId);
+
+    boolean existsByUser_UserIdAndTeam_TeamIdAndParticipantStatusAndActivatedTrue(String userId, Long teamId, ParticipantStatus participantStatus);
 
     boolean existsByUser_UserIdAndTeam_TeamIdAndParticipantStatus(String userId, Long teamId, ParticipantStatus participantStatus);
 
