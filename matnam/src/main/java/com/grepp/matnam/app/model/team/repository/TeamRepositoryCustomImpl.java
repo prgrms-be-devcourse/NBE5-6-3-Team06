@@ -247,12 +247,18 @@ public class TeamRepositoryCustomImpl implements TeamRepositoryCustom {
 
     // 페이징: activated=true, 상태가 COMPLETED/CANCELED 가 아닌 팀을 참여자 정보 포함하여 조회
     @Override
-    public Page<Team> findAllWithParticipantsAndActivatedTrue(Pageable pageable, boolean includeCompleted) {
+    public Page<Team> findAllWithParticipantsAndActivatedTrue(Pageable pageable, boolean includeCompleted, String keyword) {
         BooleanBuilder builder = new BooleanBuilder()
             .and(team.activated.isTrue())
             .and(team.status.ne(Status.CANCELED));
         if (!includeCompleted) {
             builder.and(team.status.ne(Status.COMPLETED));
+        }
+        if (StringUtils.hasText(keyword)) {
+            builder.and(
+                team.teamDetails.containsIgnoreCase(keyword)
+                    .or(team.teamTitle.containsIgnoreCase(keyword))
+            );
         }
 
         List<Team> content = queryFactory
@@ -353,13 +359,19 @@ public class TeamRepositoryCustomImpl implements TeamRepositoryCustom {
 
     // 즐겨찾기 카운트
     @Override
-    public Page<Team> findAllOrderByFavoriteCount(Pageable pageable, boolean includeCompleted) {
+    public Page<Team> findAllOrderByFavoriteCount(Pageable pageable, boolean includeCompleted, String keyword) {
 
         BooleanBuilder builder = new BooleanBuilder()
             .and(team.activated.eq(true))
             .and(team.status.ne(Status.CANCELED));
         if (!includeCompleted) {
             builder.and(team.status.ne(Status.COMPLETED));
+        }
+        if (StringUtils.hasText(keyword)) {
+            builder.and(
+                team.teamDetails.containsIgnoreCase(keyword)
+                    .or(team.teamTitle.containsIgnoreCase(keyword))
+            );
         }
 
         List<Tuple> tuples = queryFactory
