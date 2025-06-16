@@ -111,29 +111,33 @@
             <div class="modal-body">
                 <form id="couponForm">
                     <input type="hidden" id="coupon-id">
+                    <input type="hidden" id="selected-restaurant-id">
 
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="coupon-restaurant">식당 <span class="required">*</span></label>
-                            <select id="coupon-restaurant" required>
-                                <option value="">식당을 선택하세요</option>
-                                <option th:each="restaurant : ${restaurants}"
-                                        th:value="${restaurant.restaurantId}"
-                                        th:text="${restaurant.name}"></option>
-                            </select>
-                            <span id="error-restaurant" class="error-message"></span>
-                        </div>
-                        <div class="form-group">
-                            <label for="coupon-name">쿠폰명 <span class="required">*</span></label>
-                            <input type="text" id="coupon-name" required>
-                            <span id="error-name" class="error-message"></span>
-                        </div>
+                    <div class="form-group">
+                        <label for="coupon-name">쿠폰명 <span class="required">*</span></label>
+                        <input type="text" id="coupon-name" required>
+                        <span id="error-name" class="error-message"></span>
                     </div>
 
                     <div class="form-group">
                         <label for="coupon-description">쿠폰 설명</label>
                         <textarea id="coupon-description" rows="3" placeholder="쿠폰에 대한 설명을 입력하세요"></textarea>
                         <span id="error-description" class="error-message"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="restaurant-selector-btn">식당 <span class="required">*</span></label>
+                        <div class="restaurant-selector-container">
+                            <button type="button" class="restaurant-selector-btn" id="restaurant-selector-btn">
+                                <div class="restaurant-info">
+                                    <span class="restaurant-placeholder">식당을 선택하세요</span>
+                                    <span class="selected-restaurant-name" style="display: none;"></span>
+                                    <span class="selected-restaurant-category" style="display: none;"></span>
+                                </div>
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                        <span id="error-restaurant" class="error-message"></span>
                     </div>
 
                     <div class="form-row">
@@ -187,6 +191,87 @@
             <div class="modal-footer">
                 <button class="secondary-btn cancel-btn">취소</button>
                 <button class="primary-btn save-btn" id="save-coupon-button">저장</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="restaurantSearchModal">
+        <div class="modal-content restaurant-search-modal">
+            <div class="modal-header">
+                <h2><i class="fas fa-utensils"></i> 식당 검색</h2>
+                <span class="close-modal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="search-section">
+                    <div class="search-box">
+                        <input type="text" id="restaurant-search-input" placeholder="식당명을 입력하세요" autocomplete="off">
+                        <button type="button" id="restaurant-search-btn">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="search-results-section">
+                    <div class="results-header">
+                        <h3>검색 결과</h3>
+                        <span class="results-count" id="results-count">0개</span>
+                    </div>
+
+                    <div class="results-container" id="results-container">
+                        <div class="empty-state" id="empty-state">
+                            <div class="empty-icon">
+                                <i class="fas fa-utensils"></i>
+                            </div>
+                            <h4>모든 식당 보기</h4>
+                            <p>검색어를 입력하거나 아래에서 식당을 선택하세요</p>
+                        </div>
+
+                        <div class="loading-state" id="loading-state" style="display: none;">
+                            <div class="loading-spinner">
+                                <i class="fas fa-spinner fa-spin"></i>
+                            </div>
+                            <p>검색 중...</p>
+                        </div>
+
+                        <div class="no-results-state" id="no-results-state" style="display: none;">
+                            <div class="empty-icon">
+                                <i class="fas fa-search-minus"></i>
+                            </div>
+                            <h4>검색 결과가 없습니다</h4>
+                            <p>다른 키워드로 검색해보세요</p>
+                        </div>
+
+                        <div class="results-list" id="results-list" style="display: none;">
+                            <!-- JavaScript로 동적 생성 -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="selected-preview" id="selected-preview" style="display: none;">
+                    <div class="preview-header">
+                        <h3>선택된 식당</h3>
+                    </div>
+                    <div class="preview-card">
+                        <div class="preview-info">
+                            <h4 class="preview-name"></h4>
+                            <div class="preview-details">
+                                <span class="preview-category"></span>
+                                <div class="preview-rating">
+                                    <span class="preview-stars"></span>
+                                    <span class="preview-score"></span>
+                                </div>
+                            </div>
+                            <p class="preview-address"></p>
+                        </div>
+                        <button type="button" class="preview-remove" id="preview-remove">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary-btn" id="cancel-restaurant-selection">취소</button>
+                <button class="primary-btn" id="confirm-restaurant-selection" disabled>선택 완료</button>
             </div>
         </div>
     </div>

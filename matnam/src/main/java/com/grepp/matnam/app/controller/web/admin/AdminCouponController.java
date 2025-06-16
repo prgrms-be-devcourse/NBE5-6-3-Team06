@@ -4,6 +4,7 @@ import com.grepp.matnam.app.model.coupon.code.CouponTemplateStatus;
 import com.grepp.matnam.app.model.coupon.code.DiscountType;
 import com.grepp.matnam.app.model.coupon.entity.CouponTemplate;
 import com.grepp.matnam.app.model.coupon.service.CouponManageService;
+import com.grepp.matnam.app.model.restaurant.code.Category;
 import com.grepp.matnam.app.model.restaurant.entity.Restaurant;
 import com.grepp.matnam.app.model.restaurant.service.RestaurantService;
 import com.grepp.matnam.infra.error.exceptions.CommonException;
@@ -35,7 +36,7 @@ public class AdminCouponController {
     private final CouponManageService couponManageService;
     private final RestaurantService restaurantService;
 
-    @GetMapping({"", "/", "/list"})
+    @GetMapping
     public String couponManagement(@RequestParam(required = false) CouponTemplateStatus status,
                                    @RequestParam(required = false, defaultValue = "") String keyword,
                                    @RequestParam(required = false, defaultValue = "newest") String sort,
@@ -88,6 +89,7 @@ public class AdminCouponController {
         model.addAttribute("status", statusName);
         model.addAttribute("sort", sort);
         model.addAttribute("restaurants", restaurants);
+        model.addAttribute("categories", Category.values());
         model.addAttribute("discountTypes", DiscountType.values());
         model.addAttribute("couponStatuses", CouponTemplateStatus.values());
 
