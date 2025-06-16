@@ -11,6 +11,7 @@ import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -34,6 +35,8 @@ public class User extends BaseEntity {
     private String nickname;
 
     private Boolean activated = false;
+
+    private String emailCode = UUID.randomUUID().toString();
 
     private int age;
 

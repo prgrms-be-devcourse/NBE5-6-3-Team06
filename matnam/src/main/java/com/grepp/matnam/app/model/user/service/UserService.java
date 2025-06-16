@@ -340,7 +340,26 @@ public class UserService {
                 notificationSender.resendNotificationToUser(userId, notice);
             }
         }
+    }
 
+    @Transactional
+    public User activateUserByEmailCode(String emailCode) {
+        Optional<User> optionalUser = userRepository.findByEmailCode(emailCode);
 
+        if (optionalUser.isEmpty()) {
+            throw new IllegalArgumentException("유효하지 않은 인증 코드입니다.");
+        }
+
+        User user = optionalUser.get();
+
+        if (user.isActivated()) {
+            throw new IllegalStateException("이미 인증이 완료된 계정입니다.");
+        }
+
+        // 활성화 처리
+        user.setActivated(true);
+        user.setEmailCode(null);
+
+        return userRepository.save(user);
     }
 }

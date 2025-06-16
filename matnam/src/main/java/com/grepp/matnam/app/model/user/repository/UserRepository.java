@@ -16,6 +16,7 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, String>, UserRepositoryCustom{
     Optional<User> findByEmail(String email);
     Optional<User> findByUserId(String userId);
+    Optional<User> findByEmailCode(String emailCode);
     boolean existsByEmail(String email);
     boolean existsByUserId(String userId);
     List<User> findAllByStatusAndDueDateBefore(Status status, LocalDate date);
