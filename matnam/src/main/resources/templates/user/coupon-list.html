@@ -465,7 +465,7 @@
 
                 <button class="apply-btn"
                         th:if="${coupon.issuedQuantity < coupon.totalQuantity}"
-                        th:onclick="'applyCoupon(' + ${coupon.templateId} + ')'">
+                        th:data-template-id="${coupon.templateId}">
                     <i class="fas fa-ticket-alt"></i> 쿠폰 받기
                 </button>
 
@@ -501,7 +501,7 @@
 <script src="/js/header.js"></script>
 <script src="/js/notification-common.js"></script>
 <script>
-    async function applyCoupon(templateId) {
+    async function applyCoupon(templateId, buttonElement) {
         if (!auth.isLoggedIn()) {
             showToast('로그인이 필요합니다.', 'error');
             setTimeout(() => {
@@ -511,6 +511,8 @@
         }
 
         try {
+            console.log('Applying coupon for template ID:', templateId);
+
             const response = await fetch(`/api/user/coupons/${templateId}/apply`, {
                 method: 'POST',
                 headers: {
@@ -520,19 +522,26 @@
             });
 
             const result = await response.json();
+            console.log('Apply coupon response:', result);
 
-            if (response.ok && result.success) {
+            const isSuccess = response.ok && (result.success || result.code === '0000');
+
+            if (isSuccess) {
+                console.log('Showing success toast');
                 showToast('쿠폰 신청이 완료되었습니다! 선착순 결과를 확인해보세요.', 'success');
 
-                const button = event.target.closest('.apply-btn');
-                button.disabled = true;
-                button.innerHTML = '<i class="fas fa-check"></i> 신청 완료';
+                if (buttonElement) {
+                    buttonElement.disabled = true;
+                    buttonElement.innerHTML = '<i class="fas fa-check"></i> 신청 완료';
+                }
 
                 setTimeout(() => {
                     window.location.reload();
                 }, 2000);
             } else {
-                showToast(result.message || '쿠폰 신청에 실패했습니다.', 'error');
+                console.log('Showing error toast');
+                const errorMessage = result.message || result.error || '쿠폰 신청에 실패했습니다.';
+                showToast(errorMessage, 'error');
             }
         } catch (error) {
             console.error('Error applying coupon:', error);
@@ -541,6 +550,21 @@
     }
 
     document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('click', function(event) {
+            if (event.target.matches('.apply-btn:not(:disabled)') ||
+                event.target.closest('.apply-btn:not(:disabled)')) {
+
+                const button = event.target.matches('.apply-btn') ?
+                    event.target : event.target.closest('.apply-btn');
+
+                const templateId = button.getAttribute('data-template-id');
+
+                if (templateId) {
+                    event.preventDefault();
+                    applyCoupon(parseInt(templateId), button);
+                }
+            }
+        });
     });
 </script>
 </body>

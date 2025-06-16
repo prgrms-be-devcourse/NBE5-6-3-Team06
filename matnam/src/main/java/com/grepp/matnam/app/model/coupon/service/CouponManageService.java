@@ -27,7 +27,7 @@ public class CouponManageService {
     private final RestaurantRepository restaurantRepository;
     private final StringRedisTemplate redisTemplate;
 
-    private static final String ACTIVE_COUPON_CAMPAIGNS_KEY = "coupon:active_campaigns";
+    private static final String ACTIVE_COUPON_TEMPLATES_KEY = "coupon:active_templates";
 
     @Transactional
     public CouponTemplate createCouponTemplate(CouponTemplateCreateDto dto) {
@@ -50,19 +50,19 @@ public class CouponManageService {
 
         CouponTemplate savedTemplate = couponTemplateRepository.save(couponTemplate);
 
-        redisTemplate.opsForSet().add(ACTIVE_COUPON_CAMPAIGNS_KEY, String.valueOf(savedTemplate.getTemplateId()));
+        redisTemplate.opsForSet().add(ACTIVE_COUPON_TEMPLATES_KEY, String.valueOf(savedTemplate.getTemplateId()));
 
         return savedTemplate;
     }
 
     public CouponTemplate getCouponTemplate(Long templateId) {
-        return couponTemplateRepository.findById(templateId)
+        return couponTemplateRepository.findByIdWithRestaurant(templateId)
                 .orElseThrow(() -> new EntityNotFoundException("해당 쿠폰 템플릿을 찾을 수 없습니다. id: " + templateId));
     }
 
     @Transactional
     public CouponTemplate updateCouponTemplate(Long templateId, CouponTemplateUpdateDto dto) {
-        CouponTemplate template = couponTemplateRepository.findById(templateId)
+        CouponTemplate template = couponTemplateRepository.findByIdWithRestaurant(templateId)
                 .orElseThrow(() -> new EntityNotFoundException("해당 쿠폰 템플릿을 찾을 수 없습니다. id: " + templateId));
 
         if (dto.getName() != null) {
@@ -70,6 +70,23 @@ public class CouponManageService {
         }
         if (dto.getDescription() != null) {
             template.setDescription(dto.getDescription());
+        }
+
+        if (dto.getDiscountType() != null) {
+            template.setDiscountType(dto.getDiscountType());
+        }
+        if (dto.getDiscountValue() != null) {
+            template.setDiscountValue(dto.getDiscountValue());
+        }
+
+        if (dto.getTotalQuantity() != null) {
+            if (dto.getTotalQuantity() < template.getIssuedQuantity()) {
+                throw new IllegalArgumentException("총 발급 수량은 이미 발급된 수량(" + template.getIssuedQuantity() + ")보다 적을 수 없습니다.");
+            }
+            template.setTotalQuantity(dto.getTotalQuantity());
+        }
+        if (dto.getValidDays() != null) {
+            template.setValidDays(dto.getValidDays());
         }
 
         if (dto.getEndAt() != null && dto.getEndAt().isAfter(LocalDateTime.now()) && dto.getEndAt().isBefore(template.getEndAt())) {
@@ -86,7 +103,7 @@ public class CouponManageService {
 
         template.setStatus(CouponTemplateStatus.DELETED);
 
-        redisTemplate.opsForSet().remove(ACTIVE_COUPON_CAMPAIGNS_KEY, String.valueOf(templateId));
+        redisTemplate.opsForSet().remove(ACTIVE_COUPON_TEMPLATES_KEY, String.valueOf(templateId));
     }
 
     public Page<CouponTemplate> getCouponTemplates(Pageable pageable) {

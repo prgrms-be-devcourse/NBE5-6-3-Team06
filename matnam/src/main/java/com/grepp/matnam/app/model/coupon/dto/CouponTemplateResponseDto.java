@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 @Builder
 public class CouponTemplateResponseDto {
     private Long id;
+    private Long restaurantId;
     private String restaurantName;
     private String name;
     private String description;
@@ -27,6 +28,7 @@ public class CouponTemplateResponseDto {
     public static CouponTemplateResponseDto from(CouponTemplate template) {
         return CouponTemplateResponseDto.builder()
                 .id(template.getTemplateId())
+                .restaurantId(template.getRestaurant().getRestaurantId())
                 .restaurantName(template.getRestaurant().getName())
                 .name(template.getName())
                 .description(template.getDescription())

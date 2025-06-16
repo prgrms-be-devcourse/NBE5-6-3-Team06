@@ -22,37 +22,37 @@ public class CouponIssuanceScheduler {
     private final CouponTemplateRepository couponTemplateRepository;
     private final CouponIssueService couponIssueService;
 
-    private static final String ACTIVE_COUPON_CAMPAIGNS_KEY = "coupon:active_campaigns";
+    private static final String ACTIVE_COUPON_TEMPLATES_KEY = "coupon:active_templates";
     private static final int BATCH_SIZE = 50;
 
     @Scheduled(fixedDelay = 5000)
     public void issueCouponsFromQueue() {
-        Set<String> activeCampaignIds = redisTemplate.opsForSet().members(ACTIVE_COUPON_CAMPAIGNS_KEY);
-        if (activeCampaignIds == null || activeCampaignIds.isEmpty()) {
+        Set<String> activeTemplatesIds = redisTemplate.opsForSet().members(ACTIVE_COUPON_TEMPLATES_KEY);
+        if (activeTemplatesIds == null || activeTemplatesIds.isEmpty()) {
             return;
         }
 
-        for (String campaignIdStr : activeCampaignIds) {
-            Long campaignId = Long.parseLong(campaignIdStr);
-            CouponTemplate template = couponTemplateRepository.findById(campaignId).orElse(null);
+        for (String templateIdStr : activeTemplatesIds) {
+            Long templateId = Long.parseLong(templateIdStr);
+            CouponTemplate template = couponTemplateRepository.findById(templateId).orElse(null);
 
             if (template == null || template.getStatus() != CouponTemplateStatus.ACTIVE || template.getEndAt().isBefore(LocalDateTime.now())) {
-                redisTemplate.opsForSet().remove(ACTIVE_COUPON_CAMPAIGNS_KEY, campaignIdStr);
+                redisTemplate.opsForSet().remove(ACTIVE_COUPON_TEMPLATES_KEY, templateIdStr);
                 continue;
             }
 
-            Set<String> userIds = redisTemplate.opsForZSet().range(getCouponQueueKey(campaignId), 0, BATCH_SIZE - 1);
+            Set<String> userIds = redisTemplate.opsForZSet().range(getCouponQueueKey(templateId), 0, BATCH_SIZE - 1);
             if (userIds == null || userIds.isEmpty()) {
                 continue;
             }
 
             for (String userId : userIds) {
                 try {
-                    couponIssueService.issueSingleCoupon(Long.parseLong(campaignIdStr), userId);
+                    couponIssueService.issueSingleCoupon(Long.parseLong(templateIdStr), userId);
                 } catch (Exception e) {
-                    log.error("쿠폰 발급 중 오류 발생. campaignId: {}, userId: {}", campaignId, userId, e);
+                    log.error("쿠폰 발급 중 오류 발생. templateId: {}, userId: {}", templateId, userId, e);
                 } finally {
-                    redisTemplate.opsForZSet().remove(getCouponQueueKey(campaignId), userId);
+                    redisTemplate.opsForZSet().remove(getCouponQueueKey(templateId), userId);
                 }
             }
         }

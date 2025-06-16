@@ -89,24 +89,37 @@ function closeQRModal() {
 
 async function applyCoupon(templateId) {
     try {
+        console.log('Applying coupon for template ID:', templateId);
+
         const response = await fetch(`/api/user/coupons/${templateId}/apply`, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${auth.getAccessToken()}`,
                 'Content-Type': 'application/json'
             }
         });
 
         const result = await response.json();
+        console.log('Apply coupon response:', result);
+        console.log('Response status:', response.status);
+        console.log('Response ok:', response.ok);
 
-        if (response.ok && result.success) {
+        const isSuccess = response.ok && (result.success || result.code === '0000');
+        console.log('Is success?', isSuccess);
+        console.log('result.success:', result.success);
+        console.log('result.code:', result.code);
+
+        if (isSuccess) {
+            console.log('Showing success toast');
             showToast('쿠폰 신청이 완료되었습니다!', 'success');
 
             setTimeout(() => {
                 window.location.reload();
             }, 1500);
         } else {
-            showToast(result.message || '쿠폰 신청에 실패했습니다.', 'error');
+            console.log('Showing error toast');
+            const errorMessage = result.message || result.error || '쿠폰 신청에 실패했습니다.';
+            console.log('Error message:', errorMessage);
+            showToast(errorMessage, 'error');
         }
     } catch (error) {
         console.error('Error applying coupon:', error);

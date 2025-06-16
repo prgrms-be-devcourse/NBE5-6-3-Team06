@@ -40,12 +40,12 @@ public class CouponIssueService {
     }
 
     @Transactional
-    public void issueSingleCoupon(Long campaignId, String userId) {
-        CouponTemplate template = couponTemplateRepository.findByIdWithPessimisticLock(campaignId)
+    public void issueSingleCoupon(Long templateId, String userId) {
+        CouponTemplate template = couponTemplateRepository.findByIdWithPessimisticLock(templateId)
                 .orElseThrow(() -> new RuntimeException("쿠폰 템플릿을 찾을 수 없습니다."));
 
         if (template.getIssuedQuantity() >= template.getTotalQuantity() || template.getStatus() != CouponTemplateStatus.ACTIVE) {
-            log.warn("쿠폰이 소진되었거나 비활성 상태입니다. campaignId: {}", campaignId);
+            log.warn("쿠폰이 소진되었거나 비활성 상태입니다. templateId: {}", templateId);
             return;
         }
 

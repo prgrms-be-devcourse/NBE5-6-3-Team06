@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "관리자 쿠폰 관리")
@@ -30,6 +31,7 @@ public class AdminCouponApiController {
 
     @Operation(summary = "쿠폰 템플릿 상세 조회")
     @GetMapping("/templates/{templateId}")
+    @Transactional(readOnly = true)
     public ResponseEntity<ApiResponse<CouponTemplateResponseDto>> getCouponTemplate(@PathVariable Long templateId) {
         CouponTemplate couponTemplate = couponManageService.getCouponTemplate(templateId);
         return ResponseEntity.ok(ApiResponse.success(CouponTemplateResponseDto.from(couponTemplate)));

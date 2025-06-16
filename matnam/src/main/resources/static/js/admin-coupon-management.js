@@ -19,7 +19,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const CouponAPI = {
         getTemplate: (id) => {
             return fetch(`/api/admin/coupons/templates/${id}`, {
-                headers: { 'Authorization': `Bearer ${auth.getAccessToken()}` }
             });
         },
 
@@ -28,7 +27,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${auth.getAccessToken()}`
                 },
                 body: JSON.stringify(data)
             });
@@ -39,7 +37,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${auth.getAccessToken()}`
                 },
                 body: JSON.stringify(data)
             });
@@ -48,7 +45,6 @@ document.addEventListener('DOMContentLoaded', function() {
         deleteTemplate: (id) => {
             return fetch(`/api/admin/coupons/templates/${id}`, {
                 method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${auth.getAccessToken()}` }
             });
         }
     };
@@ -70,6 +66,9 @@ document.addEventListener('DOMContentLoaded', function() {
         updateDiscountSuffix();
         isEditMode = false;
         currentCouponId = null;
+
+        document.getElementById('coupon-restaurant').disabled = false;
+        document.getElementById('coupon-start-at').disabled = false;
     }
 
     function clearErrors() {
@@ -96,21 +95,50 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function getFormData() {
+        const restaurantId = document.getElementById('coupon-restaurant').value;
+        const discountValue = document.getElementById('coupon-discount-value').value;
+        const totalQuantity = document.getElementById('coupon-total-quantity').value;
+        const validDays = document.getElementById('coupon-valid-days').value;
+
         return {
-            restaurantId: parseInt(document.getElementById('coupon-restaurant').value),
+            restaurantId: restaurantId ? parseInt(restaurantId) : null,
             name: document.getElementById('coupon-name').value,
             description: document.getElementById('coupon-description').value,
             discountType: document.getElementById('coupon-discount-type').value,
-            discountValue: parseInt(document.getElementById('coupon-discount-value').value),
-            totalQuantity: parseInt(document.getElementById('coupon-total-quantity').value),
-            validDays: parseInt(document.getElementById('coupon-valid-days').value),
+            discountValue: discountValue ? parseInt(discountValue) : null,
+            totalQuantity: totalQuantity ? parseInt(totalQuantity) : null,
+            validDays: validDays ? parseInt(validDays) : null,
             startAt: document.getElementById('coupon-start-at').value,
             endAt: document.getElementById('coupon-end-at').value
         };
     }
 
+    function getUpdateFormData() {
+        const discountValue = document.getElementById('coupon-discount-value').value;
+        const totalQuantity = document.getElementById('coupon-total-quantity').value;
+        const validDays = document.getElementById('coupon-valid-days').value;
+
+        return {
+            name: document.getElementById('coupon-name').value,
+            description: document.getElementById('coupon-description').value,
+            discountType: document.getElementById('coupon-discount-type').value,
+            discountValue: discountValue ? parseInt(discountValue) : null,
+            totalQuantity: totalQuantity ? parseInt(totalQuantity) : null,
+            validDays: validDays ? parseInt(validDays) : null,
+            endAt: document.getElementById('coupon-end-at').value
+        };
+    }
+
     function setFormData(data) {
-        document.getElementById('coupon-restaurant').value = data.restaurantId || '';
+        if (data.restaurantId) {
+            document.getElementById('coupon-restaurant').value = data.restaurantId;
+            if (isEditMode) {
+                document.getElementById('coupon-restaurant').disabled = true;
+            }
+        } else {
+            console.warn('restaurantId is missing in data:', data);
+        }
+
         document.getElementById('coupon-name').value = data.name || '';
         document.getElementById('coupon-description').value = data.description || '';
         document.getElementById('coupon-discount-type').value = data.discountType || '';
@@ -120,6 +148,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (data.startAt) {
             document.getElementById('coupon-start-at').value = formatDateTimeForInput(data.startAt);
+            if (isEditMode) {
+                document.getElementById('coupon-start-at').disabled = true;
+            }
         }
         if (data.endAt) {
             document.getElementById('coupon-end-at').value = formatDateTimeForInput(data.endAt);
@@ -265,7 +296,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const response = await CouponAPI.getTemplate(couponId);
             const result = await response.json();
 
-            if (response.ok && result.success) {
+            if (response.ok && (result.success || result.code === '0000')) {
                 const couponData = result.data;
                 isEditMode = true;
                 currentCouponId = couponId;
@@ -315,7 +346,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         row.innerHTML = `
             <td>${rowNumber}</td>
-            <td>${coupon.couponName || coupon.name}</td>
+            <td>${coupon.name}</td>
             <td>${coupon.restaurantName}</td>
             <td>
                 <span class="badge ${badgeClass}">${coupon.discountType}</span>
@@ -374,7 +405,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     async function saveCoupon() {
-        const formData = getFormData();
+        let formData;
+
+        if (isEditMode && currentCouponId) {
+            formData = getUpdateFormData();
+        } else {
+            formData = getFormData();
+        }
 
         try {
             let response;
@@ -386,7 +423,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const result = await response.json();
 
-            if (response.ok && result.success) {
+            if (response.ok && (result.success || result.code === '0000')) {
                 const successMessage = isEditMode ? '쿠폰 템플릿이 수정되었습니다.' : '쿠폰 템플릿이 생성되었습니다.';
                 showToast(successMessage, 'success');
                 closeModal(couponModal);

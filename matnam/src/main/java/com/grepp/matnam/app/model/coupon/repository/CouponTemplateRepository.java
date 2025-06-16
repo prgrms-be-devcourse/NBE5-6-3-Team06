@@ -35,4 +35,7 @@ public interface CouponTemplateRepository extends JpaRepository<CouponTemplate, 
             "AND ct.issuedQuantity < ct.totalQuantity " +
             "AND (:keyword = '' OR ct.name LIKE %:keyword% OR r.name LIKE %:keyword%)")
     Page<CouponTemplate> findAvailableCoupons(@Param("keyword") String keyword, Pageable pageable);
+
+    @Query("SELECT ct FROM CouponTemplate ct JOIN FETCH ct.restaurant r WHERE ct.templateId = :id")
+    Optional<CouponTemplate> findByIdWithRestaurant(@Param("id") Long id);
 }
