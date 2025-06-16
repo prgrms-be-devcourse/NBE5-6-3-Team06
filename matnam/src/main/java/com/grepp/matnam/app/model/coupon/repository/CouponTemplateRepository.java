@@ -38,4 +38,23 @@ public interface CouponTemplateRepository extends JpaRepository<CouponTemplate, 
 
     @Query("SELECT ct FROM CouponTemplate ct JOIN FETCH ct.restaurant r WHERE ct.templateId = :id")
     Optional<CouponTemplate> findByIdWithRestaurant(@Param("id") Long id);
+
+    @Query("SELECT ct FROM CouponTemplate ct JOIN FETCH ct.restaurant r " +
+            "WHERE ct.status != 'DELETED' " +
+            "AND (:keyword = '' OR ct.name LIKE %:keyword% OR r.name LIKE %:keyword%)")
+    Page<CouponTemplate> findAllActiveCoupons(@Param("keyword") String keyword, Pageable pageable);
+
+    @Query("SELECT ct FROM CouponTemplate ct JOIN FETCH ct.restaurant r " +
+            "WHERE ct.status != 'DELETED' " +
+            "AND (:keyword = '' OR ct.name LIKE %:keyword% OR r.name LIKE %:keyword%) " +
+            "ORDER BY " +
+            "CASE " +
+            "  WHEN ct.status = 'ACTIVE' AND ct.startAt <= CURRENT_TIMESTAMP AND ct.endAt > CURRENT_TIMESTAMP AND ct.issuedQuantity < ct.totalQuantity THEN 1 " +
+            "  WHEN ct.status = 'ACTIVE' AND ct.startAt > CURRENT_TIMESTAMP THEN 2 " +
+            "  WHEN ct.status = 'ACTIVE' AND ct.issuedQuantity >= ct.totalQuantity THEN 3 " +
+            "  WHEN ct.status = 'ACTIVE' AND ct.endAt <= CURRENT_TIMESTAMP THEN 4 " +
+            "  ELSE 5 " +
+            "END, " +
+            "ct.createdAt DESC")
+    Page<CouponTemplate> findAllActiveCouponsWithDefaultSort(@Param("keyword") String keyword, Pageable pageable);
 }

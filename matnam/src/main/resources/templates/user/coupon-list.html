@@ -163,6 +163,18 @@
             font-size: 1.1rem;
         }
 
+        .status-badge {
+            position: absolute;
+            top: 3.5rem;
+            right: 1rem;
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 0.4rem 0.8rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            z-index: 1;
+        }
         .coupon-body {
             padding: 1.5rem;
         }
@@ -226,8 +238,6 @@
 
         .apply-btn {
             width: 100%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
             border: none;
             padding: 1rem;
             border-radius: 8px;
@@ -235,17 +245,64 @@
             font-size: 1.1rem;
             cursor: pointer;
             transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
         }
 
-        .apply-btn:hover:not(:disabled) {
+        .apply-btn.available {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .apply-btn.available:hover {
             background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
             transform: translateY(-2px);
         }
 
-        .apply-btn:disabled {
-            background: #6c757d;
+        .apply-btn.applied {
+            background: #28a745;
+            color: white;
+            cursor: pointer;
+        }
+
+        .apply-btn.applied:hover {
+            background: #218838;
+            transform: translateY(-1px);
+        }
+
+        .apply-btn.exhausted {
+            background: #dc3545;
+            color: white;
             cursor: not-allowed;
-            transform: none;
+        }
+
+        .apply-btn.expired {
+            background: #ffc107;
+            color: #212529;
+            cursor: not-allowed;
+        }
+
+        .apply-btn.not-started {
+            background: #6c757d;
+            color: white;
+            cursor: not-allowed;
+        }
+
+        .apply-btn.loading {
+            background: #6c757d;
+            cursor: wait;
+            color: white;
+        }
+
+        .apply-btn.loading i {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
 
         .deadline-warning {
@@ -398,6 +455,7 @@
                    th:value="${keyword}">
 
             <select name="sort" class="sort-select" onchange="this.form.submit()">
+                <option value="default" th:selected="${sort == 'default'}">기본</option>
                 <option value="newest" th:selected="${sort == 'newest'}">최신순</option>
                 <option value="name" th:selected="${sort == 'name'}">쿠폰명순</option>
                 <option value="restaurant" th:selected="${sort == 'restaurant'}">식당명순</option>
@@ -412,12 +470,23 @@
 
     <div th:if="${#lists.isEmpty(page.content())}" class="empty-state">
         <i class="fas fa-ticket-alt"></i>
-        <h3>현재 발급 가능한 쿠폰이 없습니다</h3>
-        <p>새로운 쿠폰이 등록되면 알려드릴게요!</p>
+        <h3>검색 결과가 없습니다</h3>
+        <p>다른 키워드로 검색해보세요!</p>
     </div>
 
     <div th:if="${!#lists.isEmpty(page.content())}" class="coupon-grid">
-        <div th:each="coupon : ${page.content()}" class="coupon-item">
+        <div th:each="coupon : ${page.content()}"
+             class="coupon-item"
+             th:with="
+                now=${T(java.time.LocalDateTime).now()},
+                isApplied=${#sets.contains(appliedCouponIds, coupon.templateId)},
+                isExhausted=${coupon.issuedQuantity >= coupon.totalQuantity},
+                isExpired=${coupon.endAt.isBefore(now)},
+                isNotStarted=${coupon.startAt.isAfter(now)}"
+             th:classappend="${isApplied ? 'applied' :
+                             (isExhausted ? 'exhausted' :
+                             (isExpired ? 'expired' :
+                             (isNotStarted ? 'not-started' : 'available')))}">
 
             <div class="coupon-header">
                 <div class="restaurant-name" th:text="${coupon.restaurant.name}">식당명</div>
@@ -425,6 +494,11 @@
                 <div class="discount-badge">
                     <span th:text="${coupon.discountValue}">10</span><span th:text="${coupon.discountType.name() == 'PERCENTAGE' ? '%' : '원'}">%</span> 할인
                 </div>
+
+                <div class="status-badge" th:if="${isApplied}">신청완료</div>
+                <div class="status-badge exhausted" th:if="${!isApplied and isExhausted}">선착순 마감</div>
+                <div class="status-badge expired" th:if="${!isApplied and !isExhausted and isExpired}">기간 종료</div>
+                <div class="status-badge not-started" th:if="${!isApplied and !isExhausted and !isExpired and isNotStarted}">오픈예정</div>
             </div>
 
             <div class="coupon-body">
@@ -433,7 +507,7 @@
                 </div>
 
                 <div th:with="hoursLeft=${T(java.time.temporal.ChronoUnit).HOURS.between(T(java.time.LocalDateTime).now(), coupon.endAt)}"
-                     th:if="${hoursLeft <= 24 and hoursLeft > 0}"
+                     th:if="${hoursLeft <= 24 and hoursLeft > 0 and !isExpired}"
                      class="deadline-warning"
                      th:classappend="${hoursLeft <= 6 ? 'deadline-urgent' : ''}">
                     <i class="fas fa-clock"></i>
@@ -463,15 +537,35 @@
                     </div>
                 </div>
 
-                <button class="apply-btn"
-                        th:if="${coupon.issuedQuantity < coupon.totalQuantity}"
-                        th:data-template-id="${coupon.templateId}">
-                    <i class="fas fa-ticket-alt"></i> 쿠폰 받기
-                </button>
+                <div th:switch="${true}">
+                    <button th:case="${isApplied}"
+                            class="apply-btn applied"
+                            onclick="goToMyCoupons()">
+                        <i class="fas fa-check"></i> 신청 완료 (내 쿠폰함 보기)
+                    </button>
 
-                <button class="apply-btn" disabled th:if="${coupon.issuedQuantity >= coupon.totalQuantity}">
-                    <i class="fas fa-times"></i> 발급 완료
-                </button>
+                    <button th:case="${isExhausted}"
+                            class="apply-btn exhausted" disabled>
+                        <i class="fas fa-times"></i> 선착순 마감
+                    </button>
+
+                    <button th:case="${isExpired}"
+                            class="apply-btn expired" disabled>
+                        <i class="fas fa-clock"></i> 기간 종료
+                    </button>
+
+                    <button th:case="${isNotStarted}"
+                            class="apply-btn not-started" disabled>
+                        <i class="fas fa-hourglass-start"></i>
+                        <span th:text="'오픈예정 (' + ${#temporals.format(coupon.startAt, 'MM/dd HH:mm')} + ')'">오픈예정</span>
+                    </button>
+
+                    <button th:case="*"
+                            class="apply-btn available"
+                            th:data-template-id="${coupon.templateId}">
+                        <i class="fas fa-ticket-alt"></i> 쿠폰 받기
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -501,6 +595,12 @@
 <script src="/js/header.js"></script>
 <script src="/js/notification-common.js"></script>
 <script>
+    function goToMyCoupons() {
+        setTimeout(() => {
+            window.location.href = 'user/coupons';
+        });
+    }
+
     async function applyCoupon(templateId, buttonElement) {
         if (!auth.isLoggedIn()) {
             showToast('로그인이 필요합니다.', 'error');
@@ -509,6 +609,11 @@
             }, 1000);
             return;
         }
+
+        const originalContent = buttonElement.innerHTML;
+        buttonElement.classList.add('loading');
+        buttonElement.innerHTML = '<i class="fas fa-spinner"></i> 신청 중...';
+        buttonElement.disabled = true;
 
         try {
             console.log('Applying coupon for template ID:', templateId);
@@ -528,31 +633,51 @@
 
             if (isSuccess) {
                 console.log('Showing success toast');
-                showToast('쿠폰 신청이 완료되었습니다! 선착순 결과를 확인해보세요.', 'success');
+                showToast('쿠폰 신청이 완료되었습니다!', 'success');
 
-                if (buttonElement) {
-                    buttonElement.disabled = true;
-                    buttonElement.innerHTML = '<i class="fas fa-check"></i> 신청 완료';
+                buttonElement.className = 'apply-btn applied';
+                buttonElement.disabled = false;
+                buttonElement.innerHTML = '<i class="fas fa-check"></i> 신청 완료 (내 쿠폰함 보기)';
+                buttonElement.onclick = goToMyCoupons;
+
+                const couponCard = buttonElement.closest('.coupon-item');
+                if (couponCard) {
+                    couponCard.classList.remove('available');
+                    couponCard.classList.add('applied');
+
+                    const couponHeader = couponCard.querySelector('.coupon-header');
+                    const existingBadge = couponHeader.querySelector('.status-badge');
+                    if (!existingBadge) {
+                        const statusBadge = document.createElement('div');
+                        statusBadge.className = 'status-badge';
+                        statusBadge.textContent = '신청완료';
+                        couponHeader.appendChild(statusBadge);
+                    }
                 }
 
-                setTimeout(() => {
-                    window.location.reload();
-                }, 2000);
             } else {
                 console.log('Showing error toast');
                 const errorMessage = result.message || result.error || '쿠폰 신청에 실패했습니다.';
                 showToast(errorMessage, 'error');
+
+                buttonElement.className = 'apply-btn available';
+                buttonElement.innerHTML = originalContent;
+                buttonElement.disabled = false;
             }
         } catch (error) {
             console.error('Error applying coupon:', error);
             showToast('네트워크 오류가 발생했습니다.', 'error');
+
+            buttonElement.className = 'apply-btn available';
+            buttonElement.innerHTML = originalContent;
+            buttonElement.disabled = false;
         }
     }
 
     document.addEventListener('DOMContentLoaded', function() {
         document.addEventListener('click', function(event) {
-            if (event.target.matches('.apply-btn:not(:disabled)') ||
-                event.target.closest('.apply-btn:not(:disabled)')) {
+            if (event.target.matches('.apply-btn.available:not(:disabled)') ||
+                event.target.closest('.apply-btn.available:not(:disabled)')) {
 
                 const button = event.target.matches('.apply-btn') ?
                     event.target : event.target.closest('.apply-btn');

@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,5 +35,9 @@ public class UserCouponService {
         int expiredCount = (int) userCoupons.stream().filter(c -> c.getStatus() == CouponStatus.EXPIRED).count();
 
         return new CouponStatsDto(totalCount, availableCount, usedCount, expiredCount);
+    }
+
+    public Set<Long> getUserAppliedCouponTemplateIds(String userId) {
+        return userCouponRepository.findAppliedCouponTemplateIdsByUserId(userId);
     }
 }

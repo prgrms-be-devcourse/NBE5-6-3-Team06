@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Repository
 public interface UserCouponRepository extends JpaRepository<UserCoupon, Long> {
@@ -19,4 +20,7 @@ public interface UserCouponRepository extends JpaRepository<UserCoupon, Long> {
 
     @Query("select uc from UserCoupon uc where uc.user.userId = :userId")
     List<UserCoupon> findAllByUserId(@Param("userId") String userId);
+
+    @Query("SELECT uc.couponTemplate.templateId FROM UserCoupon uc WHERE uc.user.userId = :userId")
+    Set<Long> findAppliedCouponTemplateIdsByUserId(@Param("userId") String userId);
 }

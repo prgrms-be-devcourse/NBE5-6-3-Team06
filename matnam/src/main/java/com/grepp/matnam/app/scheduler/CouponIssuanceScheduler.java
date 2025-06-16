@@ -25,7 +25,7 @@ public class CouponIssuanceScheduler {
     private static final String ACTIVE_COUPON_TEMPLATES_KEY = "coupon:active_templates";
     private static final int BATCH_SIZE = 50;
 
-    @Scheduled(fixedDelay = 5000)
+    @Scheduled(fixedDelay = 1000)
     public void issueCouponsFromQueue() {
         Set<String> activeTemplatesIds = redisTemplate.opsForSet().members(ACTIVE_COUPON_TEMPLATES_KEY);
         if (activeTemplatesIds == null || activeTemplatesIds.isEmpty()) {

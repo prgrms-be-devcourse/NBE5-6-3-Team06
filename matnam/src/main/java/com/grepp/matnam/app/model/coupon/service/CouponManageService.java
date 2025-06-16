@@ -126,4 +126,12 @@ public class CouponManageService {
     public Page<CouponTemplate> findAvailableCoupons(String keyword, Pageable pageable) {
         return couponTemplateRepository.findAvailableCoupons(keyword, pageable);
     }
+
+    public Page<CouponTemplate> findAllActiveCoupons(String keyword, Pageable pageable) {
+        return couponTemplateRepository.findAllActiveCoupons(keyword, pageable);
+    }
+
+    public Page<CouponTemplate> findAllActiveCouponsWithDefaultSort(String keyword, Pageable pageable) {
+        return couponTemplateRepository.findAllActiveCouponsWithDefaultSort(keyword, pageable);
+    }
 }
