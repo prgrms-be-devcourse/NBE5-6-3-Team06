@@ -33,12 +33,202 @@ document.addEventListener('DOMContentLoaded', function() {
     const discountSuffix = document.getElementById('discount-suffix');
     const discountValueInput = document.getElementById('coupon-discount-value');
 
+    const tableBody = document.querySelector('.data-table tbody');
+
     // 상태 변수들
     let currentCouponId = null;
     let isEditMode = false;
     let searchTimeout = null;
     let selectedRestaurant = null;
     let restaurantData = [];
+
+    const TableManager = {
+        addCouponRow(couponData) {
+            if (!tableBody) return;
+
+            const newRow = this.createCouponRow(couponData);
+
+            newRow.style.opacity = '0';
+            newRow.style.transform = 'translateY(-20px)';
+            newRow.style.transition = 'all 0.3s ease';
+
+            if (tableBody.firstChild) {
+                tableBody.insertBefore(newRow, tableBody.firstChild);
+            } else {
+                tableBody.appendChild(newRow);
+            }
+
+            setTimeout(() => {
+                newRow.style.opacity = '1';
+                newRow.style.transform = 'translateY(0)';
+            }, 100);
+
+            setTimeout(() => {
+                newRow.style.backgroundColor = '#e8f5e8';
+                setTimeout(() => {
+                    newRow.style.backgroundColor = '';
+                }, 2000);
+            }, 400);
+        },
+
+        updateCouponRow(couponId, couponData) {
+            const existingRow = tableBody.querySelector(`tr[data-coupon-id="${couponId}"]`);
+            if (!existingRow) return;
+
+            console.log('쿠폰 행 업데이트:', couponId, couponData);
+
+            const newRow = this.createCouponRow(couponData);
+            newRow.style.backgroundColor = '#fff3e0';
+
+            existingRow.replaceWith(newRow);
+
+            setTimeout(() => {
+                newRow.style.transition = 'background-color 0.3s ease';
+                newRow.style.backgroundColor = '';
+            }, 1000);
+        },
+
+        removeCouponRow(couponId) {
+            const row = tableBody.querySelector(`tr[data-coupon-id="${couponId}"]`);
+            if (!row) return;
+
+            row.style.transition = 'all 0.3s ease';
+            row.style.opacity = '0';
+            row.style.transform = 'translateX(-100%)';
+            row.style.backgroundColor = '#ffebee';
+
+            setTimeout(() => {
+                row.remove();
+                this.checkEmptyTable();
+            }, 300);
+        },
+
+        createCouponRow(coupon) {
+            const row = document.createElement('tr');
+
+            const couponId = coupon.id || coupon.templateId;
+            row.setAttribute('data-coupon-id', couponId);
+
+            const restaurantName = coupon.restaurantName ||
+                (coupon.restaurant && coupon.restaurant.name) || '알 수 없음';
+
+            const discountText = coupon.discountType === 'PERCENTAGE' ?
+                `${coupon.discountValue}%` : `${coupon.discountValue}원`;
+
+            const progressPercentage = coupon.totalQuantity > 0 ?
+                Math.round((coupon.issuedQuantity * 100) / coupon.totalQuantity) : 0;
+
+            const status = coupon.status || 'ACTIVE';
+            const statusClass = status.toLowerCase();
+
+            const rowNumber = '신규';
+
+            row.innerHTML = `
+                <td>${rowNumber}</td>
+                <td>${coupon.name || '제목 없음'}</td>
+                <td>${restaurantName}</td>
+                <td>
+                    <span class="badge ${coupon.discountType === 'PERCENTAGE' ? 'badge-blue' : 'badge-green'}">
+                        ${coupon.discountType || 'PERCENTAGE'}
+                    </span>
+                </td>
+                <td>${discountText}</td>
+                <td>
+                    <span>${coupon.issuedQuantity || 0}</span> /
+                    <span>${coupon.totalQuantity || 0}</span>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${progressPercentage}%"></div>
+                    </div>
+                </td>
+                <td>
+                    <div class="date-range">
+                        <div>${this.formatDateTime(coupon.startAt)}</div>
+                        <div>~</div>
+                        <div>${this.formatDateTime(coupon.endAt)}</div>
+                    </div>
+                </td>
+                <td>
+                    <span class="status ${statusClass}">${status}</span>
+                </td>
+                <td>
+                    <button class="action-btn edit" data-id="${couponId}">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    ${status !== 'DELETED' ? `
+                        <button class="action-btn delete" data-id="${couponId}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    ` : ''}
+                </td>
+            `;
+
+            return row;
+        },
+
+        formatDateTime(dateTimeString) {
+            if (!dateTimeString) return '-';
+
+            try {
+                const date = new Date(dateTimeString);
+                return date.toLocaleString('ko-KR', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                }).replace(/\. /g, '/').replace('.', '');
+            } catch (error) {
+                return dateTimeString;
+            }
+        },
+
+        checkEmptyTable() {
+            if (!tableBody || tableBody.children.length === 0) {
+                const emptyRow = document.createElement('tr');
+                emptyRow.innerHTML = `
+                    <td colspan="9" style="text-align: center; padding: 2rem; color: #666;">
+                        <i class="fas fa-ticket-alt" style="font-size: 2rem; margin-bottom: 1rem; display: block;"></i>
+                        등록된 쿠폰이 없습니다.
+                    </td>
+                `;
+                tableBody.appendChild(emptyRow);
+            }
+        }
+    };
+
+    const LoadingManager = {
+        showButtonLoading(button, text = '처리 중...') {
+            if (!button) return;
+            button.dataset.originalText = button.innerHTML;
+            button.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${text}`;
+            button.disabled = true;
+        },
+
+        hideButtonLoading(button) {
+            if (!button) return;
+            if (button.dataset.originalText) {
+                button.innerHTML = button.dataset.originalText;
+                delete button.dataset.originalText;
+            }
+            button.disabled = false;
+        },
+
+        showRowLoading(couponId) {
+            const row = tableBody.querySelector(`tr[data-coupon-id="${couponId}"]`);
+            if (row) {
+                row.style.opacity = '0.6';
+                row.style.pointerEvents = 'none';
+            }
+        },
+
+        hideRowLoading(couponId) {
+            const row = tableBody.querySelector(`tr[data-coupon-id="${couponId}"]`);
+            if (row) {
+                row.style.opacity = '1';
+                row.style.pointerEvents = 'auto';
+            }
+        }
+    };
 
     // API 객체
     const CouponAPI = {
@@ -66,7 +256,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
-    // 🎨 모달 관리 함수들
     function openModal(modal) {
         modal.style.display = 'block';
         document.body.classList.add('modal-open');
@@ -77,12 +266,9 @@ document.addEventListener('DOMContentLoaded', function() {
         document.body.classList.remove('modal-open');
     }
 
-    // 🎯 모든 식당 로드 함수 추가
     async function loadAllRestaurants() {
         showLoadingState();
-
         try {
-            // 빈 키워드와 카테고리로 모든 식당 조회
             await searchRestaurants('', '');
         } catch (error) {
             console.error('모든 식당 로드 오류:', error);
@@ -90,21 +276,18 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // 🎨 식당 검색 함수들
     async function searchRestaurants(keyword = '', category = '') {
         showLoadingState();
 
         try {
-            // 실제 검색을 위해 식당 관리 페이지에서 데이터 가져오기
             const params = new URLSearchParams();
             if (keyword.trim()) params.append('keyword', keyword);
             if (category.trim()) params.append('category', category);
-            params.append('size', '50'); // 더 많은 결과
+            params.append('size', '120');
 
             const response = await fetch(`/admin/restaurant/list?${params.toString()}`);
             const html = await response.text();
 
-            // HTML 파싱해서 식당 데이터 추출
             const parser = new DOMParser();
             const doc = parser.parseFromString(html, 'text/html');
             const restaurantRows = doc.querySelectorAll('.data-table tbody tr');
@@ -134,7 +317,6 @@ document.addEventListener('DOMContentLoaded', function() {
             displaySearchResults(restaurantData);
 
         } catch (error) {
-            console.error('검색 오류:', error);
             showNoResultsState();
         }
     }
@@ -169,7 +351,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         resultsList.innerHTML = resultsHtml;
 
-        // 클릭 이벤트 추가
         resultsList.querySelectorAll('.restaurant-item').forEach(item => {
             item.addEventListener('click', function() {
                 const restaurantId = this.dataset.restaurantId;
@@ -200,18 +381,15 @@ document.addEventListener('DOMContentLoaded', function() {
     function selectRestaurant(restaurant) {
         selectedRestaurant = restaurant;
 
-        // 기존 선택 해제
         resultsList.querySelectorAll('.restaurant-item').forEach(item => {
             item.classList.remove('selected');
         });
 
-        // 새로운 선택 표시
         const selectedItem = resultsList.querySelector(`[data-restaurant-id="${restaurant.id}"]`);
         if (selectedItem) {
             selectedItem.classList.add('selected');
         }
 
-        // 미리보기 업데이트
         updateSelectedPreview(restaurant);
         selectedPreview.style.display = 'block';
         confirmRestaurantBtn.disabled = false;
@@ -242,8 +420,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (restaurant) {
             placeholder.style.display = 'none';
-            nameSpan.style.display = 'inline-block'; // 🎯 inline-block으로 변경
-            categorySpan.style.display = 'inline-block'; // 🎯 inline-block으로 변경
+            nameSpan.style.display = 'inline-block';
+            categorySpan.style.display = 'inline-block';
             nameSpan.textContent = restaurant.name;
             categorySpan.textContent = restaurant.category;
             restaurantSelectorBtn.classList.add('selected');
@@ -257,7 +435,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // 🎨 상태 표시 함수들
     function showLoadingState() {
         hideAllStates();
         loadingState.style.display = 'flex';
@@ -268,7 +445,6 @@ document.addEventListener('DOMContentLoaded', function() {
         hideAllStates();
         emptyState.style.display = 'flex';
         resultsCount.textContent = '0개';
-        // 🎯 빈 상태에서도 "모든 식당 보기" 메시지로 변경
         emptyState.querySelector('h4').textContent = '모든 식당 보기';
         emptyState.querySelector('p').textContent = '검색어를 입력하거나 아래에서 식당을 선택하세요';
     }
@@ -286,7 +462,6 @@ document.addEventListener('DOMContentLoaded', function() {
         resultsList.style.display = 'none';
     }
 
-    // 🎨 폼 관리 함수들
     function resetForm() {
         couponForm.reset();
         couponIdInput.value = '';
@@ -297,7 +472,6 @@ document.addEventListener('DOMContentLoaded', function() {
         isEditMode = false;
         currentCouponId = null;
 
-        // 편집 모드 제한 해제
         restaurantSelectorBtn.disabled = false;
         document.getElementById('coupon-start-at').disabled = false;
     }
@@ -378,7 +552,6 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('coupon-end-at').value = formatDateTimeForInput(data.endAt);
         }
 
-        // 식당 정보 설정
         if (data.restaurant) {
             const restaurant = {
                 id: data.restaurant.restaurantId || data.restaurant.id,
@@ -386,10 +559,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 category: data.restaurant.category
             };
             updateRestaurantSelector(restaurant);
+        } else if (data.restaurantName && data.restaurantId) {
+            const restaurant = {
+                id: data.restaurantId,
+                name: data.restaurantName,
+                category: ''
+            };
+            updateRestaurantSelector(restaurant);
+        }
 
-            if (isEditMode) {
-                restaurantSelectorBtn.disabled = true;
-            }
+        if (isEditMode) {
+            restaurantSelectorBtn.disabled = true;
         }
 
         updateDiscountSuffix();
@@ -475,7 +655,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // 🎨 이벤트 리스너들
     addCouponBtn.addEventListener('click', function() {
         resetForm();
         modalTitle.textContent = '새 쿠폰 템플릿 추가';
@@ -487,18 +666,14 @@ document.addEventListener('DOMContentLoaded', function() {
             clearSelectedRestaurant();
             restaurantSearchInput.value = '';
             openModal(restaurantSearchModal);
-
-            // 🎯 모달 열릴 때 바로 모든 식당 로드
             loadAllRestaurants();
         }
     });
 
-    // 검색 이벤트들
     restaurantSearchInput.addEventListener('input', function() {
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(() => {
             const keyword = this.value.trim();
-            // 🎯 키워드 상관없이 항상 검색 (빈 키워드면 모든 식당)
             searchRestaurants(keyword);
         }, 300);
     });
@@ -508,7 +683,6 @@ document.addEventListener('DOMContentLoaded', function() {
         searchRestaurants(keyword);
     });
 
-    // 식당 선택 완료/취소
     confirmRestaurantBtn.addEventListener('click', function() {
         if (selectedRestaurant) {
             updateRestaurantSelector(selectedRestaurant);
@@ -526,7 +700,6 @@ document.addEventListener('DOMContentLoaded', function() {
         clearSelectedRestaurant();
     });
 
-    // 기타 이벤트들
     discountTypeSelect.addEventListener('change', updateDiscountSuffix);
 
     document.addEventListener('click', function(e) {
@@ -564,9 +737,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // 🎨 CRUD 함수들
     async function editCoupon(couponId) {
         try {
+            LoadingManager.showRowLoading(couponId);
+
             const response = await CouponAPI.getTemplate(couponId);
             const result = await response.json();
 
@@ -585,6 +759,8 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (error) {
             console.error('Error fetching coupon:', error);
             showToast('쿠폰 정보를 불러오는데 실패했습니다.', 'error');
+        } finally {
+            LoadingManager.hideRowLoading(couponId);
         }
     }
 
@@ -598,6 +774,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         try {
+            LoadingManager.showButtonLoading(saveCouponBtn, isEditMode ? '수정 중...' : '생성 중...');
+
             let response;
             if (isEditMode && currentCouponId) {
                 response = await CouponAPI.updateTemplate(currentCouponId, formData);
@@ -610,8 +788,28 @@ document.addEventListener('DOMContentLoaded', function() {
             if (response.ok && (result.success || result.code === '0000')) {
                 const successMessage = isEditMode ? '쿠폰 템플릿이 수정되었습니다.' : '쿠폰 템플릿이 생성되었습니다.';
                 showToast(successMessage, 'success');
+
                 closeModal(couponModal);
-                window.location.reload();
+
+                if (result.data) {
+                    try {
+                        if (isEditMode) {
+                            TableManager.updateCouponRow(currentCouponId, result.data);
+                        } else {
+                            TableManager.addCouponRow(result.data);
+                        }
+                    } catch (tableError) {
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1000);
+                    }
+                } else {
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                }
+
+                resetForm();
             } else {
                 if (result.errors) {
                     Object.keys(result.errors).forEach(field => {
@@ -622,31 +820,55 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         } catch (error) {
-            console.error('Error saving coupon:', error);
             showToast('저장에 실패했습니다.', 'error');
+        } finally {
+            LoadingManager.hideButtonLoading(saveCouponBtn);
         }
     }
 
     async function deleteCoupon(couponId) {
         try {
-            const response = await CouponAPI.deleteTemplate(couponId);
-            const result = await response.json();
+            LoadingManager.showButtonLoading(confirmDeleteBtn, '삭제 중...');
+            LoadingManager.showRowLoading(couponId);
 
-            if (response.ok && result.success) {
+            const response = await CouponAPI.deleteTemplate(couponId);
+
+            let result = null;
+            const contentType = response.headers.get('content-type');
+
+            if (contentType && contentType.includes('application/json')) {
+                try {
+                    result = await response.json();
+                } catch (jsonError) {
+                }
+            }
+
+            if (response.ok || (result && result.success)) {
                 showToast('쿠폰 템플릿이 삭제되었습니다.', 'success');
                 closeModal(deleteConfirmModal);
-                window.location.reload();
+
+                try {
+                    TableManager.removeCouponRow(couponId);
+                } catch (tableError) {
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                }
+
+                currentCouponId = null;
             } else {
-                showToast(result.message || '삭제에 실패했습니다.', 'error');
+                const errorMessage = (result && result.message) ||
+                    `삭제에 실패했습니다. (상태: ${response.status})`;
+                throw new Error(errorMessage);
             }
         } catch (error) {
-            console.error('Error deleting coupon:', error);
-            showToast('삭제에 실패했습니다.', 'error');
+            showToast(error.message || '삭제에 실패했습니다.', 'error');
+        } finally {
+            LoadingManager.hideButtonLoading(confirmDeleteBtn);
+            LoadingManager.hideRowLoading(couponId);
         }
     }
 
-    // 초기화
     updateDiscountSuffix();
-    // 🎯 초기 상태는 로딩 상태가 아닌 빈 상태로 설정
     showEmptyState();
 });
