@@ -400,6 +400,10 @@ public class TeamService {
 
         updateTeamStatus(team);
         teamRepository.save(team);
+
+        notificationSender.sendNotificationToUser(team.getUser().getUserId(),
+            NotificationType.TEAM_STATUS, participant.getUser().getNickname() + "님이 [" + team.getTeamTitle() + "] 모임을 탈퇴했습니다.",
+            "/team/detail/" + teamId);
     }
 
     @Transactional
@@ -420,6 +424,10 @@ public class TeamService {
         team.setNowPeople(team.getNowPeople() - 1);
         updateTeamStatus(team);
         teamRepository.save(team);
+
+        notificationSender.sendNotificationToUser(participant.getUser().getUserId(),
+            NotificationType.TEAM_STATUS, "[" + team.getTeamTitle() + "] 모임에서 추방됐습니다.",
+            "/team/detail/" + team.getTeamId());
     }
 
 
