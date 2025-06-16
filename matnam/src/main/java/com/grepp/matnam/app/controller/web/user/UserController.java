@@ -1,5 +1,8 @@
 package com.grepp.matnam.app.controller.web.user;
 
+import com.grepp.matnam.app.controller.api.auth.payload.TokenResponse;
+import com.grepp.matnam.app.model.auth.service.AuthService;
+import com.grepp.matnam.app.model.auth.token.dto.TokenDto;
 import com.grepp.matnam.app.model.mymap.service.MymapService;
 import com.grepp.matnam.app.model.team.dto.TeamDto;
 import com.grepp.matnam.app.model.team.service.FavoriteService;
@@ -11,18 +14,17 @@ import com.grepp.matnam.app.model.user.service.UserService;
 import com.grepp.matnam.app.model.user.entity.User;
 import com.grepp.matnam.infra.auth.AuthenticationUtils;
 import com.grepp.matnam.infra.auth.CookieUtils;
-import com.grepp.matnam.infra.auth.jwt.JwtProvider;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -42,6 +44,7 @@ public class UserController {
     private final TeamReviewService teamReviewService;
     private final MymapService mymapService;
     private final FavoriteService favoriteService;
+    private final AuthService authService;
 
     @GetMapping("/signup")
     public String signupPage() {
@@ -247,5 +250,33 @@ public class UserController {
         }
 
         return "user/passwordChange";
+    }
+
+    @GetMapping("/verify")
+    public String verifyEmail(@RequestParam String code, HttpServletResponse response) {
+        try{
+            // 1. 인증 처리
+            User user = userService.activateUserByEmailCode(code);
+
+            // 2. 자동 로그인 (쿠키에 JWT 저장)
+            TokenDto dto = authService.processTokenSignin(user.getUserId());
+            setAuthCookies(response, dto);
+
+            // 3. 인증 완료 -> 취향 페이지로
+            return "redirect:/user/preference";
+        }catch (Exception e) {
+            log.error("이메일 인증 중 오류: {}", e.getMessage());
+            throw e;
+        }
+    }
+    private void setAuthCookies(HttpServletResponse response, TokenDto dto) {
+        try {
+            CookieUtils.addTokenCookie(response, "ACCESS_TOKEN", dto.getAccessToken(), "/");
+            CookieUtils.addTokenCookie(response, "REFRESH_TOKEN", dto.getRefreshToken(), "/");
+            log.debug("토큰 쿠키 설정 완료");
+        } catch (Exception e) {
+            log.error("토큰 쿠키 설정 실패: {}", e.getMessage());
+            throw e;
+        }
     }
 }

@@ -39,13 +39,13 @@ public class RestaurantEmbedding {
     private String mainFood;
 
     private String openTime;
-    
-    // 업데이트를 위해 활성화 값 넣음
-    private Boolean activated = true;
 
     private Double latitude;
 
     private Double longitude;
+    
+    // 업데이트를 위해 활성화 값 넣음
+    private Boolean activated = true;
 
     //평점
     private Float googleRating;
