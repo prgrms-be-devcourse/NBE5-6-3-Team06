@@ -2270,7 +2270,7 @@ h1 {
     flex: 1;
 }
 
-/* 쿠폰 관리 페이지 스타일 */
+/* 쿠폰 */
 .progress-bar {
     width: 60px;
     height: 8px;
@@ -2311,6 +2311,8 @@ h1 {
     display: flex;
     align-items: center;
     overflow: hidden;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
 }
 
 .input-with-suffix input {
@@ -2318,6 +2320,10 @@ h1 {
     flex: 1;
     padding: 8px 12px;
     outline: none;
+}
+
+.input-with-suffix input:focus {
+    box-shadow: none;
 }
 
 .input-with-suffix span {
@@ -2328,14 +2334,6 @@ h1 {
     font-weight: 500;
     min-width: 40px;
     text-align: center;
-}
-
-.status {
-    padding: 4px 8px;
-    border-radius: 12px;
-    font-size: 12px;
-    font-weight: 500;
-    text-transform: uppercase;
 }
 
 .status.active {
@@ -2363,61 +2361,6 @@ h1 {
     color: #0c5460;
 }
 
-.large-modal {
-    max-width: 800px;
-    width: 90%;
-}
-
-.form-row {
-    display: flex;
-    gap: 20px;
-    margin-bottom: 20px;
-}
-
-.form-row .form-group {
-    flex: 1;
-}
-
-.form-group {
-    margin-bottom: 20px;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: 500;
-    color: #333;
-}
-
-.form-group input,
-.form-group select,
-.form-group textarea {
-    width: 100%;
-    padding: 8px 12px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 14px;
-}
-
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus {
-    outline: none;
-    border-color: #007bff;
-    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
-}
-
-.required {
-    color: #dc3545;
-}
-
-.error-message {
-    color: #dc3545;
-    font-size: 12px;
-    margin-top: 4px;
-    display: block;
-}
-
 .warning-text {
     color: #856404;
     background-color: #fff3cd;
@@ -2428,45 +2371,6 @@ h1 {
     font-size: 14px;
 }
 
-.danger-btn {
-    background-color: #dc3545;
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: background-color 0.2s;
-}
-
-.danger-btn:hover {
-    background-color: #c82333;
-}
-
-.danger-btn:active {
-    background-color: #bd2130;
-}
-
-@media (max-width: 768px) {
-    .form-row {
-        flex-direction: column;
-        gap: 0;
-    }
-
-    .large-modal {
-        width: 95%;
-        margin: 20px auto;
-    }
-
-    .progress-bar {
-        width: 50px;
-    }
-
-    .date-range {
-        font-size: 11px;
-    }
-}
-
 .data-table td .progress-bar {
     margin: 4px auto 0;
 }
@@ -2475,6 +2379,7 @@ h1 {
     margin-left: 5px;
 }
 
+/* 식당 선택 관련 스타일 */
 .restaurant-selector-container {
     position: relative;
 }
@@ -2514,10 +2419,11 @@ h1 {
 
 .restaurant-info {
     display: flex;
-    flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
+    gap: 8px;
     flex: 1;
     text-align: left;
+    flex-wrap: nowrap;
 }
 
 .restaurant-placeholder {
@@ -2529,18 +2435,24 @@ h1 {
 .selected-restaurant-name {
     font-weight: 600;
     color: #212529;
-    margin-bottom: 2px;
     font-size: inherit;
     line-height: 1.2;
+    margin: 0;
+    flex-shrink: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .selected-restaurant-category {
-    font-size: 12px;
-    color: #6c757d;
+    font-size: 11px;
+    color: #1976d2;
     background: #e3f2fd;
     padding: 2px 6px;
     border-radius: 10px;
     line-height: 1;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .restaurant-search-modal {
@@ -2691,6 +2603,7 @@ h1 {
     cursor: pointer;
     transition: all 0.3s ease;
     background: white;
+    animation: fadeInUp 0.3s ease;
 }
 
 .restaurant-item:hover {
@@ -2842,6 +2755,17 @@ h1 {
     color: white;
 }
 
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 @media (max-width: 768px) {
     .restaurant-search-modal {
         width: 95vw;
@@ -2862,23 +2786,17 @@ h1 {
         flex-direction: column;
         align-items: flex-start;
     }
-}
 
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
+    .form-row {
+        flex-direction: column;
+        gap: 0;
     }
-    to {
-        opacity: 1;
-        transform: translateY(0);
+
+    .progress-bar {
+        width: 50px;
     }
-}
 
-.restaurant-item {
-    animation: fadeInUp 0.3s ease;
-}
-
-.restaurant-search-modal {
-    animation: fadeInUp 0.4s ease;
+    .date-range {
+        font-size: 11px;
+    }
 }

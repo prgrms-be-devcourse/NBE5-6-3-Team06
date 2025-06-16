@@ -1,13 +1,16 @@
 document.addEventListener('DOMContentLoaded', function() {
+    // 모달 요소들
     const couponModal = document.getElementById('couponModal');
     const restaurantSearchModal = document.getElementById('restaurantSearchModal');
     const deleteConfirmModal = document.getElementById('deleteConfirmModal');
 
+    // 버튼들
     const addCouponBtn = document.getElementById('add-coupon-btn');
     const restaurantSelectorBtn = document.getElementById('restaurant-selector-btn');
     const saveCouponBtn = document.getElementById('save-coupon-button');
     const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
 
+    // 식당 검색 관련 요소들
     const restaurantSearchInput = document.getElementById('restaurant-search-input');
     const restaurantSearchBtn = document.getElementById('restaurant-search-btn');
     const resultsContainer = document.getElementById('results-container');
@@ -21,6 +24,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const cancelRestaurantBtn = document.getElementById('cancel-restaurant-selection');
     const confirmRestaurantBtn = document.getElementById('confirm-restaurant-selection');
 
+    // 폼 요소들
     const couponForm = document.getElementById('couponForm');
     const couponIdInput = document.getElementById('coupon-id');
     const selectedRestaurantIdInput = document.getElementById('selected-restaurant-id');
@@ -29,12 +33,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const discountSuffix = document.getElementById('discount-suffix');
     const discountValueInput = document.getElementById('coupon-discount-value');
 
+    // 상태 변수들
     let currentCouponId = null;
     let isEditMode = false;
     let searchTimeout = null;
     let selectedRestaurant = null;
     let restaurantData = [];
 
+    // API 객체
     const CouponAPI = {
         getTemplate: (id) => {
             return fetch(`/api/admin/coupons/templates/${id}`);
@@ -60,6 +66,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
+    // 🎨 모달 관리 함수들
     function openModal(modal) {
         modal.style.display = 'block';
         document.body.classList.add('modal-open');
@@ -70,10 +77,12 @@ document.addEventListener('DOMContentLoaded', function() {
         document.body.classList.remove('modal-open');
     }
 
+    // 🎯 모든 식당 로드 함수 추가
     async function loadAllRestaurants() {
         showLoadingState();
 
         try {
+            // 빈 키워드와 카테고리로 모든 식당 조회
             await searchRestaurants('', '');
         } catch (error) {
             console.error('모든 식당 로드 오류:', error);
@@ -81,18 +90,21 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // 🎨 식당 검색 함수들
     async function searchRestaurants(keyword = '', category = '') {
         showLoadingState();
 
         try {
+            // 실제 검색을 위해 식당 관리 페이지에서 데이터 가져오기
             const params = new URLSearchParams();
             if (keyword.trim()) params.append('keyword', keyword);
             if (category.trim()) params.append('category', category);
-            params.append('size', '120');
+            params.append('size', '50'); // 더 많은 결과
 
             const response = await fetch(`/admin/restaurant/list?${params.toString()}`);
             const html = await response.text();
 
+            // HTML 파싱해서 식당 데이터 추출
             const parser = new DOMParser();
             const doc = parser.parseFromString(html, 'text/html');
             const restaurantRows = doc.querySelectorAll('.data-table tbody tr');
@@ -157,6 +169,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         resultsList.innerHTML = resultsHtml;
 
+        // 클릭 이벤트 추가
         resultsList.querySelectorAll('.restaurant-item').forEach(item => {
             item.addEventListener('click', function() {
                 const restaurantId = this.dataset.restaurantId;
@@ -187,15 +200,18 @@ document.addEventListener('DOMContentLoaded', function() {
     function selectRestaurant(restaurant) {
         selectedRestaurant = restaurant;
 
+        // 기존 선택 해제
         resultsList.querySelectorAll('.restaurant-item').forEach(item => {
             item.classList.remove('selected');
         });
 
+        // 새로운 선택 표시
         const selectedItem = resultsList.querySelector(`[data-restaurant-id="${restaurant.id}"]`);
         if (selectedItem) {
             selectedItem.classList.add('selected');
         }
 
+        // 미리보기 업데이트
         updateSelectedPreview(restaurant);
         selectedPreview.style.display = 'block';
         confirmRestaurantBtn.disabled = false;
@@ -226,8 +242,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (restaurant) {
             placeholder.style.display = 'none';
-            nameSpan.style.display = 'block';
-            categorySpan.style.display = 'block';
+            nameSpan.style.display = 'inline-block'; // 🎯 inline-block으로 변경
+            categorySpan.style.display = 'inline-block'; // 🎯 inline-block으로 변경
             nameSpan.textContent = restaurant.name;
             categorySpan.textContent = restaurant.category;
             restaurantSelectorBtn.classList.add('selected');
@@ -241,6 +257,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // 🎨 상태 표시 함수들
     function showLoadingState() {
         hideAllStates();
         loadingState.style.display = 'flex';
@@ -251,6 +268,7 @@ document.addEventListener('DOMContentLoaded', function() {
         hideAllStates();
         emptyState.style.display = 'flex';
         resultsCount.textContent = '0개';
+        // 🎯 빈 상태에서도 "모든 식당 보기" 메시지로 변경
         emptyState.querySelector('h4').textContent = '모든 식당 보기';
         emptyState.querySelector('p').textContent = '검색어를 입력하거나 아래에서 식당을 선택하세요';
     }
@@ -268,6 +286,7 @@ document.addEventListener('DOMContentLoaded', function() {
         resultsList.style.display = 'none';
     }
 
+    // 🎨 폼 관리 함수들
     function resetForm() {
         couponForm.reset();
         couponIdInput.value = '';
@@ -278,6 +297,7 @@ document.addEventListener('DOMContentLoaded', function() {
         isEditMode = false;
         currentCouponId = null;
 
+        // 편집 모드 제한 해제
         restaurantSelectorBtn.disabled = false;
         document.getElementById('coupon-start-at').disabled = false;
     }
@@ -358,6 +378,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('coupon-end-at').value = formatDateTimeForInput(data.endAt);
         }
 
+        // 식당 정보 설정
         if (data.restaurant) {
             const restaurant = {
                 id: data.restaurant.restaurantId || data.restaurant.id,
@@ -454,6 +475,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // 🎨 이벤트 리스너들
     addCouponBtn.addEventListener('click', function() {
         resetForm();
         modalTitle.textContent = '새 쿠폰 템플릿 추가';
@@ -466,14 +488,17 @@ document.addEventListener('DOMContentLoaded', function() {
             restaurantSearchInput.value = '';
             openModal(restaurantSearchModal);
 
+            // 🎯 모달 열릴 때 바로 모든 식당 로드
             loadAllRestaurants();
         }
     });
 
+    // 검색 이벤트들
     restaurantSearchInput.addEventListener('input', function() {
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(() => {
             const keyword = this.value.trim();
+            // 🎯 키워드 상관없이 항상 검색 (빈 키워드면 모든 식당)
             searchRestaurants(keyword);
         }, 300);
     });
@@ -483,6 +508,7 @@ document.addEventListener('DOMContentLoaded', function() {
         searchRestaurants(keyword);
     });
 
+    // 식당 선택 완료/취소
     confirmRestaurantBtn.addEventListener('click', function() {
         if (selectedRestaurant) {
             updateRestaurantSelector(selectedRestaurant);
@@ -500,6 +526,7 @@ document.addEventListener('DOMContentLoaded', function() {
         clearSelectedRestaurant();
     });
 
+    // 기타 이벤트들
     discountTypeSelect.addEventListener('change', updateDiscountSuffix);
 
     document.addEventListener('click', function(e) {
@@ -618,6 +645,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // 초기화
     updateDiscountSuffix();
+    // 🎯 초기 상태는 로딩 상태가 아닌 빈 상태로 설정
     showEmptyState();
 });

@@ -36,7 +36,7 @@ public class AdminCouponController {
     private final CouponManageService couponManageService;
     private final RestaurantService restaurantService;
 
-    @GetMapping
+    @GetMapping({"","/list"})
     public String couponManagement(@RequestParam(required = false) CouponTemplateStatus status,
                                    @RequestParam(required = false, defaultValue = "") String keyword,
                                    @RequestParam(required = false, defaultValue = "newest") String sort,

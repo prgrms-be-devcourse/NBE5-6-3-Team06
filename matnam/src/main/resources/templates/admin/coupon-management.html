@@ -8,98 +8,106 @@
 <div layout:fragment="content">
     <h1>쿠폰 관리</h1>
 
-    <div class="action-bar">
-        <button class="primary-btn" id="add-coupon-btn"><i class="fas fa-plus"></i> 새 쿠폰 템플릿 추가</button>
-        <form method="get" action="/admin/coupons/list">
-            <div class="form-row">
-                <div class="search-filter">
-                    <input type="text" name="keyword" placeholder="쿠폰명 또는 식당명을 입력하세요" th:value="${param.keyword}"/>
-                    <button class="search-btn" type="submit"><i class="fas fa-search"></i></button>
-                </div>
-                <div class="filter-options">
-                    <select name="status" id="coupon-status-filter" onchange="this.form.submit()">
-                        <option value="" th:selected="${#strings.isEmpty(status)}">모든 상태</option>
-                        <option th:each="couponStatus : ${couponStatuses}"
-                                th:value="${couponStatus.name()}"
-                                th:text="${couponStatus.name()}"
-                                th:selected="${status == couponStatus.name()}">
-                        </option>
-                    </select>
-                    <select name="sort" id="coupon-sort" onchange="this.form.submit()">
-                        <option value="newest" th:selected="${sort == 'newest'}">최신순</option>
-                        <option value="name" th:selected="${sort == 'name'}">쿠폰명순</option>
-                        <option value="restaurant" th:selected="${sort == 'restaurant'}">식당명순</option>
-                        <option value="startAt" th:selected="${sort == 'startAt'}">발급시작일순</option>
-                        <option value="endAt" th:selected="${sort == 'endAt'}">발급종료일순</option>
-                    </select>
-                </div>
+    <div class="tab-container">
+        <div class="tabs">
+            <div class="tab active">쿠폰 관리</div>
+        </div>
+
+        <div class="tab-content active">
+            <div class="action-bar">
+                <button class="primary-btn" id="add-coupon-btn"><i class="fas fa-plus"></i> 새 쿠폰 템플릿 추가</button>
+                <form method="get" action="/admin/coupons/list">
+                    <!--                    <div class="form-row">-->
+                    <!--                        <div class="search-filter">-->
+                    <!--                            <input type="text" name="keyword" placeholder="쿠폰명 또는 식당명을 입력하세요" th:value="${param.keyword}"/>-->
+                    <!--                            <button class="search-btn" type="submit"><i class="fas fa-search"></i></button>-->
+                    <!--                        </div>-->
+                    <!--                        <div class="filter-options">-->
+                    <!--                            <select name="status" id="coupon-status-filter" onchange="this.form.submit()">-->
+                    <!--                                <option value="" th:selected="${#strings.isEmpty(status)}">모든 상태</option>-->
+                    <!--                                <option th:each="couponStatus : ${couponStatuses}"-->
+                    <!--                                        th:value="${couponStatus.name()}"-->
+                    <!--                                        th:text="${couponStatus.name()}"-->
+                    <!--                                        th:selected="${status == couponStatus.name()}">-->
+                    <!--                                </option>-->
+                    <!--                            </select>-->
+                    <!--                            <select name="sort" id="coupon-sort" onchange="this.form.submit()">-->
+                    <!--                                <option value="newest" th:selected="${sort == 'newest'}">최신순</option>-->
+                    <!--                                <option value="name" th:selected="${sort == 'name'}">쿠폰명순</option>-->
+                    <!--                                <option value="restaurant" th:selected="${sort == 'restaurant'}">식당명순</option>-->
+                    <!--                                <option value="startAt" th:selected="${sort == 'startAt'}">발급시작일순</option>-->
+                    <!--                                <option value="endAt" th:selected="${sort == 'endAt'}">발급종료일순</option>-->
+                    <!--                            </select>-->
+                    <!--                        </div>-->
+                    <!--                    </div>-->
+                </form>
             </div>
-        </form>
-    </div>
 
-    <div class="table-container">
-        <table class="data-table">
-            <thead>
-            <tr>
-                <th>번호</th>
-                <th>쿠폰명</th>
-                <th>식당명</th>
-                <th>할인 타입</th>
-                <th>할인 값</th>
-                <th>발급/총 수량</th>
-                <th>발급 기간</th>
-                <th>상태</th>
-                <th>액션</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr th:each="coupon, iterStat : ${page.content()}" th:data-coupon-id="${coupon.templateId}">
-                <td th:text="${iterStat.count + (5 * (page.currentNumber()-1))}"></td>
-                <td th:text="${coupon.name}"></td>
-                <td th:text="${coupon.restaurant.name}"></td>
-                <td>
-          <span class="badge" th:text="${coupon.discountType.name()}"
-                th:classappend="${coupon.discountType.name() == 'PERCENTAGE' ? 'badge-blue' : 'badge-green'}"></span>
-                </td>
-                <td>
-                    <span th:text="${coupon.discountValue}"></span>
-                    <span th:text="${coupon.discountType.name() == 'PERCENTAGE' ? '%' : '원'}"></span>
-                </td>
-                <td>
-                    <span th:text="${coupon.issuedQuantity}"></span> /
-                    <span th:text="${coupon.totalQuantity}"></span>
-                    <div class="progress-bar">
-                        <div class="progress-fill"
-                             th:style="'width: ' + ${coupon.totalQuantity > 0 ? (coupon.issuedQuantity * 100 / coupon.totalQuantity) : 0} + '%'">
-                        </div>
-                    </div>
-                </td>
-                <td>
-                    <div class="date-range">
-                        <div th:text="${#temporals.format(coupon.startAt, 'yyyy-MM-dd HH:mm')}"></div>
-                        <div>~</div>
-                        <div th:text="${#temporals.format(coupon.endAt, 'yyyy-MM-dd HH:mm')}"></div>
-                    </div>
-                </td>
-                <td>
-          <span th:class="'status ' + ${#strings.toLowerCase(coupon.status.name())}"
-                th:text="${coupon.status.name()}"></span>
-                </td>
-                <td>
-                    <button class="action-btn edit" th:data-id="${coupon.templateId}">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="action-btn delete" th:data-id="${coupon.templateId}"
-                            th:if="${coupon.status.name() != 'DELETED'}">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </td>
-            </tr>
-            </tbody>
-        </table>
-    </div>
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                    <tr>
+                        <th>번호</th>
+                        <th>쿠폰명</th>
+                        <th>식당명</th>
+                        <th>할인 타입</th>
+                        <th>할인 값</th>
+                        <th>발급/총 수량</th>
+                        <th>발급 기간</th>
+                        <th>상태</th>
+                        <th>액션</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="coupon, iterStat : ${page.content()}" th:data-coupon-id="${coupon.templateId}">
+                        <td th:text="${iterStat.count + (5 * (page.currentNumber()-1))}"></td>
+                        <td th:text="${coupon.name}"></td>
+                        <td th:text="${coupon.restaurant.name}"></td>
+                        <td>
+                            <span class="badge" th:text="${coupon.discountType.name()}"
+                                  th:classappend="${coupon.discountType.name() == 'PERCENTAGE' ? 'badge-blue' : 'badge-green'}"></span>
+                        </td>
+                        <td>
+                            <span th:text="${coupon.discountValue}"></span>
+                            <span th:text="${coupon.discountType.name() == 'PERCENTAGE' ? '%' : '원'}"></span>
+                        </td>
+                        <td>
+                            <span th:text="${coupon.issuedQuantity}"></span> /
+                            <span th:text="${coupon.totalQuantity}"></span>
+                            <div class="progress-bar">
+                                <div class="progress-fill"
+                                     th:style="'width: ' + ${coupon.totalQuantity > 0 ? (coupon.issuedQuantity * 100 / coupon.totalQuantity) : 0} + '%'">
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="date-range">
+                                <div th:text="${#temporals.format(coupon.startAt, 'yyyy-MM-dd HH:mm')}"></div>
+                                <div>~</div>
+                                <div th:text="${#temporals.format(coupon.endAt, 'yyyy-MM-dd HH:mm')}"></div>
+                            </div>
+                        </td>
+                        <td>
+                            <span th:class="'status ' + ${#strings.toLowerCase(coupon.status.name())}"
+                                  th:text="${coupon.status.name()}"></span>
+                        </td>
+                        <td>
+                            <button class="action-btn edit" th:data-id="${coupon.templateId}">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="action-btn delete" th:data-id="${coupon.templateId}"
+                                    th:if="${coupon.status.name() != 'DELETED'}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
 
-    <div th:replace="~{admin/fragments/pagination :: pagination}"></div>
+            <div th:replace="~{admin/fragments/pagination :: pagination}"></div>
+        </div>
+    </div>
 
     <!-- 쿠폰 템플릿 추가/수정 모달 -->
     <div class="modal" id="couponModal">
@@ -195,6 +203,7 @@
         </div>
     </div>
 
+    <!-- 식당 검색 모달 -->
     <div class="modal" id="restaurantSearchModal">
         <div class="modal-content restaurant-search-modal">
             <div class="modal-header">
