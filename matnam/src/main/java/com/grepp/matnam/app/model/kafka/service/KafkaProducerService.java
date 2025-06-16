@@ -2,6 +2,7 @@ package com.grepp.matnam.app.model.kafka.service;
 
 import com.grepp.matnam.app.controller.api.auth.payload.SignupRequest;
 import com.grepp.matnam.app.model.kafka.dto.SmtpDto;
+import com.grepp.matnam.app.model.user.entity.User;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -13,7 +14,7 @@ public class KafkaProducerService {
 
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
-    public void sendSignupEvent(SignupRequest signupRequest) {
+    public void sendSignupEvent(SignupRequest signupRequest, String emailCode) {
         // SmtpDto 변환해서 전송
         SmtpDto smtpDto = SmtpDto.builder()
             .from("studyseok97@gmail.com")
@@ -24,7 +25,8 @@ public class KafkaProducerService {
             .properties(Map.of(
                 "nickname", signupRequest.getNickname(),
                 "userId", signupRequest.getUserId(),
-                "domain", "http://localhost:8080"
+                "domain", "http://localhost:8080",
+                "emailCode", emailCode
             ))
             .build();
 
