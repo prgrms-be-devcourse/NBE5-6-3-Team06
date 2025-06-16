@@ -62,7 +62,7 @@ public class SecurityConfig {
 
                 // 회원가입/로그인 관련
                 .requestMatchers(
-                    "/user/signup", "/user/signin", "/user/oauth2/signup"
+                    "/user/signup", "/user/signin", "/user/oauth2/signup", "/user/verify"
                 ).permitAll()
 
                 // OAuth2 관련
