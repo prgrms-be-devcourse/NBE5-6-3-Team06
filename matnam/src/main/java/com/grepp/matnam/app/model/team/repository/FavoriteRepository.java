@@ -17,6 +17,8 @@ public interface FavoriteRepository extends JpaRepository<Favorite, Long>{
         Status excludedStatus
     );
 
+    List<Favorite> findAllByUser_UserIdAndTeam_ActivatedTrue(String userId);
+
     // 팀ID 로 즐겨찾기 수 조회
     long countByTeam_TeamId(Long teamId);
 

@@ -5,6 +5,7 @@ import com.grepp.matnam.app.model.team.code.ParticipantStatus;
 import com.grepp.matnam.app.model.team.dto.MeetingDto;
 import com.grepp.matnam.app.model.team.dto.MonthlyMeetingStatsDto;
 import com.grepp.matnam.app.model.team.dto.ParticipantWithUserIdDto;
+import com.grepp.matnam.app.model.team.dto.TeamDto;
 import com.grepp.matnam.app.model.team.entity.QFavorite;
 import com.grepp.matnam.app.model.team.entity.QParticipant;
 import com.grepp.matnam.app.model.team.entity.QTeam;
@@ -30,6 +31,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -256,7 +258,7 @@ public class TeamRepositoryCustomImpl implements TeamRepositoryCustom {
         List<Team> content = queryFactory
             .selectDistinct(team)
             .from(team)
-            .leftJoin(team.participants, participant).fetchJoin()
+//            .leftJoin(team.participants, participant).fetchJoin()
             .where(builder)
             .orderBy(team.createdAt.desc())
             .offset(pageable.getOffset())

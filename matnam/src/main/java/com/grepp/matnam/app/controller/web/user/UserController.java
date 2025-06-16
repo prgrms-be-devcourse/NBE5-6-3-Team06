@@ -132,7 +132,7 @@ public class UserController {
             List<Team> allTeams = teamService.getAllTeams(userId);
 
             // 즐겨찾기 조회
-            List<TeamDto> favoriteTeams = favoriteService.getFavoriteForUser(userId);
+            List<TeamDto> favoriteTeams = favoriteService.getFavoriteForUser(userId, true);
 
             for (TeamDto dto : favoriteTeams) {
                 long cnt = favoriteService.countFavoritesByTeamId(dto.getTeamId());
@@ -147,8 +147,6 @@ public class UserController {
             participatingTeams.sort(getTeamComparator());
             allTeams.sort(getTeamComparator());
 
-
-            // todo 겹치는 코드 리팩토링
             int allTotal = allTeams.size();
             int hostingTotal = hostingTeams.size();
             int partTotal = participatingTeams.size();

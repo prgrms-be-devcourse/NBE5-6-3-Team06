@@ -490,11 +490,11 @@
     .delete-button button {
       text-align: right;
       margin-top: 0.5rem;
-      padding: 0.4rem 1rem;
+      padding: 10px 20px;
       background-color: #dc3545;
       color: white;
       border: none;
-      border-radius: 4px;
+      border-radius: 5px;
       font-size: 0.8rem;
       cursor: pointer;
     }
@@ -502,6 +502,23 @@
     .delete-button button :hover {
       background-color: #c82333;
       transition: background-color 0.2s ease;
+    }
+
+    .kick-button {
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 11px;
+      transition: background-color 0.3s ease;
+    }
+    .kick-button:hover {
+      background-color: #c82333;
+    }
+    .kick-button:active {
+      background-color: #bd2130;
     }
 
   </style>
@@ -544,7 +561,7 @@
                   : '모임 완료하기'}">
         </button>
 
-        <div class="delete-button" style="text-align: right"
+        <div class="btn delete-button" style="text-align: right"
              th:if="${#strings.toString(team.status) != 'CANCELED' and #strings.toString(team.status) != 'COMPLETED'}">
           <button id="deleteButton" type="button" th:attr="data-team-id=${team.teamId}">삭제</button>
         </div>
@@ -553,7 +570,7 @@
               id="leaveTeamButton"
               th:if="${not isLeader and #strings.toString(team.status) != 'COMPLETED' and #strings.toString(team.status) != 'CANCELED'}"
               th:data-team-id="${team.teamId}"
-              class="btn btn-danger">
+              class="btn delete-button">
         모임 나가기
       </button>
     </div>
