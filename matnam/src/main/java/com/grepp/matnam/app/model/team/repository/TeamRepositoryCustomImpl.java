@@ -388,4 +388,32 @@ public class TeamRepositoryCustomImpl implements TeamRepositoryCustom {
 
         return new PageImpl<>(teams, pageable, total);
     }
+
+    @Override
+    public Page<Team> findAllOrderByViewCount(Pageable pageable, boolean includeCompleted) {
+        BooleanBuilder condition = new BooleanBuilder();
+        condition.and(team.activated.isTrue());
+
+        if (!includeCompleted) {
+            condition.and(team.status.ne(Status.COMPLETED));
+        }
+
+        List<Team> results = queryFactory
+                .selectFrom(team)
+                .where(condition)
+                .orderBy(team.viewCount.desc())
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        long count = Optional.ofNullable(
+                queryFactory
+                        .select(team.count())
+                        .from(team)
+                        .where(condition)
+                        .fetchOne()
+        ).orElse(0L);
+
+        return new PageImpl<>(results, pageable, count);
+    }
 }

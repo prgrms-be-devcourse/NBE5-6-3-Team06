@@ -18,4 +18,7 @@ public class TeamResponse {
         this.userId = team.getUser().getUserId();
         this.userNickname = team.getUser().getNickname();
     }
+    public static TeamResponse from(Team team) {
+        return new TeamResponse(team);
+    }
 }

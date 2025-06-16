@@ -1,30 +1,30 @@
 package com.grepp.matnam.app.controller.api.team;
 
+import com.grepp.matnam.app.controller.api.admin.payload.TeamResponse;
+import com.grepp.matnam.app.model.team.repository.TeamRepository;
 import com.grepp.matnam.app.model.team.service.TeamService;
 import com.grepp.matnam.app.model.team.code.Status;
 import com.grepp.matnam.app.model.team.dto.TeamDto;
 import com.grepp.matnam.app.model.team.entity.Team;
 import com.grepp.matnam.app.model.user.service.UserService;
 import com.grepp.matnam.app.model.user.entity.User;
+import com.grepp.matnam.infra.auth.AuthenticationUtils;
+import com.grepp.matnam.infra.auth.jwt.JwtProvider;
 import com.grepp.matnam.infra.response.ApiResponse;
 import com.grepp.matnam.infra.response.ResponseCode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import java.util.Map;
+
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/team")
@@ -35,7 +35,45 @@ public class TeamApiController {
 
     private final TeamService teamService;
     private final UserService userService;
+    private final JwtProvider jwtProvider;
+    private final TeamRepository teamRepository;
 
+
+
+    @Operation(summary = "모임 상세 조회 (조회수 증가 포함)", description = "JWT 있으면 사용자 기반, 없으면 IP 기반 조회수 증가")
+    @GetMapping("/{teamId}")
+    public ResponseEntity<TeamResponse> getTeamDetail(@PathVariable Long teamId,
+                                                      HttpServletRequest request) {
+        Long userId = null;
+
+        if (AuthenticationUtils.isAuthenticated()) {
+            userId = Long.valueOf(AuthenticationUtils.getCurrentUserId());
+        }
+
+        // 조회수 증가 처리 (로그인 or 비회원 모두 포함)
+        teamService.increaseViewCountWithUserOrIp(teamId, userId, request);
+
+        // 실제 팀 정보 조회
+        Team team = teamService.getTeamById(teamId);
+
+        // 응답 반환 (DTO 변환)
+        return ResponseEntity.ok(TeamResponse.from(team));
+    }
+
+
+    @GetMapping
+    public ResponseEntity<List<TeamResponse>> getTeams(@RequestParam(defaultValue = "recent") String sort) {
+        Sort sorting = sort.equals("views")
+                ? Sort.by(Sort.Direction.DESC, "viewCount")
+                : Sort.by(Sort.Direction.DESC, "createdAt");
+
+        List<Team> teams = teamRepository.findAll(sorting);
+        List<TeamResponse> responses = teams.stream()
+                .map(TeamResponse::from)
+                .toList();
+
+        return ResponseEntity.ok(responses);
+    }
 
     // 모임 상태 변경 - 모임 완료
     @PutMapping("/{teamId}/complete")
@@ -252,6 +290,7 @@ public class TeamApiController {
         teamDto.setLatitude(team.getLatitude());
         teamDto.setLongitude(team.getLongitude());
         teamDto.setRestaurantAddress(team.getRestaurantAddress());
+        teamDto.setViewCount(team.getViewCount());
         return teamDto;
     }
 

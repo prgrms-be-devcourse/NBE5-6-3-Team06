@@ -69,6 +69,8 @@ public class Team extends BaseEntity {
 
     private Double longitude;
 
+    private Long viewCount;
+
     public boolean isActivated() {
         return this.activated;
     }

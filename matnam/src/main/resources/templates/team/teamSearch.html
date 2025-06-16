@@ -223,6 +223,7 @@
         <p>📍 <span th:text="${team.restaurantName}"></span></p>
         <p>👥 <span th:text="${team.nowPeople}"></span>/ <span th:text="${team.maxPeople}"></span>명 참여중</p>
         <p th:if="${sort == 'favoriteCount'}">⭐️ <span th:text="${team.favoriteCount}"></span>명</p>
+        <p>👁 <span th:text="${team.viewCount}"></span>회 조회</p>
         <a class="link-button" th:href="@{/team/detail/{teamId}(teamId=${team.teamId})}">자세히 보기</a>
       </div>
     </div>

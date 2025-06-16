@@ -23,6 +23,7 @@ public class TeamDto {
     private long favoriteCount;
     private Double latitude;
     private Double longitude;
+    private long viewCount;
 
     public static TeamDto from(Team team) {
         TeamDto dto = new TeamDto();
@@ -40,7 +41,7 @@ public class TeamDto {
         dto.setFavoriteCount(team.getFavoriteCount());
         dto.setLatitude(team.getLatitude());
         dto.setLongitude(team.getLongitude());
+        dto.setViewCount(team.getViewCount());
         return dto;
     }
-
 }
