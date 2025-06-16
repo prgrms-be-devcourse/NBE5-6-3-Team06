@@ -232,7 +232,8 @@ public class TeamRepositoryCustomImpl implements TeamRepositoryCustom {
         builder
             .and(participant.user.userId.eq(userId))
             .and(participant.participantStatus.eq(participantStatus))
-            .and(team.activated.isTrue());
+            .and(team.activated.isTrue())
+            .and(participant.activated.isTrue());
 
         return queryFactory
             .select(team)
