@@ -349,18 +349,43 @@
     src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=9e9f7116c9bee853591bfa6e12c7fa5f&libraries=services"></script>
 <script>
   let map, markers = [], ps;
+
   kakao.maps.load(function () {
     const container = document.getElementById('map-placeholder');
+
+    const latValue = document.getElementById('latitude').value;
+    const lngValue = document.getElementById('longitude').value;
+
+    const hasLatLng = latValue && lngValue;
+
+    const centerLat = hasLatLng ? parseFloat(latValue) : 37.5665;
+    const centerLng = hasLatLng ? parseFloat(lngValue) : 126.9780;
+
     map = new kakao.maps.Map(container, {
-      center: new kakao.maps.LatLng(37.5665, 126.9780),
+      center: new kakao.maps.LatLng(centerLat, centerLng),
       level: 4
     });
+
     ps = new kakao.maps.services.Places();
+
+    if (hasLatLng) {
+      const marker = new kakao.maps.Marker({
+        position: new kakao.maps.LatLng(centerLat, centerLng),
+        map: map
+      });
+      markers.push(marker);
+    }
   });
 
+  function clearMarkers() {
+    markers.forEach(marker => marker.setMap(null));
+    markers = [];
+  }
+
   function searchPlace() {
-    const keyword = document.getElementById('restaurantName').value;
-    if (!keyword.trim()) return alert('식당명을 입력해주세요.');
+    const keyword = document.getElementById('restaurantName').value.trim();
+    if (!keyword) return alert('식당명을 입력해주세요.');
+
     ps.keywordSearch(keyword, placesSearchCB);
   }
 
@@ -377,6 +402,7 @@
     }
 
     clearMarkers();
+
     const allowed = ['FD6', 'CE7', 'Q12'];
     const filtered = data.filter(p => allowed.includes(p.category_group_code));
 
@@ -421,42 +447,31 @@
     map.setBounds(bounds);
   }
 
-  function clearMarkers() {
-    markers.forEach(marker => marker.setMap(null));
-    markers = [];
-  }
-
-  const uploadBox = document.getElementById('uploadBox');
-  const fileInput = document.getElementById('imageUrl');
-  const preview = document.getElementById('preview');
-
-  uploadBox.addEventListener('click', () => fileInput.click());
-
-  fileInput.addEventListener('change', e => {
-    if (e.target.files && e.target.files.length > 0) {
-      const file = e.target.files[0];
-      preview.src = URL.createObjectURL(file);
-    }
+  document.getElementById('restaurantName').addEventListener('input', () => {
+    document.getElementById('latitude').value = '';
+    document.getElementById('longitude').value = '';
   });
 
-  ['dragenter', 'dragover'].forEach(ev =>
-      uploadBox.addEventListener(ev, e => {
-        e.preventDefault();
-        uploadBox.classList.add('drag-over');
-      })
-  );
-  ['dragleave', 'drop'].forEach(ev =>
-      uploadBox.addEventListener(ev, e => {
-        e.preventDefault();
-        uploadBox.classList.remove('drag-over');
-      })
-  );
+  document.getElementById('restaurantAddress').addEventListener('input', () => {
+    document.getElementById('latitude').value = '';
+    document.getElementById('longitude').value = '';
+  });
 
-  uploadBox.addEventListener('drop', e => {
-    e.preventDefault();
-    if (e.dataTransfer && e.dataTransfer.files.length > 0) {
-      fileInput.files = e.dataTransfer.files;
-      preview.src = URL.createObjectURL(e.dataTransfer.files[0]);
+  document.querySelector('form').addEventListener('submit', function (e) {
+    const lat = document.getElementById('latitude').value;
+    const lng = document.getElementById('longitude').value;
+
+    if (!lat || !lng) {
+      e.preventDefault();
+
+      Toastify({
+        text: "반드시 검색을 통해 희망 장소를 선택해야합니다.",
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        backgroundColor: "#dc143c",
+        close: true
+      }).showToast();
     }
   });
 </script>

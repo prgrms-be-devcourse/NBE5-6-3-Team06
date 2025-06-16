@@ -392,6 +392,25 @@
       preview.src = URL.createObjectURL(file);
     }
   });
+
+  document.querySelector('form').addEventListener('submit', function (e) {
+    const lat = document.getElementById('latitude').value;
+    const lng = document.getElementById('longitude').value;
+
+    if (!lat || !lng) {
+      e.preventDefault();
+
+      Toastify({
+        text: "검색을 통해 정확한 주소지를 반영해주세요.",
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        backgroundColor: "#dc143c",
+        close: true
+      }).showToast();
+
+    }
+  });
 </script>
 
 </body>

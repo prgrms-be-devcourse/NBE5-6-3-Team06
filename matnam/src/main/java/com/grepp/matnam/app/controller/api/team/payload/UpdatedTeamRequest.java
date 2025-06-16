@@ -3,6 +3,7 @@ package com.grepp.matnam.app.controller.api.team.payload;
 import com.grepp.matnam.app.model.team.code.Status;
 import com.grepp.matnam.app.model.team.entity.Team;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 import lombok.Getter;
@@ -29,7 +30,9 @@ public class UpdatedTeamRequest {
     private String restaurantName;
     @NotBlank(message = "식당 주소는 필수 입력 값입니다.")
     private String restaurantAddress;
+    @NotNull(message = "상호명 검색을 통해 정확한 주소를 입력해주세요.")
     private Double latitude;
+    @NotNull(message = "상호명 검색을 통해 정확한 주소를 입력해주세요.")
     private Double longitude;
     private MultipartFile imageUrl;
 

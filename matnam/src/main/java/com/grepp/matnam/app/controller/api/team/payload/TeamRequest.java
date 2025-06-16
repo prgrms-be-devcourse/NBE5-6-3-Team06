@@ -40,8 +40,10 @@ public class TeamRequest {
 
     private MultipartFile imageUrl;
 
+    @NotNull(message = "상호명 검색을 통해 정확한 주소를 입력해주세요.")
     private Double latitude;
 
+    @NotNull(message = "상호명 검색을 통해 정확한 주소를 입력해주세요.")
     private Double longitude;
 
     public Team toEntity(User user, String imageUrl) {
