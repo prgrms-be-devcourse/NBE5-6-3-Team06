@@ -286,10 +286,10 @@
 
         .modal-content {
             background-color: #fff;
-            margin: 10% auto;
+            margin: 5% auto;
             padding: 2rem;
             border-radius: 12px;
-            width: 400px;
+            width: 450px;
             max-width: 90%;
             text-align: center;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
@@ -348,7 +348,35 @@
             margin-bottom: 0;
         }
 
+        .modal-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .use-coupon-btn {
+            flex: 1;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s ease;
+        }
+
+        .use-coupon-btn:hover {
+            background-color: #218838;
+        }
+
+        .use-coupon-btn:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+
         .close-modal {
+            flex: 1;
             background-color: #6c757d;
             color: white;
             border: none;
@@ -356,7 +384,6 @@
             border-radius: 6px;
             cursor: pointer;
             font-weight: 500;
-            margin-top: 1rem;
         }
 
         .close-modal:hover {
@@ -389,6 +416,10 @@
             .modal-content {
                 margin: 5% auto;
                 width: 95%;
+            }
+
+            .modal-actions {
+                flex-direction: column;
             }
         }
 
@@ -453,7 +484,8 @@
         <div th:if="${!#lists.isEmpty(allCoupons)}" class="coupon-grid">
             <div th:each="coupon : ${allCoupons}"
                  class="coupon-card"
-                 th:classappend="${#strings.toLowerCase(coupon.status.name())}">
+                 th:classappend="${#strings.toLowerCase(coupon.status.name())}"
+                 th:data-coupon-id="${coupon.couponCode}">
 
                 <div class="coupon-header">
                     <div>
@@ -511,7 +543,9 @@
         </div>
 
         <div th:if="${!#lists.isEmpty(availableCoupons)}" class="coupon-grid">
-            <div th:each="coupon : ${availableCoupons}" class="coupon-card available">
+            <div th:each="coupon : ${availableCoupons}"
+                 class="coupon-card available"
+                 th:data-coupon-id="${coupon.couponCode}">
                 <div class="coupon-header">
                     <div>
                         <div class="restaurant-name" th:text="${coupon.restaurantName}">식당명</div>
@@ -557,7 +591,9 @@
         </div>
 
         <div th:if="${!#lists.isEmpty(usedCoupons)}" class="coupon-grid">
-            <div th:each="coupon : ${usedCoupons}" class="coupon-card used">
+            <div th:each="coupon : ${usedCoupons}"
+                 class="coupon-card used"
+                 th:data-coupon-id="${coupon.couponCode}">
                 <div class="coupon-header">
                     <div>
                         <div class="restaurant-name" th:text="${coupon.restaurantName}">식당명</div>
@@ -598,7 +634,9 @@
         </div>
 
         <div th:if="${!#lists.isEmpty(expiredCoupons)}" class="coupon-grid">
-            <div th:each="coupon : ${expiredCoupons}" class="coupon-card expired">
+            <div th:each="coupon : ${expiredCoupons}"
+                 class="coupon-card expired"
+                 th:data-coupon-id="${coupon.couponCode}">
                 <div class="coupon-header">
                     <div>
                         <div class="restaurant-name" th:text="${coupon.restaurantName}">식당명</div>
@@ -636,7 +674,7 @@
     <div class="modal-content">
         <div class="modal-header">
             <h2>쿠폰 QR 코드</h2>
-            <p>음식점에서 이 QR 코드를 보여주세요</p>
+            <p>음식점에서 이 QR 코드를 보여주거나 직접 사용하세요</p>
         </div>
 
         <div class="qr-code-container">
@@ -648,7 +686,12 @@
         <div class="coupon-details" id="couponDetails">
         </div>
 
-        <button class="close-modal" onclick="closeQRModal()">닫기</button>
+        <div class="modal-actions">
+            <button class="use-coupon-btn" onclick="useCoupon()">
+                <i class="fas fa-check"></i> 사용하기
+            </button>
+            <button class="close-modal" onclick="closeQRModal()">닫기</button>
+        </div>
     </div>
 </div>
 

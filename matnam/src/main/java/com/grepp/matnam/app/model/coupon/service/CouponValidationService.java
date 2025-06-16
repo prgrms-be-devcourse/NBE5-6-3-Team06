@@ -33,4 +33,29 @@ public class CouponValidationService {
             return new CouponValidationResponseDto(false, e.getMessage(), userCoupon.getCouponTemplate().getName(), null);
         }
     }
+
+    @Transactional
+    public CouponValidationResponseDto validateAndUseCouponByUser(String couponCode, String userId) {
+        UserCoupon userCoupon = userCouponRepository.findByCouponCode(couponCode)
+                .orElse(null);
+
+        if (userCoupon == null) {
+            return new CouponValidationResponseDto(false, "존재하지 않는 쿠폰입니다.", null, null);
+        }
+
+        if (!userCoupon.getUser().getUserId().equals(userId)) {
+            return new CouponValidationResponseDto(false, "본인의 쿠폰만 사용할 수 있습니다.", null, null);
+        }
+
+        try {
+            userCoupon.use();
+            userCouponRepository.save(userCoupon);
+
+            String discountInfo = userCoupon.getCouponTemplate().getDiscountType().name() + ": " + userCoupon.getCouponTemplate().getDiscountValue();
+            return new CouponValidationResponseDto(true, "쿠폰이 정상적으로 사용되었습니다.", userCoupon.getCouponTemplate().getName(), discountInfo);
+
+        } catch (IllegalStateException e) {
+            return new CouponValidationResponseDto(false, e.getMessage(), userCoupon.getCouponTemplate().getName(), null);
+        }
+    }
 }
