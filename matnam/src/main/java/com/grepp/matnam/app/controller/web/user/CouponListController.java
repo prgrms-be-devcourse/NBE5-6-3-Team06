@@ -33,6 +33,8 @@ public class CouponListController {
     private final CouponManageService couponManageService;
     private final UserCouponService userCouponService;
 
+    private static final int COUPON_PAGE_SIZE = 6;
+
     @GetMapping
     public String couponList(@RequestParam(required = false, defaultValue = "") String keyword,
                              @RequestParam(required = false, defaultValue = "default") String sort,
@@ -47,27 +49,27 @@ public class CouponListController {
         switch (sort) {
             case "default":
                 page = couponManageService.findAllActiveCouponsWithDefaultSort(keyword,
-                        PageRequest.of(param.getPage() - 1, param.getSize()));
+                        PageRequest.of(param.getPage() - 1, COUPON_PAGE_SIZE));
                 break;
             case "name":
                 sortOption = Sort.by("name").ascending();
                 page = couponManageService.findAllActiveCoupons(keyword,
-                        PageRequest.of(param.getPage() - 1, param.getSize(), sortOption));
+                        PageRequest.of(param.getPage() - 1, COUPON_PAGE_SIZE, sortOption));
                 break;
             case "restaurant":
                 sortOption = Sort.by("restaurant.name").ascending();
                 page = couponManageService.findAllActiveCoupons(keyword,
-                        PageRequest.of(param.getPage() - 1, param.getSize(), sortOption));
+                        PageRequest.of(param.getPage() - 1, COUPON_PAGE_SIZE, sortOption));
                 break;
             case "endAt":
                 sortOption = Sort.by("endAt").ascending();
                 page = couponManageService.findAllActiveCoupons(keyword,
-                        PageRequest.of(param.getPage() - 1, param.getSize(), sortOption));
+                        PageRequest.of(param.getPage() - 1, COUPON_PAGE_SIZE, sortOption));
                 break;
             default:
                 sortOption = Sort.by(Sort.Order.desc("createdAt"));
                 page = couponManageService.findAllActiveCoupons(keyword,
-                        PageRequest.of(param.getPage() - 1, param.getSize(), sortOption));
+                        PageRequest.of(param.getPage() - 1, COUPON_PAGE_SIZE, sortOption));
                 break;
         }
 
@@ -77,7 +79,7 @@ public class CouponListController {
 
         PageResponse<CouponTemplate> response = new PageResponse<>(
                 "/coupons?keyword=" + keyword + "&sort=" + sort,
-                page, 5
+                page, 6
         );
 
         Set<Long> appliedCouponIds = new HashSet<>();
