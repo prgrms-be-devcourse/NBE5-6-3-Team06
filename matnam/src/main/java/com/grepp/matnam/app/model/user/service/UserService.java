@@ -377,4 +377,8 @@ public class UserService {
 
         return userRepository.save(user);
     }
+
+    public List<User> findAllUsers() {
+        return userRepository.findAllByStatusEqualsAndActivatedEquals(Status.ACTIVE, true);
+    }
 }

@@ -1,12 +1,16 @@
 package com.grepp.matnam.app.model.coupon.service;
 
+import com.grepp.matnam.app.facade.NotificationSender;
 import com.grepp.matnam.app.model.coupon.code.CouponTemplateStatus;
 import com.grepp.matnam.app.model.coupon.dto.CouponTemplateCreateDto;
 import com.grepp.matnam.app.model.coupon.dto.CouponTemplateUpdateDto;
 import com.grepp.matnam.app.model.coupon.entity.CouponTemplate;
 import com.grepp.matnam.app.model.coupon.repository.CouponTemplateRepository;
+import com.grepp.matnam.app.model.notification.code.NotificationType;
 import com.grepp.matnam.app.model.restaurant.entity.Restaurant;
 import com.grepp.matnam.app.model.restaurant.repository.RestaurantRepository;
+import com.grepp.matnam.app.model.user.entity.User;
+import com.grepp.matnam.app.model.user.service.UserService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -16,6 +20,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
+
+import static com.grepp.matnam.app.model.team.entity.QTeam.team;
 
 
 @Service
@@ -26,8 +33,10 @@ public class CouponManageService {
     private final CouponTemplateRepository couponTemplateRepository;
     private final RestaurantRepository restaurantRepository;
     private final StringRedisTemplate redisTemplate;
+    private final NotificationSender notificationSender;
 
     private static final String ACTIVE_COUPON_TEMPLATES_KEY = "coupon:active_templates";
+    private final UserService userService;
 
     @Transactional
     public CouponTemplate createCouponTemplate(CouponTemplateCreateDto dto) {
@@ -51,6 +60,16 @@ public class CouponManageService {
         CouponTemplate savedTemplate = couponTemplateRepository.save(couponTemplate);
 
         redisTemplate.opsForSet().add(ACTIVE_COUPON_TEMPLATES_KEY, String.valueOf(savedTemplate.getTemplateId()));
+
+        List<User> activatedUsers = userService.findAllUsers();
+
+        for (User user : activatedUsers) {
+            notificationSender.sendNotificationToUser(user.getUserId(),
+                    NotificationType.COUPON_ISSUED, "맛있는 알림이 도착했습니다 !\n[" +
+                            couponTemplate.getRestaurant().getName() +
+                            "] " + "할인 쿠폰 발급 예정 알림 (" + couponTemplate.getTotalQuantity() + "명)",
+                    "/coupons");
+        }
 
         return savedTemplate;
     }
