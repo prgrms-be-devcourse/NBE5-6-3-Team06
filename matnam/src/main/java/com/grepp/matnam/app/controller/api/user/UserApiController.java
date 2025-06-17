@@ -3,11 +3,13 @@ package com.grepp.matnam.app.controller.api.user;
 import com.grepp.matnam.app.controller.api.user.payload.PasswordChangeRequest;
 import com.grepp.matnam.app.controller.api.user.payload.PreferenceRequest;
 import com.grepp.matnam.app.controller.api.user.payload.UserDeactivateRequest;
+import com.grepp.matnam.app.model.user.dto.UserDto;
 import com.grepp.matnam.app.model.user.entity.User;
 import com.grepp.matnam.app.model.user.service.PreferenceService;
 import com.grepp.matnam.app.model.user.service.UserService;
 import com.grepp.matnam.infra.auth.AuthenticationUtils;
 import com.grepp.matnam.infra.response.ApiResponse;
+import com.grepp.matnam.infra.response.ResponseCode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -81,4 +83,19 @@ public class UserApiController {
 
         return ResponseEntity.ok(ApiResponse.success(temperature));
     }
+
+    @GetMapping("/info")
+    public ResponseEntity<ApiResponse<UserDto>> getCurrentUserInfo() {
+        String currentUserId = AuthenticationUtils.getCurrentUserId();
+        User user = userService.getUserById(currentUserId);
+        return ResponseEntity.ok(ApiResponse.success(UserDto.from(user)));
+    }
+
+    @PutMapping("/update")
+    public ResponseEntity<ApiResponse<String>> updateUserInfo(@RequestBody UserDto userDto) {
+        String currentUserId = AuthenticationUtils.getCurrentUserId();
+        userService.updateUser(currentUserId, userDto);
+        return ResponseEntity.ok(ApiResponse.success("회원 정보가 업데이트되었습니다."));
+    }
+
 }

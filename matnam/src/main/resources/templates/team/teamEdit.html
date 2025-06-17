@@ -210,6 +210,11 @@
       color: slategray;
       font-size: 0.9rem;
     }
+
+    .empty-state {
+      text-align: left;
+      color: #888;
+    }
   </style>
   <link rel="stylesheet" th:href="@{/css/notification.css}">
   <link rel="stylesheet"
@@ -331,7 +336,9 @@
              th:errors="*{imageUrl}"
              class="error-msg"></div>
       </div>
-      <p>(클릭하거나 드래그 앤 드롭하여 이미지 업로드)</p>
+      <div class="empty-state">
+        <p>(클릭하거나 드래그 앤 드롭하여 이미지 업로드)</p>
+      </div>
     </div>
     <input type="hidden" id="latitude" name="latitude" th:field="*{latitude}" />
     <input type="hidden" id="longitude" name="longitude" th:field="*{longitude}" />

@@ -7,6 +7,7 @@ import com.grepp.matnam.app.facade.NotificationSender;
 import com.grepp.matnam.app.model.notification.code.NotificationType;
 import com.grepp.matnam.app.model.notification.entity.Notice;
 import com.grepp.matnam.app.model.notification.service.NotificationService;
+import com.grepp.matnam.app.model.user.dto.UserDto;
 import com.grepp.matnam.app.model.user.repository.UserRepository;
 import com.grepp.matnam.infra.response.Messages;
 import com.grepp.matnam.app.controller.web.admin.payload.TotalUserResponse;
@@ -16,6 +17,7 @@ import com.grepp.matnam.app.model.user.code.Gender;
 import com.grepp.matnam.app.model.user.code.Status;
 import com.grepp.matnam.app.model.user.entity.User;
 import com.grepp.matnam.infra.auth.PasswordValidator;
+import jakarta.persistence.EntityNotFoundException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -155,6 +157,19 @@ public class UserService {
 
         return updatedUser;
     }
+
+    @Transactional
+    public void updateUser(String userId, UserDto userDto) {
+        User user = userRepository.findByUserId(userId)
+            .orElseThrow(() -> new EntityNotFoundException("유저 없음"));
+
+        user.setNickname(userDto.getUsername());
+        user.setEmail(userDto.getEmail());
+        user.setAddress(userDto.getAddress());
+        user.setAge(userDto.getAge());
+        user.setGender(Gender.valueOf(userDto.getGender().toUpperCase())); // man → MALE
+    }
+
 
     public Page<User> findByFilter(String status, String keyword, Pageable pageable) {
         if (!status.isBlank() && StringUtils.hasText(keyword)) {

@@ -50,7 +50,7 @@ public class FavoriteApiController {
     @GetMapping
     public ResponseEntity<ApiResponse<List<TeamDto>>> listFavorites() {
         String userId = SecurityContextHolder.getContext().getAuthentication().getName();
-        List<TeamDto> favorite = favoriteService.getFavoriteForUser(userId);
+        List<TeamDto> favorite = favoriteService.getFavoriteForUser(userId, false);
         return ResponseEntity.ok(ApiResponse.success(favorite));
     }
 
