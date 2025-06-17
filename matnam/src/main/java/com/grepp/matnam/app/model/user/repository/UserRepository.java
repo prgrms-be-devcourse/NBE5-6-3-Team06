@@ -29,4 +29,6 @@ public interface UserRepository extends JpaRepository<User, String>, UserReposit
     long countByGenderAndCreatedAtAfter(Gender gender, LocalDateTime dateTime);
 
     List<User> findByRoleEqualsAndActivatedIsTrue(Role role);
+
+    List<User> findAllByStatusEqualsAndActivatedEquals(Status status, Boolean activated);
 }

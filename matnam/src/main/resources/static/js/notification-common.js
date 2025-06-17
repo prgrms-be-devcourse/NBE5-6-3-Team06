@@ -324,6 +324,7 @@ class NotificationHandler {
             case 'REVIEW_REQUEST': return '<i class="fas fa-star"></i>';
             case 'REVIEW_RECEIVED': return '<i class="fas fa-reply"></i>';
             case 'REPORT': return '<i class="fas fa-flag"></i>';
+            case 'COUPON_ISSUED': return '<i class="fas fa-fw fa-ticket-alt"></i>';
             default: return '<i class="fas fa-bell"></i>';
         }
     }
