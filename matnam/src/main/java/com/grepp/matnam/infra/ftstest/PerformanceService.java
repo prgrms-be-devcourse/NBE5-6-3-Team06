@@ -2,7 +2,6 @@ package com.grepp.matnam.infra.ftstest;
 
 import com.grepp.matnam.app.model.team.entity.Team;
 import com.grepp.matnam.app.model.team.repository.TeamRepository;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -24,10 +23,9 @@ public class PerformanceService {
 
     @Async
     public CompletableFuture<List<String>> test(String mode, String keyword) {
-        int repeatCount = 20;
-        // 병렬 스트림으로 처리
+        int repeatCount = 10;
         List<String> result = IntStream.rangeClosed(1, repeatCount)
-            .parallel()  // :왼쪽을_가리키는_손_모양: 이게 병렬 처리!
+            .parallel()
             .mapToObj(i -> {
                 long startTime = System.nanoTime();
                 Page<Team> teams;

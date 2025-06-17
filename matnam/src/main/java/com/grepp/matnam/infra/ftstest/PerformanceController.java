@@ -1,7 +1,6 @@
 package com.grepp.matnam.infra.ftstest;
 
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +25,6 @@ public class PerformanceController {
         if (!keyword.isBlank()) {
             CompletableFuture<List<String>> likeResults = performanceService.test("LIKE", keyword);
             CompletableFuture<List<String>> fullTextResults = performanceService.test("FTS", keyword);
-            // 결과를 Model 뷰 전달
             model.addAttribute("likeResults", likeResults.get());
             model.addAttribute("fullTextResults", fullTextResults.get());
             model.addAttribute("testCount", likeResults.get().size());
