@@ -36,15 +36,12 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -53,7 +50,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class TeamService {
 
@@ -64,30 +60,33 @@ public class TeamService {
     private final MymapRepository mymapRepository;
     private final UserRepository userRepository;
     private final ChatRoomRepository chatRoomRepository;
-
     private final NotificationSender notificationSender;
-
     private final RedisTemplate<String, String> redisTemplate;
+    private final ViewCountService viewCountService;
 
-    //게시글 조회수
-    @Transactional
-    public void increaseViewCount(Long teamId) {
-        teamRepository.increaseViewCount(teamId);
+    public TeamService(
+            TeamRepository teamRepository,
+            ParticipantRepository participantRepository,
+            PreferenceRepository preferenceRepository,
+            MymapRepository mymapRepository,
+            UserRepository userRepository,
+            ChatRoomRepository chatRoomRepository,
+            NotificationSender notificationSender,
+            @Qualifier("stringKeyRedisTemplate") RedisTemplate<String, String> redisTemplate,
+            ViewCountService viewCountService
+    ) {
+        this.teamRepository = teamRepository;
+        this.participantRepository = participantRepository;
+        this.preferenceRepository = preferenceRepository;
+        this.mymapRepository = mymapRepository;
+        this.userRepository = userRepository;
+        this.chatRoomRepository = chatRoomRepository;
+        this.notificationSender = notificationSender;
+        this.redisTemplate = redisTemplate;
+        this.viewCountService = viewCountService;
     }
 
     @Transactional
-    public void increaseViewCountIfNotViewedRecently(Long teamId, Long userId) {
-        String redisKey = "viewed:team:" + teamId + ":user:" + userId;
-
-        Boolean alreadyViewed = redisTemplate.hasKey(redisKey);
-        if (Boolean.TRUE.equals(alreadyViewed)) {
-            return;
-        }
-        teamRepository.increaseViewCount(teamId);
-
-        redisTemplate.opsForValue().set(redisKey, "1", Duration.ofHours(1));
-    }
-
     public void increaseViewCountWithUserOrIp(Long teamId, Long userId, HttpServletRequest request) {
         String redisKey;
         if (userId != null) {
@@ -97,20 +96,19 @@ public class TeamService {
             redisKey = "viewed:team:" + teamId + ":ip:" + clientIp;
         }
 
-        if (Boolean.TRUE.equals(redisTemplate.hasKey(redisKey))) {
-            return;
-        }
+        if (Boolean.TRUE.equals(redisTemplate.hasKey(redisKey))) return;
 
-        teamRepository.increaseViewCount(teamId);
+        viewCountService.increaseViewCount(teamId);
+
         redisTemplate.opsForValue().set(redisKey, "1", Duration.ofHours(1));
     }
 
     private String getClientIp(HttpServletRequest request) {
         String ip = request.getHeader("X-Forwarded-For");
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getRemoteAddr();
+        if (ip != null && !ip.isEmpty() && !"unknown".equalsIgnoreCase(ip)) {
+            return ip.split(",")[0].trim();
         }
-        return ip;
+        return request.getRemoteAddr();
     }
 
     // 모임 생성

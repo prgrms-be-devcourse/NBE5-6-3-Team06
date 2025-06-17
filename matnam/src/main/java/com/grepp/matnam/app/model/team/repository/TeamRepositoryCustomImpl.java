@@ -282,7 +282,7 @@ public class TeamRepositoryCustomImpl implements TeamRepositoryCustom {
     @Override
     public Optional<Team> findByIdWithParticipantsAndUserAndActivatedTrue(Long teamId) {
         Team result = queryFactory
-            .select(team)
+            .select(team).distinct()
             .from(team)
             .leftJoin(team.participants, participant).fetchJoin()
             .leftJoin(participant.user, user).fetchJoin()

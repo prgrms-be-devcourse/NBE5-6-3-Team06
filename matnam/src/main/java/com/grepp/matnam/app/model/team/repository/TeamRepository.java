@@ -1,19 +1,17 @@
 package com.grepp.matnam.app.model.team.repository;
 
 import com.grepp.matnam.app.model.team.code.Status;
-import com.grepp.matnam.app.model.team.dto.TeamDto;
 import com.grepp.matnam.app.model.team.entity.Team;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Repository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 public interface TeamRepository extends JpaRepository<Team, Long>, TeamRepositoryCustom {
@@ -34,7 +32,13 @@ public interface TeamRepository extends JpaRepository<Team, Long>, TeamRepositor
 
     Long countByNowPeopleBetweenAndActivatedTrue(Integer nowPeopleAfter, Integer nowPeopleBefore);
 
-    @Modifying
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Transactional
     @Query("UPDATE Team t SET t.viewCount = t.viewCount + 1 WHERE t.teamId = :teamId")
     void increaseViewCount(@Param("teamId") Long teamId);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Transactional
+    @Query("UPDATE Team t SET t.viewCount = t.viewCount + :count WHERE t.teamId = :teamId")
+    void updateViewCount(@Param("teamId") Long teamId, @Param("count") long count);
 }
