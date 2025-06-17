@@ -30,9 +30,8 @@ import com.grepp.matnam.infra.error.exceptions.CommonException;
 import com.grepp.matnam.infra.response.ResponseCode;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.transaction.Transactional;
-
 import java.time.Duration;
+import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -50,7 +49,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 @Service
+@RequiredArgsConstructor
 @Slf4j
+@Transactional(readOnly = true)
 public class TeamService {
 
     private final TeamRepository teamRepository;
@@ -60,6 +61,7 @@ public class TeamService {
     private final MymapRepository mymapRepository;
     private final UserRepository userRepository;
     private final ChatRoomRepository chatRoomRepository;
+
     private final NotificationSender notificationSender;
     private final RedisTemplate<String, String> redisTemplate;
     private final ViewCountService viewCountService;
@@ -370,13 +372,15 @@ public class TeamService {
     }
 
     // 모임 검색 페이지
-    public Page<Team> getAllTeams(Pageable pageable, boolean includeCompleted) {
-        return teamRepository.findAllWithParticipantsAndActivatedTrue(pageable, includeCompleted);
+    public Page<Team> getAllTeams(Pageable pageable, boolean includeCompleted, String keyword) {
+//        return teamRepository.findAllWithParticipantsAndActivatedTrue(pageable, includeCompleted, keyword);
+        return teamRepository.findAllWithFullText(pageable, includeCompleted, keyword);
     }
 
     // 모임 즐겨찾기 카운트
-    public Page<Team> getAllTeamsByFavoriteCount(Pageable pageable, boolean includeCompleted) {
-        return teamRepository.findAllOrderByFavoriteCount(pageable, includeCompleted);
+    public Page<Team> getAllTeamsByFavoriteCount(Pageable pageable, boolean includeCompleted, String keyword) {
+//        return teamRepository.findAllOrderByFavoriteCount(pageable, includeCompleted, keyword);
+        return teamRepository.findAllOrderByFavoriteCountWithFullText(pageable, includeCompleted, keyword);
     }
 
     public Page<Team> getAllTeamsByViewCount(Pageable pageable, boolean includeCompleted) {
@@ -453,6 +457,10 @@ public class TeamService {
 
         updateTeamStatus(team);
         teamRepository.save(team);
+
+        notificationSender.sendNotificationToUser(team.getUser().getUserId(),
+            NotificationType.TEAM_STATUS, participant.getUser().getNickname() + "님이 [" + team.getTeamTitle() + "] 모임을 탈퇴했습니다.",
+            "/team/detail/" + teamId);
     }
 
     @Transactional
@@ -473,6 +481,10 @@ public class TeamService {
         team.setNowPeople(team.getNowPeople() - 1);
         updateTeamStatus(team);
         teamRepository.save(team);
+
+        notificationSender.sendNotificationToUser(participant.getUser().getUserId(),
+            NotificationType.TEAM_STATUS, "[" + team.getTeamTitle() + "] 모임에서 추방됐습니다.",
+            "/team/detail/" + team.getTeamId());
     }
 
 

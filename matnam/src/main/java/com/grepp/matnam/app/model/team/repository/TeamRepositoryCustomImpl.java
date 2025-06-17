@@ -21,17 +21,21 @@ import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberExpression;
+import com.querydsl.core.types.dsl.NumberTemplate;
+import com.querydsl.core.types.dsl.StringPath;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -224,6 +228,13 @@ public class TeamRepositoryCustomImpl implements TeamRepositoryCustom {
             .toArray(OrderSpecifier[]::new);
     }
 
+    private OrderSpecifier<?>[] getScoreSort(NumberTemplate<Double> score) {
+        if (score == null) {
+            return new OrderSpecifier[]{team.createdAt.desc()};
+        }
+        return new OrderSpecifier[]{score.desc(), team.createdAt.desc()};
+    }
+
     // 사용자 참가자 기준 팀 조회(activated = true)
     @Override
     public List<Team> findTeamsByParticipantUserIdAndParticipantStatusAndActivatedTrue(
@@ -247,16 +258,22 @@ public class TeamRepositoryCustomImpl implements TeamRepositoryCustom {
 
     // 페이징: activated=true, 상태가 COMPLETED/CANCELED 가 아닌 팀을 참여자 정보 포함하여 조회
     @Override
-    public Page<Team> findAllWithParticipantsAndActivatedTrue(Pageable pageable, boolean includeCompleted) {
+    public Page<Team> findAllWithParticipantsAndActivatedTrue(Pageable pageable, boolean includeCompleted, String keyword) {
         BooleanBuilder builder = new BooleanBuilder()
             .and(team.activated.isTrue())
             .and(team.status.ne(Status.CANCELED));
         if (!includeCompleted) {
             builder.and(team.status.ne(Status.COMPLETED));
         }
+        if (StringUtils.hasText(keyword)) {
+            builder.and(
+                team.teamDetails.containsIgnoreCase(keyword)
+                    .or(team.teamTitle.containsIgnoreCase(keyword))
+            );
+        }
 
         List<Team> content = queryFactory
-            .selectDistinct(team)
+            .select(team)
             .from(team)
 //            .leftJoin(team.participants, participant).fetchJoin()
             .where(builder)
@@ -276,7 +293,42 @@ public class TeamRepositoryCustomImpl implements TeamRepositoryCustom {
         return PageableExecutionUtils.getPage(content, pageable, () -> total);
     }
 
+    @Override
+    public Page<Team> findAllWithFullText(Pageable pageable, boolean includeCompleted, String keyword) {
+        // note
+        BooleanBuilder builder = new BooleanBuilder()
+            .and(team.activated.isTrue())
+            .and(team.status.ne(Status.CANCELED));
+        if (!includeCompleted) {
+            builder.and(team.status.ne(Status.COMPLETED));
+        }
+        NumberTemplate<Double> score = null;
+        if (StringUtils.hasText(keyword) && keyword.length() >= 2) {
+            score = getScore(team.teamTitle, team.teamDetails, keyword);
+            builder.and(
+                score.gt(0)
+            );
+        }
 
+        List<Team> content = queryFactory
+            .select(team)
+            .from(team)
+            .where(builder)
+            .orderBy(getScoreSort(score))
+            .offset(pageable.getOffset())
+            .limit(pageable.getPageSize())
+            .fetch();
+
+        long total = Optional.ofNullable(
+            queryFactory
+                .select(team.count())
+                .from(team)
+                .where(builder)
+                .fetchOne()
+        ).orElse(0L);
+
+        return PageableExecutionUtils.getPage(content, pageable, () -> total);
+    }
 
     // 단건 조회: teamId 기준, activated=true, participants + user fetch join
     @Override
@@ -353,13 +405,18 @@ public class TeamRepositoryCustomImpl implements TeamRepositoryCustom {
 
     // 즐겨찾기 카운트
     @Override
-    public Page<Team> findAllOrderByFavoriteCount(Pageable pageable, boolean includeCompleted) {
-
+    public Page<Team> findAllOrderByFavoriteCount(Pageable pageable, boolean includeCompleted, String keyword) {
         BooleanBuilder builder = new BooleanBuilder()
             .and(team.activated.eq(true))
             .and(team.status.ne(Status.CANCELED));
         if (!includeCompleted) {
             builder.and(team.status.ne(Status.COMPLETED));
+        }
+        if (StringUtils.hasText(keyword)) {
+            builder.and(
+                team.teamDetails.containsIgnoreCase(keyword)
+                    .or(team.teamTitle.containsIgnoreCase(keyword))
+            );
         }
 
         List<Tuple> tuples = queryFactory
@@ -393,30 +450,59 @@ public class TeamRepositoryCustomImpl implements TeamRepositoryCustom {
     }
 
     @Override
-    public Page<Team> findAllOrderByViewCount(Pageable pageable, boolean includeCompleted) {
-        BooleanBuilder condition = new BooleanBuilder();
-        condition.and(team.activated.isTrue());
-
+    public Page<Team> findAllOrderByFavoriteCountWithFullText(Pageable pageable, boolean includeCompleted, String keyword) {
+        // note
+        BooleanBuilder builder = new BooleanBuilder()
+            .and(team.activated.eq(true))
+            .and(team.status.ne(Status.CANCELED));
         if (!includeCompleted) {
-            condition.and(team.status.ne(Status.COMPLETED));
+            builder.and(team.status.ne(Status.COMPLETED));
+        }
+        NumberTemplate<Double> score = null;
+        if (StringUtils.hasText(keyword) && keyword.length() >= 2) {
+            score = getScore(team.teamTitle, team.teamDetails, keyword);
+            builder.and(
+                score.gt(0)
+            );
         }
 
-        List<Team> results = queryFactory
-                .selectFrom(team)
-                .where(condition)
-                .orderBy(team.viewCount.desc())
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .fetch();
+        OrderSpecifier<?>[] combined = Stream.concat(
+            Stream.of(favorite.count().desc()),
+            Arrays.stream(getScoreSort(score))
+        ).toArray(OrderSpecifier[]::new);
 
-        long count = Optional.ofNullable(
-                queryFactory
-                        .select(team.count())
-                        .from(team)
-                        .where(condition)
-                        .fetchOne()
-        ).orElse(0L);
+        List<Tuple> tuples = queryFactory
+            .select(team, favorite.count())
+            .from(team)
+            .leftJoin(team.favorites, favorite)
+            .where(builder)
+            .groupBy(team)
+            .orderBy(combined)
+            .offset(pageable.getOffset())
+            .limit(pageable.getPageSize())
+            .fetch();
 
-        return new PageImpl<>(results, pageable, count);
+        List<Team> teams = tuples.stream()
+            .map(tuple -> {
+                Team t = tuple.get(team);
+                Long cnt = tuple.get(favorite.count());
+                t.setFavoriteCount(cnt != null ? cnt : 0L);
+                return t;
+            })
+            .toList();
+
+        Long totalCount = queryFactory
+            .select(team.count())
+            .from(team)
+            .where(builder)
+            .fetchOne();
+        long total = (totalCount != null ? totalCount : 0L);
+
+        return new PageImpl<>(teams, pageable, total);
+    }
+
+    private static NumberTemplate<Double> getScore(StringPath target1, StringPath target2,  String keyword) {
+        return Expressions.numberTemplate(Double.class, "function('match_against', {0}, {1}, {2})",
+            target1, target2, keyword);
     }
 }

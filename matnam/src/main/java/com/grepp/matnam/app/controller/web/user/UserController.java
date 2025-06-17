@@ -3,15 +3,17 @@ package com.grepp.matnam.app.controller.web.user;
 import com.grepp.matnam.app.controller.api.auth.payload.TokenResponse;
 import com.grepp.matnam.app.model.auth.service.AuthService;
 import com.grepp.matnam.app.model.auth.token.dto.TokenDto;
+import com.grepp.matnam.app.controller.web.user.payload.CouponStatsDto;
+import com.grepp.matnam.app.model.coupon.service.UserCouponService;
 import com.grepp.matnam.app.model.mymap.service.MymapService;
+import com.grepp.matnam.app.model.team.code.Status;
 import com.grepp.matnam.app.model.team.dto.TeamDto;
+import com.grepp.matnam.app.model.team.entity.Team;
 import com.grepp.matnam.app.model.team.service.FavoriteService;
 import com.grepp.matnam.app.model.team.service.TeamReviewService;
 import com.grepp.matnam.app.model.team.service.TeamService;
-import com.grepp.matnam.app.model.team.code.Status;
-import com.grepp.matnam.app.model.team.entity.Team;
-import com.grepp.matnam.app.model.user.service.UserService;
 import com.grepp.matnam.app.model.user.entity.User;
+import com.grepp.matnam.app.model.user.service.UserService;
 import com.grepp.matnam.infra.auth.AuthenticationUtils;
 import com.grepp.matnam.infra.auth.CookieUtils;
 import jakarta.servlet.http.HttpServletRequest;
@@ -29,9 +31,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Controller
 @RequiredArgsConstructor
@@ -45,6 +45,7 @@ public class UserController {
     private final MymapService mymapService;
     private final FavoriteService favoriteService;
     private final AuthService authService;
+    private final UserCouponService userCouponService;
 
     @GetMapping("/signup")
     public String signupPage() {
@@ -85,6 +86,9 @@ public class UserController {
 
             User user = userService.getUserById(userId);
             log.info("사용자 정보 조회 성공: {}", user.getUserId());
+
+            CouponStatsDto couponStats = userCouponService.getCouponStats(userId);
+            model.addAttribute("couponStats", couponStats);
 
             // 맛집 저장 수
             Map<String, Long> placeCounts = mymapService.getPlaceCounts(user);

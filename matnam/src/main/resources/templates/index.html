@@ -227,6 +227,117 @@
             color: #666;
             font-size: 0.9rem;
         }
+        .coupon-section {
+            padding: 2rem;
+            background-color: #fff;
+            margin-bottom: 2rem;
+        }
+
+        .coupon-section h2 {
+            font-size: 1.4rem;
+            text-align: center;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+
+        .coupon-section p {
+            text-align: center;
+            color: #666;
+            margin-bottom: 2rem;
+            font-size: 0.95rem;
+        }
+
+        .coupons-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .coupon-card {
+            border: 1px solid #eee;
+            border-radius: 8px;
+            overflow: hidden;
+            background-color: #fcfcfc;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s ease;
+        }
+
+        .coupon-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .coupon-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .restaurant-name {
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .discount-badge {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.3rem 0.6rem;
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .coupon-body {
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .coupon-name {
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .coupon-progress {
+            color: #666;
+            font-size: 0.8rem;
+        }
+
+        .coupon-actions {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        /* 반응형 디자인 - 기존 패턴과 동일 */
+        @media (max-width: 768px) {
+            .coupons-grid {
+                grid-template-columns: 1fr;
+                gap: 0.5rem;
+            }
+
+            .coupon-actions {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .coupon-actions .btn {
+                width: 200px;
+            }
+        }
+
+        .no-coupons {
+            text-align: center;
+            color: #999;
+            font-style: italic;
+            margin: 2rem 0;
+        }
     </style>
     <link rel="stylesheet" th:href="@{/css/notification.css}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -314,6 +425,39 @@
                 <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" th:onclick="'location.href=\'' + @{/team/detail/3} + '\''">자세히 보기</button>
             </div>
         </div>
+    </div>
+</section>
+
+<section class="coupon-section">
+    <h2>🎫 특별 할인 쿠폰</h2>
+    <p>지금 바로 받을 수 있는 맛집 할인 쿠폰을 확인해보세요!</p>
+
+    <div class="coupon-preview" th:if="${latestCoupons != null and !#lists.isEmpty(latestCoupons)}">
+        <div class="coupons-grid">
+            <div th:each="coupon : ${latestCoupons}" class="coupon-card">
+                <div class="coupon-header">
+                    <div class="restaurant-name" th:text="${coupon.restaurant.name}">식당명</div>
+                    <div class="discount-badge">
+                        <span th:text="${coupon.discountValue}">10</span><span th:text="${coupon.discountType.name() == 'PERCENTAGE' ? '%' : '원'}">%</span>
+                    </div>
+                </div>
+                <div class="coupon-body">
+                    <div class="coupon-name" th:text="${coupon.name}">쿠폰명</div>
+                    <div class="coupon-progress">
+                        <span th:text="${coupon.issuedQuantity}">50</span>/<span th:text="${coupon.totalQuantity}">100</span> 발급됨
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="coupon-actions">
+        <button class="btn btn-primary" th:onclick="'location.href=\'' + @{/coupons} + '\''">
+            모든 쿠폰 보기
+        </button>
+        <button class="btn btn-outline" th:onclick="'location.href=\'' + @{/user/coupons} + '\''">
+            내 쿠폰함
+        </button>
     </div>
 </section>
 

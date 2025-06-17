@@ -31,7 +31,7 @@ public interface TeamRepositoryCustom {
 
     List<Team> findTeamsByParticipantUserIdAndParticipantStatusAndActivatedTrue(String userId, ParticipantStatus status);
 
-    Page<Team> findAllWithParticipantsAndActivatedTrue(Pageable pageable, boolean includeCompleted);
+    Page<Team> findAllWithParticipantsAndActivatedTrue(Pageable pageable, boolean includeCompleted, String keyword);
 
     Optional<Team> findByIdWithParticipantsAndUserAndActivatedTrue(Long teamId);
 
@@ -39,6 +39,11 @@ public interface TeamRepositoryCustom {
 
     List<SearchTeamResponse> findTeamByKeyword(String keyword);
 
+    Page<Team> findAllOrderByFavoriteCount(Pageable pageable, boolean includeCompleted, String keyword);
+
+    Page<Team> findAllWithFullText(Pageable pageable, boolean includeCompleted, String keyword);
+
+    Page<Team> findAllOrderByFavoriteCountWithFullText(Pageable pageable, boolean includeCompleted, String keyword);
     Page<Team> findAllOrderByFavoriteCount(Pageable pageable, boolean includeCompleted);
 
     Page<Team> findAllOrderByViewCount(Pageable pageable, boolean includeCompleted);

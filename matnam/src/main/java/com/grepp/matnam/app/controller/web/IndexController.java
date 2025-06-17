@@ -3,7 +3,12 @@ package com.grepp.matnam.app.controller.web;
 import com.grepp.matnam.app.model.content.entity.ContentRanking;
 import com.grepp.matnam.app.model.content.entity.RankingItem;
 import com.grepp.matnam.app.model.content.service.ContentRankingService;
+import com.grepp.matnam.app.model.coupon.entity.CouponTemplate;
+import com.grepp.matnam.app.model.coupon.service.CouponManageService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,6 +21,7 @@ import java.util.Optional;
 public class IndexController {
 
     private final ContentRankingService contentRankingService;
+    private final CouponManageService couponManageService;
 
     @GetMapping("/")
     public String index(Model model) {
@@ -30,6 +36,14 @@ public class IndexController {
             if (!items.isEmpty()) {
                 model.addAttribute("rankingItems", items);
             }
+        }
+
+        try {
+            PageRequest latestCoupons = PageRequest.of(0, 3, Sort.by(Sort.Order.desc("createdAt")));
+            Page<CouponTemplate> couponPage = couponManageService.findAvailableCoupons("", latestCoupons);
+            model.addAttribute("latestCoupons", couponPage.getContent());
+        } catch (Exception e) {
+            model.addAttribute("latestCoupons", List.of());
         }
 
         return "index";
