@@ -40,4 +40,8 @@ public interface TeamRepositoryCustom {
     List<SearchTeamResponse> findTeamByKeyword(String keyword);
 
     Page<Team> findAllOrderByFavoriteCount(Pageable pageable, boolean includeCompleted, String keyword);
+
+    Page<Team> findAllWithFullText(Pageable pageable, boolean includeCompleted, String keyword);
+
+    Page<Team> findAllOrderByFavoriteCountWithFullText(Pageable pageable, boolean includeCompleted, String keyword);
 }

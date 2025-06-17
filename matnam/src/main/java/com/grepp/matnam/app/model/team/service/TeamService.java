@@ -29,7 +29,7 @@ import com.grepp.matnam.app.model.user.repository.UserRepository;
 import com.grepp.matnam.infra.error.exceptions.CommonException;
 import com.grepp.matnam.infra.response.ResponseCode;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -51,6 +51,7 @@ import org.springframework.util.StringUtils;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Transactional(readOnly = true)
 public class TeamService {
 
     private final TeamRepository teamRepository;
@@ -322,12 +323,14 @@ public class TeamService {
 
     // 모임 검색 페이지
     public Page<Team> getAllTeams(Pageable pageable, boolean includeCompleted, String keyword) {
-        return teamRepository.findAllWithParticipantsAndActivatedTrue(pageable, includeCompleted, keyword);
+//        return teamRepository.findAllWithParticipantsAndActivatedTrue(pageable, includeCompleted, keyword);
+        return teamRepository.findAllWithFullText(pageable, includeCompleted, keyword);
     }
 
     // 모임 즐겨찾기 카운트
     public Page<Team> getAllTeamsByFavoriteCount(Pageable pageable, boolean includeCompleted, String keyword) {
-        return teamRepository.findAllOrderByFavoriteCount(pageable, includeCompleted, keyword);
+//        return teamRepository.findAllOrderByFavoriteCount(pageable, includeCompleted, keyword);
+        return teamRepository.findAllOrderByFavoriteCountWithFullText(pageable, includeCompleted, keyword);
     }
 
     // 모임 상세 조회, 팀 페이지 조회
