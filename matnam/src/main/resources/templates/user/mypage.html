@@ -595,6 +595,379 @@
       transform: translateY(-1px);
     }
   </style>
+  <style>
+    #restaurant-search-input{
+      font-family: inherit;
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius);
+      padding: 0.5rem 0.75rem;
+      outline: none;
+      transition: var(--transition);
+    }
+
+    #restaurant-search-input:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 0.2rem rgba(74, 108, 247, 0.25);
+    }
+
+    .modal-restaurant {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      overflow-y: auto;
+    }
+
+    .modal-content-restaurant {
+      background-color: var(--card-bg);
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow-lg);
+      width: 90%;
+      margin: 50px auto;
+      animation: modalFadeIn 0.3s;
+    }
+
+    .modal-header {
+      padding: 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-header h2 {
+      margin-bottom: 0;
+      font-size: 1.25rem;
+    }
+
+    .close-modal-restaurant {
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: var(--gray-color);
+    }
+
+    .modal-body-restaurant {
+      padding: 1.5rem;
+    }
+
+    .modal-footer-restaurant {
+      padding: 1.5rem;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+    }
+
+    @keyframes modalFadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-50px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 576px) {
+
+      .modal-content {
+        width: 95%;
+        margin: 20px auto;
+      }
+    }
+
+    /* 식당 검색 모달 스타일 */
+    .restaurant-search-modal-content {
+      width: 90%;
+      max-width: 1000px;
+      /*max-height: 700px;*/
+    }
+
+    .restaurant-search-body {
+      padding: 0;
+    }
+
+    .restaurant-search-container {
+      display: flex;
+      height: 100%;
+      gap: 1rem;
+      padding: 1rem;
+    }
+
+    /* 지도 영역 */
+    .map-container-restaurant {
+      flex: 1;
+      min-height: 300px;
+    }
+
+    .restaurant-map {
+      width: 100%;
+      height: 100%;
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius);
+      background-color: var(--light-color);
+    }
+
+    .map-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      color: var(--gray-color);
+    }
+
+    .map-placeholder i {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+
+    /* 검색 및 정보 영역 */
+    .search-info-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    /* 검색창 */
+    .restaurant-search-box {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .restaurant-search-box input {
+      flex: 1;
+    }
+
+    .restaurant-search-box button {
+      padding: 0.5rem 1rem;
+      white-space: nowrap;
+    }
+
+    /* 검색 결과 영역 */
+    .restaurant-search-results {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius);
+      background-color: var(--card-bg);
+      min-height: 200px;
+    }
+
+    .search-results-header {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border-color);
+      background-color: var(--light-color);
+    }
+
+    .search-results-header h4 {
+      margin: 0;
+      font-size: 1rem;
+      color: var(--gray-dark);
+    }
+
+    .restaurant-results-list {
+      flex: 1;
+      overflow-y: auto;
+      min-height: 250px;
+      max-height: 250px;
+    }
+
+    .restaurant-result-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border-color);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .restaurant-result-item:last-child {
+      border-bottom: none;
+    }
+
+    .restaurant-result-item:hover {
+      background-color: var(--primary-light);
+    }
+
+    .restaurant-result-item.selected {
+      background-color: var(--primary-light);
+      border-left: 3px solid var(--primary-color);
+    }
+
+    .restaurant-result-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .restaurant-result-name {
+      font-weight: 500;
+      margin-bottom: 0.25rem;
+    }
+
+    .restaurant-result-address {
+      font-size: 0.85rem;
+      color: var(--gray-color);
+    }
+
+    .restaurant-result-category {
+      font-size: 0.8rem;
+      color: var(--primary-color);
+      background-color: var(--primary-light);
+      padding: 0.125rem 0.5rem;
+      border-radius: 1rem;
+      align-self: flex-start;
+      margin-top: 0.25rem;
+    }
+
+    /* 선택된 식당 정보 */
+    .selected-restaurant-info {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .selected-restaurant-address label,
+    .representative-menu label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: var(--gray-dark);
+    }
+
+    .address-display {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.85rem;
+      background-color: var(--light-color);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius);
+      color: var(--gray-dark);
+      min-height: 2rem;
+      display: flex;
+      align-items: center;
+    }
+
+    .address-display.empty {
+      color: var(--gray-color);
+      font-style: italic;
+    }
+
+    /* 검색 결과 없음 메시지 */
+    .no-restaurant-results {
+      padding: 2rem 1rem;
+      text-align: center;
+      color: var(--gray-color);
+      font-style: italic;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* 반응형 조정 */
+    @media (max-width: 768px) {
+      .restaurant-search-modal-content {
+        width: 95%;
+      }
+
+      .restaurant-search-container {
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+
+      .restaurant-map {
+        min-height: 300px;
+      }
+
+
+      .search-info-container {
+        min-width: auto;
+        flex: 1;
+      }
+
+      .restaurant-results-list {
+        min-height: 200px;
+        max-height: 200px;
+      }
+
+      .representative-menu-row {
+        flex-direction: column;
+      }
+    }
+
+    /* 대표 메뉴 영역을 식당 이름과 나란히 배치 */
+    .representative-menu-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+
+    /* 식당 이름 박스 */
+    .selected-restaurant-name {
+      flex: 1;
+    }
+
+    .selected-restaurant-name label {
+      display: block;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      color: var(--gray-dark);
+    }
+
+    .name-display-box {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.85rem;
+      background-color: var(--light-color);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius);
+      color: var(--gray-dark);
+      min-height: 2rem;
+      display: flex;
+      align-items: center;
+    }
+
+    /* 대표 메뉴 입력 필드 영역 */
+    .representative-menu {
+      flex: 1;
+    }
+
+    .representative-menu label {
+      display: block;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      color: var(--gray-dark);
+    }
+
+    .representative-menu-input {
+      height: 2.5rem;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.85rem;
+      line-height: 1.2;
+      box-sizing: border-box;
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius);
+      display: flex;
+      align-items: center;
+      width: 100%;
+      flex: 1;
+    }
+
+    .error-message {
+      color: #ff4444;
+      font-size: 0.8rem;
+      margin-top: 0.3rem;
+    }
+  </style>
   <link rel="stylesheet" th:href="@{/css/notification.css}">
   <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -736,8 +1109,7 @@
 
     <div class="profile-section">
       <h4>서비스 개선 참여하기</h4>
-      <button id="suggestBtn" class="btn-primary">식당 등록 제안</button>
-      <div id="suggest-modal-container"></div>
+      <button id = "suggestBtn" class="btn-primary" >식당 등록 제안</button>
     </div>
   </div>
 
@@ -1159,6 +1531,85 @@
   </div>
 </div>
 
+<!-- 식당 이름 검색 모달 추가 -->
+<div id="restaurant-search-modal" class="modal-restaurant">
+  <div class="modal-content-restaurant restaurant-search-modal-content">
+    <div class="modal-header" style="align-items: flex-start">
+      <div style="margin-bottom: 0">
+        <h2>식당 등록 제안</h2>
+        <h5 style="color: lightslategray; margin-bottom: 0.3rem;">새로운 맛집을 저희에게도 알려주세요!</h5>
+        <h5 style="color: lightslategray; margin-top: 0; margin-bottom: 0;">제출해주신 내용은 검토 후 업데이트할 예정입니다 🍽️</h5>
+      </div>
+      <span class="close-modal-restaurant">&times;</span>
+    </div>
+    <input type="hidden" id="submitted-user-id" th:value="${user.userId}" />
+    <div class="modal-body-restaurant restaurant-search-body">
+      <div class="restaurant-search-container">
+        <!-- 지도 영역 -->
+        <div class="map-container-restaurant">
+          <div id="restaurant-map" class="restaurant-map">
+          </div>
+        </div>
+
+        <!-- 검색 및 정보 영역 -->
+        <div class="search-info-container">
+          <!-- 검색창 -->
+          <div class="restaurant-search-box">
+            <input type="text" id="restaurant-search-input" placeholder="식당 이름을 검색하세요" class="form-control">
+            <button type="button" id="restaurant-search-btn" class="btn primary-btn">
+              <i class="fas fa-search"></i>
+            </button>
+          </div>
+
+          <!-- 검색 결과 리스트 -->
+          <div class="restaurant-search-results">
+            <div class="search-results-header">
+              <h4>검색 결과</h4>
+            </div>
+            <div id="restaurant-results-list" class="restaurant-results-list">
+              <div class="no-restaurant-results">
+                <div>
+                  <i class="fas fa-search"></i>
+                  <p>식당을 검색하세요</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 선택된 식당 정보 -->
+          <div class="selected-restaurant-info">
+            <div class="representative-menu-row">
+              <div class="selected-restaurant-name">
+                <label for="selected-restaurant-name">선택한 식당</label>
+                <input id="selected-restaurant-name" class="representative-menu-input" value="식당을 선택하세요" disabled>
+                <span id="error-name" class="error-message"></span>
+              </div>
+
+              <div class="representative-menu">
+                <label for="representative-menu-input">대표 메뉴</label>
+                <input type="text" id="representative-menu-input" placeholder="대표 메뉴를 입력하세요" class="representative-menu-input">
+                <span id="error-menu" class="error-message"></span>
+              </div>
+            </div>
+
+            <div class="selected-restaurant-address">
+              <label>선택된 식당 주소</label>
+              <div id="selected-restaurant-address" class="address-display">
+                식당을 선택하세요
+              </div>
+              <span id="error-address" class="error-message"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer-restaurant">
+      <button class="btn cancel-btn" style="background-color: white; color: black">취소</button>
+      <button class="btn btn-primary" id="proceed-to-add-restaurant">추가</button>
+    </div>
+  </div>
+</div>
+
 <footer>
   © 2025 맛남. 모든 권리 보유.
 </footer>
@@ -1324,214 +1775,177 @@
       });
     });
   });
+</script>
+<script>
   document.addEventListener("DOMContentLoaded", function () {
-    fetch('/modal/restaurant-suggestion')
-    .then(res => res.text())
-    .then(html => {
-      const container = document.getElementById('suggest-modal-container');
-      container.innerHTML = html;
+    // 모달 처리
+    const modals = document.querySelectorAll('.modal-restaurant');
+    const closeButtons = document.querySelectorAll('.close-modal-restaurant, .cancel-btn');
 
-      let map = null;
-      let marker = null;
-      let ps = null;
-      let geocoder = null;
-      let mapInitialized = false;
+    // 모달 닫기
+    closeButtons.forEach(button => {
+      button.addEventListener('click', function () {
+        modals.forEach(modal => {
+          modal.scrollTop = 0;
+          modal.style.display = 'none';
+        });
+      });
+    });
 
-      const openBtn = document.getElementById("suggestBtn");
-      const modal = document.getElementById("suggestRestaurantModal");
-      const closeBtn = modal?.querySelector(".close-modal");
-      const cancelBtn = modal?.querySelector("#cancel-suggest");
-      const submitBtn = modal?.querySelector("#submit-suggest");
+    // 모달 외부 클릭 시 닫기
+    window.addEventListener('click', function (event) {
+      modals.forEach(modal => {
+        if (event.target === modal) {
+          modal.scrollTop = 0;
+          modal.style.display = 'none';
+        }
+      });
+    });
 
-      const closeModal = () => modal.style.display = "none";
+    const suggestBtn = document.getElementById('suggestBtn');
+    if (suggestBtn) {
+      suggestBtn.addEventListener('click', function() {
+        document.getElementById('restaurant-search-modal').style.display = 'block';
 
-      openBtn?.addEventListener("click", () => {
-        modal.style.display = "block";
         setTimeout(() => {
-          if (!mapInitialized) {
-            initMap();
-            mapInitialized = true;
-          } else {
-            kakao.maps.event.trigger(map, 'resize');
-            map.setCenter(new kakao.maps.LatLng(37.5665, 126.9780));
-          }
+          map.relayout();
+          map.setCenter(new kakao.maps.LatLng(37.5665, 126.9780));
         }, 200);
       });
+    }
 
-      closeBtn && (closeBtn.onclick = closeModal);
-      cancelBtn && (cancelBtn.onclick = closeModal);
+    initRestaurantSearchMap(); // 지도 초기화
 
-      submitBtn?.addEventListener("click", () => {
-        const name = document.getElementById("suggest-name").value.trim();
-        const address = document.getElementById("suggest-address").value.trim();
-        const mainFood = document.getElementById("suggest-reason").value.trim();
-        const latitude = parseFloat(document.getElementById("latitude").value);
-        const longitude = parseFloat(document.getElementById("longitude").value);
-        const submittedByUserId = document.getElementById("submitted-user-id").value;
-
-        if (!name || !address || !mainFood || isNaN(latitude) || isNaN(longitude)) {
-          return alert("필수 항목을 모두 입력해주세요.");
-        }
-
-        fetch('/api/suggestions', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({name, address, mainFood, latitude, longitude, submittedByUserId})
-        })
-        .then(res => {
-          if (res.status === 409) {
-            throw new Error("이미 존재하는 식당입니다.");
-          }
-          if (!res.ok) {
-            throw new Error("제출에 실패했습니다.");
-          }
-          return res.text();
-        })
-        .then(() => {
-          alert("제안이 성공적으로 제출되었습니다.");
-          closeModal();
-        })
-        .catch(err => {
-          alert(err.message || "서버 오류가 발생했습니다.");
-        });
-      });
-
-      function initMap() {
-        const mapContainer = document.getElementById("map");
-        if (!mapContainer) {
-          return;
-        }
-
-        const centerLatLng = new kakao.maps.LatLng(37.5665, 126.9780);
-        map = new kakao.maps.Map(mapContainer, {
-          center: centerLatLng,
-          level: 3
-        });
-
-        ps = new kakao.maps.services.Places();
-        geocoder = new kakao.maps.services.Geocoder();
-
-        const markerImage = new kakao.maps.MarkerImage(
-            "/img/map-marker-blue.png",
-            new kakao.maps.Size(38, 40),
-            {offset: new kakao.maps.Point(19, 40)}
-        );
-
-        marker = new kakao.maps.Marker({
-          map: null,
-          position: centerLatLng,
-          image: markerImage
-        });
-
-        const searchBtn = document.getElementById("search-place");
-        if (searchBtn) {
-          searchBtn.addEventListener("click", () => {
-            const keyword = document.getElementById("suggest-name").value.trim();
-            if (!keyword) {
-              return alert("식당명을 입력하세요.");
-            }
-
-            ps.keywordSearch(keyword, (data, status) => {
-              if (status === kakao.maps.services.Status.OK && data.length > 0) {
-                const place = data[0];
-                const position = new kakao.maps.LatLng(place.y, place.x);
-                map.setCenter(position);
-
-                marker.setPosition(position);
-                marker.setMap(map);
-
-                document.getElementById("suggest-address").value = place.road_address_name
-                    || place.address_name;
-                document.getElementById("latitude").value = place.y;
-                document.getElementById("longitude").value = place.x;
-              } else {
-                alert("검색 결과가 없습니다.");
-              }
-            });
-          });
-        }
-
-        setTimeout(() => {
-          kakao.maps.event.trigger(map, 'resize');
-          map.setCenter(centerLatLng);
-        }, 300);
-      }
-    });
+    setupRestaurantSearchModal(); // 새로 추가한 함수 호출
   });
 
-  // 회원 정보 수정
-  function openEditModal() {
-    fetch('/api/user/info')
-    .then(response => {
-      if (!response.ok) {
-        throw new Error('사용자 정보를 가져오지 못했습니다.');
-      }
-      return response.json();
-    })
-    .then(result => {
-      const user = result.data;
-      document.getElementById('editModal').style.display = 'block';
-      document.getElementById('editUserId').value = user.userId || '';
-      document.getElementById('editNickName').value = user.username || '';
-      document.getElementById('editEmail').value = user.email || '';
-      document.getElementById('editAddress').value = user.address || '';
-      document.getElementById('editAge').value = user.age || '';
-      document.getElementById('editGender').value = user.gender || '';
-    })
-    .catch(error => {
-      console.error('유저 정보 불러오기 실패:', error);
-      alert('사용자 정보를 불러오는 데 실패했습니다.');
+  let map;
+  let marker;
+  let selectedRestaurant = null;
+
+  function initRestaurantSearchMap() {
+    const container = document.getElementById('restaurant-map');
+    map = new kakao.maps.Map(container, {
+      center: new kakao.maps.LatLng(37.5665, 126.9780),
+      level: 3
     });
   }
 
-  function closeEditModal() {
-    document.getElementById('editModal').style.display = 'none';
-  }
+  function setupRestaurantSearchModal() {
+    const searchBtn = document.getElementById('restaurant-search-btn');
+    const searchInput = document.getElementById('restaurant-search-input');
+    const resultsList = document.getElementById('restaurant-results-list');
+    const addressDisplay = document.getElementById('selected-restaurant-address');
+    const repMenuInput = document.getElementById('representative-menu-input');
 
-  function saveUserInfo() {
-    const userId = document.getElementById('editUserId').value.trim();
-    const nickName = document.getElementById('editNickName').value.trim();
-    const email = document.getElementById('editEmail').value.trim();
-    const address = document.getElementById('editAddress').value.trim();
-    const age = document.getElementById('editAge').value.trim();
-    const gender = document.getElementById('editGender').value.trim();
+    const ps = new kakao.maps.services.Places();
 
-    if (!userId || !nickName || !email || !address || !age || !gender) {
-      alert('모든 항목을 입력해주세요.');
-      return;
-    }
-    const userData = {
-      userId: userId,
-      username: nickName,
-      email: email,
-      address: address,
-      age: parseInt(age),
-      gender: gender.toUpperCase()
-    };
-
-    console.log('저장할 정보:', userData);
-
-    fetch('/api/user/update', {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(userData)
-    })
-    .then(response => {
-      if (!response.ok) {
-        throw new Error('정보 저장 실패');
+    searchBtn.addEventListener('click', () => {
+      const keyword = searchInput.value.trim();
+      if (!keyword) {
+        alert('검색어를 입력하세요.');
+        return;
       }
-      return response.text();
-    })
-    .then(result => {
-      alert('정보가 저장되었습니다.');
-      closeEditModal();
-      location.reload();
-    })
-    .catch(error => {
-      console.error('정보 저장 중 오류:', error);
-      alert('정보 저장에 실패했습니다.');
+
+      ps.keywordSearch(keyword, (data, status) => {
+        if (status === kakao.maps.services.Status.OK) {
+          renderSearchResults(data);
+        } else {
+          resultsList.innerHTML = '<div class="no-restaurant-results">검색 결과가 없습니다.</div>';
+        }
+      });
+    });
+
+    searchInput.addEventListener('keydown', function (event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        searchBtn.click();
+      }
+    });
+
+    function renderSearchResults(places) {
+      resultsList.innerHTML = '';
+      places.forEach(place => {
+        const item = document.createElement('div');
+        item.className = 'restaurant-result-item';
+        item.innerHTML = `
+        <div class="restaurant-result-info">
+          <div class="restaurant-result-name">${place.place_name}</div>
+          <div class="restaurant-result-address">${place.road_address_name || place.address_name}</div>
+        </div>
+      `;
+        item.addEventListener('click', () => selectPlace(place));
+        resultsList.appendChild(item);
+      });
+    }
+
+    function selectPlace(place) {
+      const lat = parseFloat(place.y);
+      const lng = parseFloat(place.x);
+      const position = new kakao.maps.LatLng(lat, lng);
+
+      map.setCenter(position);
+
+      if (!marker) {
+        marker = new kakao.maps.Marker({ map });
+      }
+      marker.setPosition(position);
+
+      addressDisplay.textContent = place.road_address_name || place.address_name;
+      document.getElementById('selected-restaurant-name').value = place.place_name;
+
+      selectedRestaurant = {
+        name: place.place_name,
+        address: place.road_address_name || place.address_name,
+        latitude: lat,
+        longitude: lng
+      };
+    }
+
+    document.getElementById('proceed-to-add-restaurant').addEventListener('click', () => {
+      if (!selectedRestaurant) {
+        alert('식당을 먼저 선택해주세요.');
+        return;
+      }
+
+      fetch('/api/suggestions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name : selectedRestaurant.name,
+          address : selectedRestaurant.address,
+          mainFood : repMenuInput.value,
+          latitude : selectedRestaurant.latitude,
+          longitude : selectedRestaurant.longitude,
+          submittedByUserId : document.getElementById("submitted-user-id").value
+        })
+      })
+      .then(async res => {
+        if (res.status === 409) throw new Error("이미 존재하는 식당입니다.");
+        if (res.status === 400) {
+          const result = (await res.json()).data;
+          document.querySelector('#error-name').textContent = res.name;
+          document.querySelector('#error-menu').textContent = result.mainFood;
+          document.querySelector('#error-address').textContent = result.address;
+          throw new Error("필수 항목을 확인해주세요.");
+        }
+        if (!res.ok) throw new Error("제출에 실패했습니다.");
+        return res.text();
+      })
+      .then(() => {
+        alert("제안이 성공적으로 제출되었습니다.");
+        document.getElementById('restaurant-search-modal').style.display = 'none';
+      })
+      .catch(err => {
+        alert(err.message || "서버 오류가 발생했습니다.");
+      });
+    });
+
+    document.querySelectorAll('#restaurant-search-modal .cancel-btn, #restaurant-search-modal .close-modal')
+    .forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.getElementById('restaurant-search-modal').style.display = 'none';
+      });
     });
   }
 </script>

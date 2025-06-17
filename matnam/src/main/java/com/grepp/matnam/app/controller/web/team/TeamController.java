@@ -166,6 +166,8 @@ public class TeamController {
         String sort,
         @RequestParam(name = "includeCompleted", defaultValue = "true")
         boolean includeCompleted,
+        @RequestParam(name = "keyword", defaultValue = "")
+        String keyword,
         Model model) {
         Page<Team> page;
 
@@ -175,16 +177,17 @@ public class TeamController {
                 pageable.getPageSize(),
                 Sort.by(Sort.Direction.DESC, "favoriteCount")
             );
-            page = teamService.getAllTeamsByFavoriteCount(favPageable, includeCompleted);
+            page = teamService.getAllTeamsByFavoriteCount(favPageable, includeCompleted, keyword);
 
         } else {
-            page = teamService.getAllTeams(pageable, includeCompleted);
+            page = teamService.getAllTeams(pageable, includeCompleted, keyword);
         }
 
         model.addAttribute("teams", page.getContent());
         model.addAttribute("page", page);
         model.addAttribute("sort", sort);
         model.addAttribute("includeCompleted", includeCompleted);
+        model.addAttribute("keyword", keyword);
         return "team/teamSearch";
     }
 

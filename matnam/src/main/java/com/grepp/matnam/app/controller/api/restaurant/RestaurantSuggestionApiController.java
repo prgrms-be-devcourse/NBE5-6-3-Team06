@@ -1,8 +1,9 @@
 package com.grepp.matnam.app.controller.api.restaurant;
 
-import com.grepp.matnam.app.model.restaurant.dto.RestaurantSuggestionDto;
+import com.grepp.matnam.app.controller.api.restaurant.payload.RestaurantSuggestionRequest;
 import com.grepp.matnam.app.model.restaurant.entity.RestaurantSuggestion;
 import com.grepp.matnam.app.model.restaurant.service.RestaurantSuggestionService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -26,7 +27,7 @@ public class RestaurantSuggestionApiController {
     }
 
     @PostMapping
-    public ResponseEntity<Void> createSuggestion(@RequestBody RestaurantSuggestionDto dto) {
+    public ResponseEntity<Void> createSuggestion(@RequestBody @Valid RestaurantSuggestionRequest request) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated()) {
             return ResponseEntity.status(401).build();
@@ -34,7 +35,7 @@ public class RestaurantSuggestionApiController {
 
         String userId = auth.getName();
 
-        service.saveSuggestion(dto, userId);
+        service.saveSuggestion(request, userId);
         return ResponseEntity.ok().build();
     }
 }

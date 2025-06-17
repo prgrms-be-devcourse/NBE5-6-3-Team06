@@ -1,7 +1,7 @@
 package com.grepp.matnam.app.model.restaurant.service;
 
+import com.grepp.matnam.app.controller.api.restaurant.payload.RestaurantSuggestionRequest;
 import com.grepp.matnam.app.model.restaurant.code.SuggestionStatus;
-import com.grepp.matnam.app.model.restaurant.dto.RestaurantSuggestionDto;
 import com.grepp.matnam.app.model.restaurant.entity.RestaurantSuggestion;
 import com.grepp.matnam.app.model.restaurant.repository.RestaurantRepository;
 import com.grepp.matnam.app.model.restaurant.repository.RestaurantSuggestionRepository;
@@ -52,14 +52,14 @@ public class RestaurantSuggestionService {
     }
 
     @Transactional
-    public void saveSuggestion(RestaurantSuggestionDto dto, String userId) {
-        existsRestaurant(dto.getLatitude(), dto.getLongitude());
+    public void saveSuggestion(RestaurantSuggestionRequest request, String userId) {
+        existsRestaurant(request.getLatitude(), request.getLongitude());
         RestaurantSuggestion suggestion = new RestaurantSuggestion();
-        suggestion.setName(dto.getName());
-        suggestion.setAddress(dto.getAddress());
-        suggestion.setMainFood(dto.getMainFood());
-        suggestion.setLatitude(dto.getLatitude());
-        suggestion.setLongitude(dto.getLongitude());
+        suggestion.setName(request.getName());
+        suggestion.setAddress(request.getAddress());
+        suggestion.setMainFood(request.getMainFood());
+        suggestion.setLatitude(request.getLatitude());
+        suggestion.setLongitude(request.getLongitude());
         suggestion.setSubmittedByUserId(userId);
         suggestion.setStatus(SuggestionStatus.PENDING);
         suggestion.setSubmittedAt(LocalDateTime.now());
