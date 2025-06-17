@@ -169,7 +169,7 @@
   <p>다양한 식사 모임을 찾아보고 참여해보세요.</p>
 
   <form th:action="@{/team/search}" method="get" class="search-bar">
-    <input type="text" name="keyword" placeholder="모임 검색..." th:value="${keyword}" />
+    <input type="text" name="keyword" placeholder="모임 검색 - 두 글자 이상부터 검색됩니다." th:value="${keyword}" />
     <button type="submit"><i class="fas fa-search"></i></button>
 
     <input type="hidden" name="page" th:value="${page.number}" />
@@ -237,16 +237,32 @@
     </div>
   </div>
   <div class="pagination" th:if="${page.totalPages > 0}">
-    <a th:if="${page.hasPrevious()}" th:href="@{/team/search(page=${page.number - 1}, size=${page.size}, sort=${param.sort}, includeCompleted=${includeCompleted}, keyword=${keyword})}">이전</a>
+    <th:block th:with="
+    currentPage=${page.number},
+    startPage=${(currentPage / 10) * 10},
+    endPage=${(startPage + 9) < (page.totalPages - 1) ? startPage + 9 : page.totalPages - 1}">
 
-    <th:block th:each="pageNumber : ${#numbers.sequence(0, page.totalPages - 1)}">
-      <span th:if="${pageNumber == page.number}" class="current" th:text="${pageNumber + 1}"></span>
-      <a th:unless="${pageNumber == page.number}"
-         th:href="@{/team/search(page=${pageNumber}, size=${page.size}, sort=${param.sort}, includeCompleted=${includeCompleted}, keyword=${keyword})}"
-         th:text="${pageNumber + 1}"></a>
+      <!-- 이전 버튼 (1페이지씩 이동) -->
+      <a th:disabled="${page.hasPrevious()}"
+         th:href="@{/team/search(page=${currentPage - 1}, size=${page.size}, sort=${param.sort}, includeCompleted=${includeCompleted}, keyword=${keyword})}">
+        이전
+      </a>
+
+      <!-- 페이지 번호 10개씩 출력 -->
+      <th:block th:each="pageNumber : ${#numbers.sequence(startPage, endPage)}">
+        <span th:if="${pageNumber == currentPage}" class="current" th:text="${pageNumber + 1}"></span>
+        <a th:unless="${pageNumber == currentPage}"
+           th:href="@{/team/search(page=${pageNumber}, size=${page.size}, sort=${param.sort}, includeCompleted=${includeCompleted}, keyword=${keyword})}"
+           th:text="${pageNumber + 1}"></a>
+      </th:block>
+
+      <!-- 다음 버튼 (1페이지씩 이동) -->
+      <a th:disabled="${page.hasNext()}"
+         th:href="@{/team/search(page=${currentPage + 1}, size=${page.size}, sort=${param.sort}, includeCompleted=${includeCompleted}, keyword=${keyword})}">
+        다음
+      </a>
     </th:block>
 
-    <a th:if="${page.hasNext()}" th:href="@{/team/search(page=${page.number + 1}, size=${page.size}, sort=${param.sort}, includeCompleted=${includeCompleted}, keyword=${keyword})}">다음</a>
   </div>
 </div>
 <script src="/js/auth.js"></script>
