@@ -1,3 +1,5 @@
+-- 모임 테이블에 n-gram 인덱싱
+ALTER TABLE team ADD FULLTEXT(team_title, team_details) WITH PARSER ngram;
 -- 사용자(user) 데이터
 INSERT INTO user (user_id, password, age, address, email, nickname, gender, temperature, created_at,
                   modified_at, activated, status, role)
