@@ -8,7 +8,8 @@ public enum ResponseCode {
     UNAUTHORIZED("4001", HttpStatus.UNAUTHORIZED, "권한이 없습니다."),
     INTERNAL_SERVER_ERROR("5000", HttpStatus.INTERNAL_SERVER_ERROR, "서버에러 입니다."),
     NOT_FOUND("4004", HttpStatus.NOT_FOUND, "요청하신 리소스를 찾을 수 없습니다."),
-    CONFLICT("4009", HttpStatus.CONFLICT, "중복된 데이터입니다.");
+    CONFLICT("4009", HttpStatus.CONFLICT, "중복된 데이터입니다."),
+    INVALID_COUPON("4010", HttpStatus.BAD_REQUEST, "유효하지 않은 쿠폰입니다.");
     
     private final String code;
     private final HttpStatus status;
