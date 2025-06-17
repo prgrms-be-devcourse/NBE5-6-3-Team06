@@ -24,19 +24,51 @@
     }
 
     .section {
-      background: #fff;
-      padding: 1.5rem;
-      margin-bottom: 1.5rem;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      backdrop-filter: blur(20px);
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 2rem;
+      margin-bottom: 2rem;
+      border-radius: 20px;
+      box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .section::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 20px 20px 0 0;
     }
 
     .section h2 {
-      margin-bottom: 1rem;
-      font-size: 1.4rem;
-      border-bottom: 2px solid #eee;
+      margin-bottom: 1.5rem;
+      font-size: 1.6rem;
+      font-weight: 600;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      position: relative;
       padding-bottom: 0.5rem;
     }
+
+    .section h2::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 60px;
+      height: 3px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 2px;
+    }
+
 
     .participant-list {
       display: flex;
@@ -45,11 +77,40 @@
     }
 
     .participant {
-      flex: 1 1 200px;
-      background: #f0f0f0;
-      padding: 1rem;
-      border-radius: 8px;
-      text-align: center;
+      backdrop-filter: blur(15px);
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      padding: 1.5rem;
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: auto;
+    }
+    .participant::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .participant:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 35px rgba(31, 38, 135, 0.2);
+      border-color: rgba(255, 255, 255, 0.4);
+    }
+
+    .participant:hover::before {
+      opacity: 1;
     }
 
     .chat-box, .recommendation-box {
@@ -113,12 +174,16 @@
 
     .info-item {
       font-size: 1rem;
-      color: #333;
+      color: rgb(55, 55, 120);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
 
     .info-item strong {
       font-weight: 600;
-      color: #555;
+      color: rgb(55, 55, 120);
+      min-width: 60px;
     }
 
     .preferences {
@@ -137,7 +202,9 @@
     }
 
     .preference-tag:hover {
-      background-color: #e0e0e0;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.2) 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
     }
 
     .chat-message {
@@ -155,7 +222,7 @@
       opacity: 1;
     }
 
-    .chat-box {
+    chat-box {
       height: 400px; /* 높이 증가 */
       overflow-y: auto;
       border: 1px solid #e0e0e0;
@@ -163,6 +230,19 @@
       border-radius: 8px;
       background: #f7f7f7;
       margin-bottom: 1rem;
+      position: relative;
+    }
+    .chat-box::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background:
+          radial-gradient(circle at 10% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 20%),
+          radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.05) 0%, transparent 20%);
+      pointer-events: none;
     }
 
     /* 채팅 메시지 컨테이너 */
@@ -243,7 +323,7 @@
       position: absolute;
       top: 2px;
       left: 5px;
-      background-color: #ff5c5c;
+      background: linear-gradient(135deg, #ea4160 0%, #ca75a2 50%, #f093fb 100%);
       color: white;
       border: none;
       border-radius: 4px;
@@ -266,6 +346,8 @@
       width: 100%;
       height: 100%;
       background-color: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(5px);
+      animation: modalFadeIn 0.3s ease;
     }
 
     .modal-content {
@@ -277,10 +359,43 @@
       max-width: 90%;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
     }
+    @keyframes modalFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .modal-content {
+      backdrop-filter: blur(20px);
+      background: rgba(255, 255, 255, 0.95);
+      margin: 10% auto;
+      padding: 2.5rem;
+      border-radius: 20px;
+      width: 450px;
+      max-width: 90%;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      animation: modalSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @keyframes modalSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-50px) scale(0.9);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
 
     .modal-title {
-      margin-bottom: 1rem;
-      font-weight: 500;
+      margin-bottom: 1.5rem;
+      font-weight: 600;
+      font-size: 1.3rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
 
     .modal-body {
@@ -294,22 +409,30 @@
     }
 
     .modal-footer button {
-      padding: 0.7rem 1rem;
-      border-radius: 4px;
+      padding: 12px 24px;
+      border-radius: 12px;
       cursor: pointer;
       font-weight: 500;
+      transition: all 0.3s ease;
+      border: none;
+      position: relative;
+      overflow: hidden;
     }
 
     .modal-footer .cancel {
-      background-color: #f5f5f5;
-      border: 1px solid #ddd;
-      color: #333;
+      background: rgba(108, 117, 125, 0.1);
+      color: #4a5568;
+      border: 1px solid rgba(108, 117, 125, 0.2);
+    }
+    .modal-footer .cancel:hover {
+      background: rgba(108, 117, 125, 0.2);
+      transform: translateY(-2px);
     }
 
     .modal-footer .submit {
-      background-color: #ff5c5c;
-      color: #fff;
-      border: none;
+      background: linear-gradient(135deg, #ea4160 0%, #ca75a2 50%, #f093fb 100%);
+      color: white;
+      box-shadow: 0 4px 15px rgba(250, 112, 154, 0.3);
     }
 
     .modal-footer .submit:disabled {
@@ -372,24 +495,33 @@
       background-color: #f44336;
     }
 
-    .complete-button {
-      background-color: #28a745;
+    .complete-button,
+    .map-button {
+      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
       color: white;
       border: none;
-      padding: 10px 20px;
-      border-radius: 5px;
+      padding: 12px 24px;
+      border-radius: 12px;
       cursor: pointer;
       font-size: 1rem;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
     }
 
-    .complete-button:hover {
-      background-color: #3da354;
+    .complete-button:hover,
+    .map-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(79, 172, 254, 0.4);
     }
 
-    .complete-button:disabled {
-      background-color: #e6e4e4;
-      color: #606061;
+    .complete-button:disabled,
+    .map-button:disabled {
+      background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+      color: #6c757d;
       cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
     }
 
     .card-wrapper {
@@ -401,11 +533,13 @@
 
     .recommend-card {
       flex: 1;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      padding: 15px;
-      background-color: #fff;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      backdrop-filter: blur(15px);
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 16px;
+      padding: 1.5rem;
+      box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+      transition: all 0.3s ease;
     }
 
     .recommend-reason-box {
@@ -488,37 +622,39 @@
     }
 
     .delete-button button {
-      text-align: right;
-      margin-top: 0.5rem;
-      padding: 10px 20px;
-      background-color: #dc3545;
+      background: linear-gradient(135deg, #ea4160 0%, #ca75a2 50%, #f093fb 100%);
       color: white;
       border: none;
-      border-radius: 5px;
-      font-size: 0.8rem;
+      padding: 10px 20px;
+      border-radius: 12px;
       cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(250, 112, 154, 0.3);
     }
 
-    .delete-button button :hover {
-      background-color: #c82333;
-      transition: background-color 0.2s ease;
+    .delete-button button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(250, 112, 154, 0.4);
     }
 
     .kick-button {
-      background-color: #dc3545;
+      background: linear-gradient(135deg, #ea4160 0%, #ca75a2 50%, #f093fb 100%);
       color: white;
       border: none;
-      padding: 5px 10px;
-      border-radius: 5px;
+      padding: 6px 12px;
+      border-radius: 8px;
       cursor: pointer;
       font-size: 11px;
-      transition: background-color 0.3s ease;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(250, 112, 154, 0.3);
     }
+
     .kick-button:hover {
-      background-color: #c82333;
-    }
-    .kick-button:active {
-      background-color: #bd2130;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(250, 112, 154, 0.4);
     }
 
   </style>
@@ -635,7 +771,7 @@
     <div style="display: flex; justify-content: space-between; align-items: center;">
       <h2>참여자 정보</h2>
       <button
-          class="btn"
+          class="map-button"
           th:onclick="|location.href='/team/map/${teamId}'|"
           style="padding: 0.4rem 1rem;
               font-size: 0.9rem;
