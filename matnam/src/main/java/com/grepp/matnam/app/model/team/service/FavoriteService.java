@@ -41,14 +41,22 @@ public class FavoriteService {
     }
 
     // 내 즐겨찾기 모임 조회
+    // FavoriteService.java
     @Transactional(readOnly = true)
-    public List<TeamDto> getFavoriteForUser(String userId) {
-        return favoriteRepository.findAllByUser_UserIdAndTeam_ActivatedTrueAndTeam_StatusNot(
-            userId, Status.CANCELED)
-            .stream()
+    public List<TeamDto> getFavoriteForUser(String userId, boolean includeCanceled) {
+        List<Favorite> favorites;
+
+        if (includeCanceled) {
+            favorites = favoriteRepository.findAllByUser_UserIdAndTeam_ActivatedTrue(userId);
+        } else {
+            favorites = favoriteRepository.findAllByUser_UserIdAndTeam_ActivatedTrueAndTeam_StatusNot(userId, Status.CANCELED);
+        }
+
+        return favorites.stream()
             .map(f -> TeamDto.from(f.getTeam()))
             .collect(Collectors.toList());
     }
+
 
     @Transactional(readOnly = true)
     public Object existsByUserAndTeam(String userId, Long teamId) {

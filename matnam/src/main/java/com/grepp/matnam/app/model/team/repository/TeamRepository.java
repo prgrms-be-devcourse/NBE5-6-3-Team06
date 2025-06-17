@@ -1,6 +1,7 @@
 package com.grepp.matnam.app.model.team.repository;
 
 import com.grepp.matnam.app.model.team.code.Status;
+import com.grepp.matnam.app.model.team.dto.TeamDto;
 import com.grepp.matnam.app.model.team.entity.Team;
 import java.time.LocalDateTime;
 import java.util.List;

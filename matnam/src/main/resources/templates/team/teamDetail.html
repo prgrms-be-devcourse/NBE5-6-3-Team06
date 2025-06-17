@@ -385,11 +385,13 @@
               th:data-user-id="${#authentication.name}"
               th:disabled="${team.status.name() != 'RECRUITING' or isParticipant or alreadyApplied or team.nowPeople >= team.maxPeople}"
               class="btn"
-              th:text="${team.status.name() != 'RECRUITING' ? '모집 종료됨'
-                : team.nowPeople >= team.maxPeople ? '인원 마감'
-                : isParticipant ? '이미 신청한 모임입니다.'
-                : alreadyApplied ? '신청 대기 중'
-                : '신청하기'}">
+              th:text="  ${team.status.name() == 'COMPLETED' ? '종료된 모임입니다.'
+                         : team.status.name() == 'CANCELED' ? '취소된 모임입니다.'
+                         : team.status.name() == 'FULL' ? '인원 마감'
+                         : isParticipant ? '이미 신청한 모임입니다.'
+                         : alreadyApplied ? '신청 대기 중'
+                         : '신청하기'}">
+
       </button>
       <th:block
           th:if="${participant != null and participant.participantStatus.name() == 'PENDING'}">
