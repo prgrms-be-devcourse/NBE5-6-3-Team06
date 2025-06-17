@@ -28,21 +28,24 @@ public class PerformanceService {
             .parallel()
             .mapToObj(i -> {
                 long startTime = System.nanoTime();
+                long count;
                 Page<Team> teams;
                 if (mode.equals("LIKE")) {
                     teams = teamRepository.findAllWithParticipantsAndActivatedTrue(
                         PageRequest.of(1, 12, Sort.by(Sort.Direction.DESC, "createdAt")),
                         true, keyword);
+                    count = teams.getTotalElements();
                 } else {
                     teams = teamRepository.findAllWithFullText(
                         PageRequest.of(1, 12, Sort.by(Sort.Direction.DESC, "createdAt")),
                         true, keyword);
+                    count = teams.getTotalElements();
                 }
                 long endTime = System.nanoTime();
                 double durationInSeconds = (endTime - startTime) / 1_000_000_000.0;
                 System.out.printf("%d번째 실행: %.6f초 (keyword: %s)%n",
                     i, durationInSeconds, keyword);
-                return i + "번째: " + String.format("%.6f", durationInSeconds) + "초";
+                return i + "번째: " + String.format("%.6f", durationInSeconds) + "초, 전체 쿼리 결과 개수 : " + count + "개";
             })
             .collect(Collectors.toList());
         return CompletableFuture.completedFuture(result);
