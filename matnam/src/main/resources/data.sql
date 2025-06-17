@@ -691,7 +691,7 @@ VALUES ('user1', '2025-05-09', '2025-05-09 09:00:00'),
 -- 공지사항 더미 데이터
 INSERT  INTO notice (activated, created_at, link, message, type) VALUE (true, '2025-05-20 19:07:16', null, '[공지사항] 시스템 점검이 있을 예정입니다.', 'NOTICE');
 
-INSERT INTO favorite (activated, created_at, modified_at, user_id, team_id) VALUES (true, '2025-05-12 13:45:00.000000', '2025-05-12 13:45:00.000000', 'user4', 44)
+INSERT INTO favorite (activated, created_at, modified_at, user_id, team_id) VALUES (true, '2025-05-12 13:45:00.000000', '2025-05-12 13:45:00.000000', 'user4', 44);
 
 -- 쿠폰 템플릿 더미 데이터
 INSERT INTO coupon_templates (
