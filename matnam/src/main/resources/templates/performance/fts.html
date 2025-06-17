@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>성능 비교 테스트 결과</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .test-controls {
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .form-group {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .form-control {
+            padding: 12px 20px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #4facfe;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+        }
+
+        .btn {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .results-section {
+            padding: 30px;
+        }
+
+        .comparison-overview {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .overview-card {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            transform: translateY(0);
+            transition: all 0.3s ease;
+        }
+
+        .overview-card.winner {
+            background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+        }
+
+        .overview-card.difference {
+            background: linear-gradient(135deg, #ffeaa7 0%, #fab1a0 100%);
+            color: #2d3436;
+        }
+
+        .overview-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(240, 147, 251, 0.3);
+        }
+
+        .overview-value {
+            font-size: 2.2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .overview-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .method-stats {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .method-stats.like-stats {
+            border-top: 4px solid #e17055;
+        }
+
+        .method-stats.fulltext-stats {
+            border-top: 4px solid #74b9ff;
+        }
+
+        .method-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #333;
+            text-align: center;
+        }
+
+        .method-title.like {
+            color: #e17055;
+        }
+
+        .method-title.fulltext {
+            color: #74b9ff;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f8f9fa;
+        }
+
+        .stat-row:last-child {
+            border-bottom: none;
+        }
+
+        .stat-label {
+            font-weight: 500;
+            color: #666;
+        }
+
+        .stat-value {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .chart-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #333;
+            text-align: center;
+        }
+
+        .results-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .results-list {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+        }
+
+        .results-list.like-results {
+            border-left: 4px solid #e17055;
+        }
+
+        .results-list.fulltext-results {
+            border-left: 4px solid #74b9ff;
+        }
+
+        .results-title {
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .result-item {
+            background: white;
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .result-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .result-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .result-number {
+            font-weight: bold;
+            color: #667eea;
+            font-size: 0.9em;
+        }
+
+        .result-time {
+            font-family: 'Courier New', monospace;
+            background: #e9ecef;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        .test-info {
+            margin-top: 30px;
+            padding: 25px;
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            border-radius: 12px;
+        }
+
+        .test-info-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 50px;
+            color: #666;
+        }
+
+        .no-results h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        @media (max-width: 1024px) {
+            .stats-grid, .results-comparison {
+                grid-template-columns: 1fr;
+            }
+            
+            .comparison-overview {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .form-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚡ 성능 비교 대시보드</h1>
+            <p>LIKE vs Full-Text 검색 성능 비교 및 분석</p>
+        </div>
+
+        <div class="test-controls">
+            <form action="/performance/fts" method="get" class="form-group">
+                <input type="text" name="keyword" placeholder="검색 키워드 입력" 
+                       class="form-control" th:value="${param.keyword}" required>
+                
+                <button type="submit" class="btn">🔥 비교 테스트 시작</button>
+            </form>
+        </div>
+
+        <!-- 결과가 있을 때만 표시 -->
+        <div class="results-section" th:if="${likeResults != null and fullTextResults != null}">
+            <!-- 비교 개요 -->
+            <div class="comparison-overview">
+                <div class="overview-card winner">
+                    <div class="overview-value" id="winnerName">-</div>
+                    <div class="overview-label">더 빠른 방식</div>
+                </div>
+                <div class="overview-card">
+                    <div class="overview-value" id="winnerTime">-</div>
+                    <div class="overview-label">승자 평균시간 (초)</div>
+                </div>
+                <div class="overview-card difference">
+                    <div class="overview-value" id="timeDifference">-</div>
+                    <div class="overview-label">성능 차이 (배)</div>
+                </div>
+            </div>
+
+            <!-- 상세 통계 -->
+            <div class="stats-grid">
+                <div class="method-stats like-stats">
+                    <h3 class="method-title like">🔍 LIKE 검색</h3>
+                    <div class="stat-row">
+                        <span class="stat-label">평균 실행시간</span>
+                        <span class="stat-value" id="likeAvg">-</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">최소 실행시간</span>
+                        <span class="stat-value" id="likeMin">-</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">최대 실행시간</span>
+                        <span class="stat-value" id="likeMax">-</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">테스트 횟수</span>
+                        <span class="stat-value" th:text="${likeResults?.size() ?: 0}">0</span>
+                    </div>
+                </div>
+
+                <div class="method-stats fulltext-stats">
+                    <h3 class="method-title fulltext">⚡ Full-Text 검색</h3>
+                    <div class="stat-row">
+                        <span class="stat-label">평균 실행시간</span>
+                        <span class="stat-value" id="fullTextAvg">-</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">최소 실행시간</span>
+                        <span class="stat-value" id="fullTextMin">-</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">최대 실행시간</span>
+                        <span class="stat-value" id="fullTextMax">-</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">테스트 횟수</span>
+                        <span class="stat-value" th:text="${fullTextResults?.size() ?: 0}">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 비교 차트 -->
+            <div class="chart-container">
+                <div class="chart-title">📊 성능 비교 차트</div>
+                <div style="height: 400px; position: relative;">
+                    <canvas id="comparisonChart"></canvas>
+                </div>
+            </div>
+
+            <!-- 실행시간 추이 차트 -->
+            <div class="chart-container">
+                <div class="chart-title">📈 실행시간 추이 비교</div>
+                <div style="height: 300px; position: relative;">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+
+            <!-- 상세 결과 -->
+            <div class="results-comparison">
+                <div class="results-list like-results">
+                    <h3 class="results-title">🔍 LIKE 검색 상세 결과</h3>
+                    <div id="likeResultsList">
+                        <div class="result-item" th:each="result, iterStat : ${likeResults}">
+                            <span class="result-number" th:text="${iterStat.index + 1} + '회'"></span>
+                            <span class="result-time" th:text="${result}"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="results-list fulltext-results">
+                    <h3 class="results-title">⚡ Full-Text 검색 상세 결과</h3>
+                    <div id="fullTextResultsList">
+                        <div class="result-item" th:each="result, iterStat : ${fullTextResults}">
+                            <span class="result-number" th:text="${iterStat.index + 1} + '회'"></span>
+                            <span class="result-time" th:text="${result}"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="test-info">
+                <div class="test-info-title">🔍 테스트 정보</div>
+                <div>
+                    <strong>검색 키워드:</strong> <span th:text="${param.keyword}">-</span><br>
+                    <strong>테스트 시간:</strong> <span id="testTime">-</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 결과가 없을 때 표시 -->
+        <div class="no-results" th:if="${likeResults == null or fullTextResults == null}">
+            <h3>🎯 성능 비교 테스트를 시작해보세요!</h3>
+            <p>키워드를 입력하고 테스트를 실행하면<br>
+               LIKE 검색과 Full-Text 검색의 성능을 비교해드립니다.</p>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        // 서버에서 전달받은 실제 데이터
+        const likeResults = /*[[${likeResults}]]*/ [];
+        const fullTextResults = /*[[${fullTextResults}]]*/ [];
+        const hasResults = likeResults && fullTextResults && likeResults.length > 0 && fullTextResults.length > 0;
+
+        if (hasResults) {
+            // 실행시간 값들 추출
+            const likeTimes = extractTimes(likeResults);
+            const fullTextTimes = extractTimes(fullTextResults);
+
+            console.log('LIKE 시간 값들:', likeTimes);
+            console.log('Full-Text 시간 값들:', fullTextTimes);
+
+            if (likeTimes.length > 0 && fullTextTimes.length > 0) {
+                calculateAndDisplayStats(likeTimes, fullTextTimes);
+                createComparisonChart(likeTimes, fullTextTimes);
+                createTrendChart(likeTimes, fullTextTimes);
+            }
+
+            // 테스트 시간 표시
+            document.getElementById('testTime').textContent = new Date().toLocaleString('ko-KR');
+        }
+
+        function extractTimes(results) {
+            return results.map(result => {
+                const match = result.match(/(\d+\.\d+)초/);
+                return match ? parseFloat(match[1]) : 0;
+            }).filter(time => time > 0);
+        }
+
+        function calculateAndDisplayStats(likeTimes, fullTextTimes) {
+            // 통계 계산
+            const likeAvg = likeTimes.reduce((a, b) => a + b, 0) / likeTimes.length;
+            const likeMin = Math.min(...likeTimes);
+            const likeMax = Math.max(...likeTimes);
+
+            const fullTextAvg = fullTextTimes.reduce((a, b) => a + b, 0) / fullTextTimes.length;
+            const fullTextMin = Math.min(...fullTextTimes);
+            const fullTextMax = Math.max(...fullTextTimes);
+
+            // 통계 표시
+            document.getElementById('likeAvg').textContent = likeAvg.toFixed(6) + '초';
+            document.getElementById('likeMin').textContent = likeMin.toFixed(6) + '초';
+            document.getElementById('likeMax').textContent = likeMax.toFixed(6) + '초';
+
+            document.getElementById('fullTextAvg').textContent = fullTextAvg.toFixed(6) + '초';
+            document.getElementById('fullTextMin').textContent = fullTextMin.toFixed(6) + '초';
+            document.getElementById('fullTextMax').textContent = fullTextMax.toFixed(6) + '초';
+
+            // 승자 결정
+            const winner = likeAvg < fullTextAvg ? 'LIKE' : 'Full-Text';
+            const winnerTime = Math.min(likeAvg, fullTextAvg);
+            const loserTime = Math.max(likeAvg, fullTextAvg);
+            const difference = (loserTime / winnerTime).toFixed(1);
+
+            document.getElementById('winnerName').textContent = winner;
+            document.getElementById('winnerTime').textContent = winnerTime.toFixed(6);
+            document.getElementById('timeDifference').textContent = difference + 'x';
+        }
+
+        function createComparisonChart(likeTimes, fullTextTimes) {
+            const ctx = document.getElementById('comparisonChart').getContext('2d');
+            
+            const likeAvg = likeTimes.reduce((a, b) => a + b, 0) / likeTimes.length;
+            const fullTextAvg = fullTextTimes.reduce((a, b) => a + b, 0) / fullTextTimes.length;
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['평균 실행시간', '최소 실행시간', '최대 실행시간'],
+                    datasets: [{
+                        label: 'LIKE 검색',
+                        data: [
+                            likeTimes.reduce((a, b) => a + b, 0) / likeTimes.length,
+                            Math.min(...likeTimes),
+                            Math.max(...likeTimes)
+                        ],
+                        backgroundColor: 'rgba(225, 112, 85, 0.8)',
+                        borderColor: '#e17055',
+                        borderWidth: 2
+                    }, {
+                        label: 'Full-Text 검색',
+                        data: [
+                            fullTextTimes.reduce((a, b) => a + b, 0) / fullTextTimes.length,
+                            Math.min(...fullTextTimes),
+                            Math.max(...fullTextTimes)
+                        ],
+                        backgroundColor: 'rgba(116, 185, 255, 0.8)',
+                        borderColor: '#74b9ff',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '실행시간 (초)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createTrendChart(likeTimes, fullTextTimes) {
+            const ctx = document.getElementById('trendChart').getContext('2d');
+            
+            const maxLength = Math.max(likeTimes.length, fullTextTimes.length);
+            const labels = Array.from({length: maxLength}, (_, i) => `${i + 1}회`);
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'LIKE 검색',
+                        data: likeTimes,
+                        borderColor: '#e17055',
+                        backgroundColor: 'rgba(225, 112, 85, 0.1)',
+                        borderWidth: 3,
+                        fill: false,
+                        tension: 0.4,
+                        pointBackgroundColor: '#e17055',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 5
+                    }, {
+                        label: 'Full-Text 검색',
+                        data: fullTextTimes,
+                        borderColor: '#74b9ff',
+                        backgroundColor: 'rgba(116, 185, 255, 0.1)',
+                        borderWidth: 3,
+                        fill: false,
+                        tension: 0.4,
+                        pointBackgroundColor: '#74b9ff',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '실행시간 (초)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: '테스트 회차'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 페이지 로드 후 애니메이션 효과
+        window.addEventListener('load', function() {
+            if (hasResults) {
+                const resultItems = document.querySelectorAll('.result-item');
+                resultItems.forEach((item, index) => {
+                    setTimeout(() => {
+                        item.style.opacity = '1';
+                        item.style.transform = 'translateX(0)';
+                    }, index * 50);
+                });
+            }
+        });
+    </script>
+</body>
+</html>
