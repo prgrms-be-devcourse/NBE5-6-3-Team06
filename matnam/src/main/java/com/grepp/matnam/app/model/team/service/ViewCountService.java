@@ -1,61 +1,48 @@
 package com.grepp.matnam.app.model.team.service;
 
-import com.grepp.matnam.app.model.team.repository.TeamRepository;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 @Service
-@Slf4j
+@RequiredArgsConstructor
 public class ViewCountService {
 
-    private final RedisTemplate<String, String> redisTemplate;
-
-    private final TeamRepository teamRepository;
-
-
-    public ViewCountService(
-            @Qualifier("stringKeyRedisTemplate") RedisTemplate<String, String> redisTemplate,
-            TeamRepository teamRepository
-    ) {
-        this.redisTemplate = redisTemplate;
-        this.teamRepository = teamRepository;
-    }
+    private final RedisTemplate<String, Object> redisTemplate;
+    private static final String VIEW_COUNT_KEY_PREFIX = "team:viewCount:";
 
     public void increaseViewCount(Long teamId) {
-        String key = "team:viewcount:" + teamId;
-        redisTemplate.opsForValue().increment(key, 1);
+        String key = VIEW_COUNT_KEY_PREFIX + teamId;
+        redisTemplate.opsForValue().increment(key);
     }
 
-    @Scheduled(fixedRate = 5 * 60 * 1000)
-    @Transactional
-    public void syncViewCountsFromRedis() {
-        Set<String> keys = redisTemplate.keys("team:viewcount:*");
-        if (keys == null || keys.isEmpty()) return;
+    public Long getViewCount(Long teamId) {
+        String key = VIEW_COUNT_KEY_PREFIX + teamId;
+        Object value = redisTemplate.opsForValue().get(key);
+        if (value == null) return 0L;
+        return Long.parseLong(value.toString());
+    }
 
-        for (String key : keys) {
-            try {
-                String teamIdStr = key.replace("team:viewcount:", "");
-                Long teamId = Long.parseLong(teamIdStr);
-                String value = redisTemplate.opsForValue().get(key);
-                if (value != null) {
-                    long increment = Long.parseLong(value);
-                    if (increment > 0) {
-                        teamRepository.updateViewCount(teamId, increment);
-                        redisTemplate.delete(key);
-                        log.info("조회수 동기화: teamId={}, 증가분={}", teamId, increment);
-                    }
+    public Map<Long, Long> getAllViewCounts() {
+        Set<String> keys = redisTemplate.keys(VIEW_COUNT_KEY_PREFIX + "*");
+        Map<Long, Long> result = new HashMap<>();
+        if (keys != null) {
+            for (String key : keys) {
+                String teamIdStr = key.replace(VIEW_COUNT_KEY_PREFIX, "");
+                Object val = redisTemplate.opsForValue().get(key);
+                if (val != null) {
+                    result.put(Long.parseLong(teamIdStr), Long.parseLong(val.toString()));
                 }
-            } catch (Exception e) {
-                log.error("조회수 동기화 실패 (key: {})", key, e);
             }
         }
+        return result;
+    }
+
+    public void clearViewCount(Long teamId) {
+        redisTemplate.delete(VIEW_COUNT_KEY_PREFIX + teamId);
     }
 }

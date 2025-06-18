@@ -59,9 +59,6 @@ public class Team extends BaseEntity {
 
     private Double longitude;
 
-    @Column(name = "view_count", nullable = false)
-    private Long viewCount = 0L;
-
     public boolean isActivated() {
         return this.activated;
     }
@@ -73,4 +70,6 @@ public class Team extends BaseEntity {
     @Transient
     private long favoriteCount;
 
+    @Column(name = "view_count")
+    private Long viewCount = 0L;
 }

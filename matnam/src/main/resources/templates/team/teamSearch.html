@@ -91,7 +91,7 @@
       display: inline-block;
       margin-top: 0.75rem;
       padding: 0.4rem 0.8rem;
-      background-color: #a7a7d1;
+      background-color: #5b5b9f;
       color: #fff;
       border-radius: 4px;
       text-decoration: none;
@@ -100,7 +100,7 @@
     }
 
     .link-button:hover{
-      background-color: #5b5b9f;
+      background-color: #a7a7d1;
     }
 
     .filters {
@@ -169,7 +169,7 @@
   <p>다양한 식사 모임을 찾아보고 참여해보세요.</p>
 
   <form th:action="@{/team/search}" method="get" class="search-bar">
-    <input type="text" name="keyword" placeholder="모임 검색 - 두 글자 이상부터 검색됩니다." th:value="${keyword}" />
+    <input type="text" name="keyword" placeholder="모임 검색 - 두 글자 이상부터 검색이 가능합니다." th:value="${keyword}" />
     <button type="submit"><i class="fas fa-search"></i></button>
 
     <input type="hidden" name="page" th:value="${page.number}" />
@@ -183,7 +183,6 @@
        th:classappend="${sort == 'createdAt'} ? 'active' : ''"
        class="filter-btn">전체</a>
 
-<!--    조회수순 파트-->
     <a th:href="@{/team/search(page=0, size=${page.size}, sort='viewCount', includeCompleted=${includeCompleted}, keyword=${keyword})}"
        th:classappend="${sort == 'viewCount'} ? 'active' : ''"
        class="filter-btn">조회수순</a>
@@ -192,10 +191,6 @@
        th:classappend="${sort == 'favoriteCount'} ? 'active' : ''"
        class="filter-btn">즐겨찾기순</a>
 
-<!--    이건 할지 말지 고민중-->
-    <a th:href="@{/team/search(page=0, size=${page.size}, sort='deadline', includeCompleted=${includeCompleted}, keyword=${keyword})}"
-       th:classappend="${sort == 'deadline'} ? 'active' : ''"
-       class="filter-btn">마감 임박</a>
   </div>
 
   <form id="filterForm" th:action="@{/team/search}" method="get">

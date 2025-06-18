@@ -29,21 +29,21 @@ import com.grepp.matnam.app.model.user.repository.UserRepository;
 import com.grepp.matnam.infra.error.exceptions.CommonException;
 import com.grepp.matnam.infra.response.ResponseCode;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.servlet.http.HttpServletRequest;
-import java.time.Duration;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.*;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -63,55 +63,6 @@ public class TeamService {
     private final ChatRoomRepository chatRoomRepository;
 
     private final NotificationSender notificationSender;
-    private final RedisTemplate<String, String> redisTemplate;
-    private final ViewCountService viewCountService;
-
-    public TeamService(
-            TeamRepository teamRepository,
-            ParticipantRepository participantRepository,
-            PreferenceRepository preferenceRepository,
-            MymapRepository mymapRepository,
-            UserRepository userRepository,
-            ChatRoomRepository chatRoomRepository,
-            NotificationSender notificationSender,
-            @Qualifier("stringKeyRedisTemplate") RedisTemplate<String, String> redisTemplate,
-            ViewCountService viewCountService
-    ) {
-        this.teamRepository = teamRepository;
-        this.participantRepository = participantRepository;
-        this.preferenceRepository = preferenceRepository;
-        this.mymapRepository = mymapRepository;
-        this.userRepository = userRepository;
-        this.chatRoomRepository = chatRoomRepository;
-        this.notificationSender = notificationSender;
-        this.redisTemplate = redisTemplate;
-        this.viewCountService = viewCountService;
-    }
-
-    @Transactional
-    public void increaseViewCountWithUserOrIp(Long teamId, Long userId, HttpServletRequest request) {
-        String redisKey;
-        if (userId != null) {
-            redisKey = "viewed:team:" + teamId + ":user:" + userId;
-        } else {
-            String clientIp = getClientIp(request);
-            redisKey = "viewed:team:" + teamId + ":ip:" + clientIp;
-        }
-
-        if (Boolean.TRUE.equals(redisTemplate.hasKey(redisKey))) return;
-
-        viewCountService.increaseViewCount(teamId);
-
-        redisTemplate.opsForValue().set(redisKey, "1", Duration.ofHours(1));
-    }
-
-    private String getClientIp(HttpServletRequest request) {
-        String ip = request.getHeader("X-Forwarded-For");
-        if (ip != null && !ip.isEmpty() && !"unknown".equalsIgnoreCase(ip)) {
-            return ip.split(",")[0].trim();
-        }
-        return request.getRemoteAddr();
-    }
 
     // 모임 생성
     public void saveTeam(Team team) {
@@ -299,9 +250,8 @@ public class TeamService {
         team.setNowPeople(updatedTeam.getNowPeople());
         team.setStatus(updatedTeam.getStatus());
         team.setRestaurantAddress(updatedTeam.getRestaurantAddress());
-        team.setLatitude(updatedTeam.getLatitude());
-        team.setLongitude(updatedTeam.getLongitude());
         team.setCategory(updatedTeam.getCategory());
+        team.setImageUrl(updatedTeam.getImageUrl());
 
         teamRepository.save(team);
     }
@@ -383,8 +333,9 @@ public class TeamService {
         return teamRepository.findAllOrderByFavoriteCountWithFullText(pageable, includeCompleted, keyword);
     }
 
-    public Page<Team> getAllTeamsByViewCount(Pageable pageable, boolean includeCompleted) {
-        return teamRepository.findAllOrderByViewCount(pageable, includeCompleted);
+    // 모임 조회수순 카운트
+    public Page<Team> getAllTeamsByViewCount(Pageable pageable, boolean includeCompleted, String keyword) {
+        return teamRepository.findAllOrderByViewCountWithFullText(pageable, includeCompleted, keyword);
     }
 
     // 모임 상세 조회, 팀 페이지 조회

@@ -23,7 +23,7 @@ public class TeamDto {
     private long favoriteCount;
     private Double latitude;
     private Double longitude;
-    private long viewCount;
+    private Long viewCount;
 
     public static TeamDto from(Team team) {
         TeamDto dto = new TeamDto();

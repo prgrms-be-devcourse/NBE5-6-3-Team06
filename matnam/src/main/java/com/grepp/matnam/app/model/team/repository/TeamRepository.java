@@ -6,13 +6,11 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import io.lettuce.core.dynamic.annotation.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.stereotype.Repository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
-import org.springframework.transaction.annotation.Transactional;
-
+import org.springframework.stereotype.Repository;
 @Repository
 public interface TeamRepository extends JpaRepository<Team, Long>, TeamRepositoryCustom {
 
@@ -32,13 +30,7 @@ public interface TeamRepository extends JpaRepository<Team, Long>, TeamRepositor
 
     Long countByNowPeopleBetweenAndActivatedTrue(Integer nowPeopleAfter, Integer nowPeopleBefore);
 
-    @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Transactional
-    @Query("UPDATE Team t SET t.viewCount = t.viewCount + 1 WHERE t.teamId = :teamId")
-    void increaseViewCount(@Param("teamId") Long teamId);
-
-    @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Transactional
+    @Modifying
     @Query("UPDATE Team t SET t.viewCount = t.viewCount + :count WHERE t.teamId = :teamId")
-    void updateViewCount(@Param("teamId") Long teamId, @Param("count") long count);
+    void increaseViewCountBy(@Param("teamId") Long teamId, @Param("count") Long count);
 }
