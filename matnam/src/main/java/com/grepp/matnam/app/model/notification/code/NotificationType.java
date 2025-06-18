@@ -8,5 +8,6 @@ public enum NotificationType {
     PARTICIPANT_STATUS,
     REVIEW_REQUEST,
     REVIEW_RECEIVED,
-    REPORT
+    REPORT,
+    COUPON_ISSUED
 }

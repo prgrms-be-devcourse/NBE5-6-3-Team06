@@ -5,6 +5,8 @@ import com.grepp.matnam.app.model.auth.token.dto.TokenDto;
 import com.grepp.matnam.app.model.auth.token.entity.RefreshToken;
 import com.grepp.matnam.app.model.auth.token.repository.UserBlackListRepository;
 import com.grepp.matnam.app.model.auth.token.service.RefreshTokenService;
+import com.grepp.matnam.app.model.outbox.entity.OutBox;
+import com.grepp.matnam.app.model.outbox.repository.OutBoxRepository;
 import com.grepp.matnam.app.model.user.entity.User;
 import com.grepp.matnam.app.model.user.service.UserService;
 import com.grepp.matnam.infra.auth.jwt.JwtProvider;
@@ -28,10 +30,14 @@ public class AuthService {
     private final UserBlackListRepository userBlackListRepository;
     private final JwtProvider jwtProvider;
     private final UserService userService;
+    private final OutBoxRepository outBoxRepository;
 
     @Transactional
     public TokenDto signup(User user) {
         User savedUser = userService.signup(user);
+        OutBox outbox = new OutBox("SIGNUP_COMPLETE", savedUser.getEmail(), savedUser.getNickname(),
+            savedUser.getEmailCode());
+        outBoxRepository.save(outbox);
         return processTokenSignin(savedUser.getUserId());
     }
 

@@ -140,6 +140,21 @@
             color: #666;
             margin-bottom: 0.5rem;
         }
+        .link-button {
+            display: inline-block;
+            margin-top: 0.75rem;
+            padding: 0.4rem 0.8rem;
+            background-color: #a7a7d1;
+            color: #fff;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: background-color 0.2s ease;
+        }
+
+        .link-button:hover{
+            background-color: #5b5b9f;
+        }
         .features-section {
             padding: 2rem;
             background-color: #f9f9f9;
@@ -387,42 +402,20 @@
     <h2>인기 모임</h2>
     <p>지금 가장 인기 있는 모임을 확인해보세요</p>
     <div class="meetings-grid">
-        <!-- 첫 번째 모임 카드 -->
-        <div class="meeting-card">
+        <div th:each="team : ${topTeams}" class="meeting-card">
             <div class="meeting-image">
-                <img src = "/img/food.jpg" alt = "첫번째 모임 카드 이미지" style = "width: 100%; height: 100%; object-fit: cover;">
+                <img th:src="@{${team.imageUrl != null ? team.imageUrl : '/img/food.jpg'}}"
+                     alt="모임 이미지"
+                     style="width:100%; height:100%; object-fit:cover;" />
             </div>
             <div class="meeting-details">
-                <div class="meeting-title">강남 스테이크 탐방 모임</div>
-                <div class="meeting-date">📅 2025년 05월 24일 (토) 오후 7시</div>
-                <div class="meeting-location">📍 서울 강남구</div>
-                <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" th:onclick="'location.href=\'' + @{/team/detail/1} + '\''">자세히 보기</button>
-            </div>
-        </div>
-
-        <!-- 두 번째 모임 카드 -->
-        <div class="meeting-card">
-            <div class="meeting-image">
-                <img src = "/img/food_2.jpg" alt = "두번째 모임 카드 이미지" style = "width: 100%; height: 100%; object-fit: cover;">
-            </div>
-            <div class="meeting-details">
-                <div class="meeting-title">이태원 타코 사랑단</div>
-                <div class="meeting-date">📅 2025년 05월 25일 (일) 오후 6시</div>
-                <div class="meeting-location">📍 서울 용산구</div>
-                <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" th:onclick="'location.href=\'' + @{/team/detail/2} + '\''">자세히 보기</button>
-            </div>
-        </div>
-
-        <!-- 세 번째 모임 카드 -->
-        <div class="meeting-card">
-            <div class="meeting-image">
-                <img src = "/img/dessert.jpg" alt = "세번째 모임 카드 이미지" style = "width: 100%; height: 100%; object-fit: cover;">
-            </div>
-            <div class="meeting-details">
-                <div class="meeting-title">성수 카페 투어</div>
-                <div class="meeting-date">📅 2025년 05월 27일 (화) 오후 3시</div>
-                <div class="meeting-location">📍 서울 성동구</div>
-                <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" th:onclick="'location.href=\'' + @{/team/detail/3} + '\''">자세히 보기</button>
+                <div class="meeting-title" th:text="${team.teamTitle}"></div>
+                <div class="meeting-date"
+                     th:text="'📅 ' + ${#temporals.format(team.teamDate, 'yyyy년 MM월 dd일 (E) a h시')}"></div>
+                <p>📍 <span th:text="${team.restaurantName}"></span></p>
+                <p>👥 <span th:text="${team.nowPeople}"></span>/ <span th:text="${team.maxPeople}"></span>명 참여중</p>
+                <div th:text="'⭐️' + ${team.favoriteCount} + '명'"></div>
+                <a class="link-button" th:href="@{/team/detail/{teamId}(teamId=${team.teamId})}">자세히 보기</a>
             </div>
         </div>
     </div>

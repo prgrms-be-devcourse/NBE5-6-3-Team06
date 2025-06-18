@@ -36,8 +36,22 @@ public class CouponIssuanceScheduler {
             Long templateId = Long.parseLong(templateIdStr);
             CouponTemplate template = couponTemplateRepository.findById(templateId).orElse(null);
 
-            if (template == null || template.getStatus() != CouponTemplateStatus.ACTIVE || template.getEndAt().isBefore(LocalDateTime.now())) {
+            if (template == null || (template.getStatus() != CouponTemplateStatus.ACTIVE && template.getStatus() != CouponTemplateStatus.EXHAUSTED) || template.getEndAt().isBefore(LocalDateTime.now())) {
                 redisTemplate.opsForSet().remove(ACTIVE_COUPON_TEMPLATES_KEY, templateIdStr);
+                continue;
+            }
+
+            if (template.getStatus() == CouponTemplateStatus.EXHAUSTED || template.getIssuedQuantity() >= template.getTotalQuantity()) {
+                log.warn("쿠폰 소진으로 대기열 정리 시작. templateId: {}", templateId);
+
+                Long remainingCount = redisTemplate.opsForZSet().zCard(getCouponQueueKey(templateId));
+                log.info("정리할 대기열 인원: {}명", remainingCount);
+
+                redisTemplate.delete(getCouponQueueKey(templateId));
+                redisTemplate.delete(getApplicantsKey(templateId));
+                redisTemplate.opsForSet().remove(ACTIVE_COUPON_TEMPLATES_KEY, templateIdStr);
+
+                log.info("대기열 정리 완료. templateId: {}, 정리된 인원: {}명", templateId, remainingCount);
                 continue;
             }
 
@@ -60,5 +74,9 @@ public class CouponIssuanceScheduler {
 
     private String getCouponQueueKey(Long couponTemplateId) {
         return "coupon:queue:" + couponTemplateId;
+    }
+
+    private String getApplicantsKey(Long couponTemplateId) {
+        return "coupon:applicants:" + couponTemplateId;
     }
 }

@@ -20,7 +20,7 @@ public class TeamDto {
     private String category;
     private String imageUrl;
     private Status status;
-    private long favoriteCount;
+    private Long favoriteCount;
     private Double latitude;
     private Double longitude;
     private Long viewCount;
