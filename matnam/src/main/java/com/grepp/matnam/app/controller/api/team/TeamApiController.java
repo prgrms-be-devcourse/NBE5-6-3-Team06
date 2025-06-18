@@ -4,6 +4,7 @@ import com.grepp.matnam.app.model.team.service.TeamService;
 import com.grepp.matnam.app.model.team.code.Status;
 import com.grepp.matnam.app.model.team.dto.TeamDto;
 import com.grepp.matnam.app.model.team.entity.Team;
+import com.grepp.matnam.app.model.team.service.ViewCountService;
 import com.grepp.matnam.app.model.user.service.UserService;
 import com.grepp.matnam.app.model.user.entity.User;
 import com.grepp.matnam.infra.response.ApiResponse;
@@ -17,14 +18,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/team")
@@ -33,6 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Team API", description = "모임 관련 REST API")
 public class TeamApiController {
 
+    private final ViewCountService viewCountService;
     private final TeamService teamService;
     private final UserService userService;
 
@@ -257,4 +253,3 @@ public class TeamApiController {
 
 
 }
-

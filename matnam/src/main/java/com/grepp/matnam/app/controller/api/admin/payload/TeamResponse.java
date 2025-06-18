@@ -46,6 +46,10 @@ public class TeamResponse {
         this.address = team.getRestaurantAddress();
         this.category = team.getCategory();
     }
+
+    public static TeamResponse from(Team team) {
+        return new TeamResponse(team);
+    }
 }
 
 

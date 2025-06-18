@@ -335,6 +335,11 @@ public class TeamService {
         return teamRepository.findAllOrderByFavoriteCountWithFullText(pageable, includeCompleted, keyword);
     }
 
+    // 모임 조회수순 카운트
+    public Page<Team> getAllTeamsByViewCount(Pageable pageable, boolean includeCompleted, String keyword) {
+        return teamRepository.findAllOrderByViewCountWithFullText(pageable, includeCompleted, keyword);
+    }
+
     // 인기모임 탑 3
     public List<Team> getTop3TeamsByFavoriteCount() {
         Pageable pageable = PageRequest.of(0, 3);

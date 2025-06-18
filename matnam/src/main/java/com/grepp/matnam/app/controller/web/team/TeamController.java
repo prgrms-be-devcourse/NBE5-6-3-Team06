@@ -14,6 +14,7 @@ import com.grepp.matnam.app.model.team.repository.TeamReviewRepository;
 import com.grepp.matnam.app.model.team.service.FavoriteService;
 import com.grepp.matnam.app.model.team.service.StorageService;
 import com.grepp.matnam.app.model.team.service.TeamService;
+import com.grepp.matnam.app.model.team.service.ViewCountService;
 import com.grepp.matnam.app.model.user.entity.User;
 import com.grepp.matnam.app.model.user.service.UserService;
 import jakarta.persistence.EntityNotFoundException;
@@ -59,6 +60,7 @@ public class TeamController {
     private final ParticipantRepository participantRepository;
     private final FavoriteService favoriteService;
     private final StorageService storageService;
+    private final ViewCountService viewCountService;
 
 
     // 모임 생성 페이지
@@ -161,25 +163,32 @@ public class TeamController {
     // 모임 검색 페이지
     @GetMapping("/search")
     public String searchTeams(
-        @PageableDefault(size = 12, sort = "createdAt", direction = Sort.Direction.DESC)
-        Pageable pageable,
-        @RequestParam(name = "sort", defaultValue = "createdAt")
-        String sort,
-        @RequestParam(name = "includeCompleted", defaultValue = "true")
-        boolean includeCompleted,
-        @RequestParam(name = "keyword", defaultValue = "")
-        String keyword,
-        Model model) {
+            @PageableDefault(size = 12, sort = "createdAt", direction = Sort.Direction.DESC)
+            Pageable pageable,
+            @RequestParam(name = "sort", defaultValue = "createdAt")
+            String sort,
+            @RequestParam(name = "includeCompleted", defaultValue = "true")
+            boolean includeCompleted,
+            @RequestParam(name = "keyword", defaultValue = "")
+            String keyword,
+            Model model) {
         Page<Team> page;
 
         if ("favoriteCount".equals(sort)) {
             Pageable favPageable = PageRequest.of(
-                pageable.getPageNumber(),
-                pageable.getPageSize(),
-                Sort.by(Sort.Direction.DESC, "favoriteCount")
+                    pageable.getPageNumber(),
+                    pageable.getPageSize(),
+                    Sort.by(Sort.Direction.DESC, "favoriteCount")
             );
             page = teamService.getAllTeamsByFavoriteCount(favPageable, includeCompleted, keyword);
 
+        }  else if ("viewCount".equals(sort)) {
+        Pageable viewPageable = PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                Sort.by(Sort.Direction.DESC, "viewCount")
+        );
+        page = teamService.getAllTeamsByViewCount(viewPageable, includeCompleted, keyword);
         } else {
             page = teamService.getAllTeams(pageable, includeCompleted, keyword);
         }
@@ -244,6 +253,13 @@ public class TeamController {
 
 
         model.addAttribute("isFavorite", favoriteService.existsByUserAndTeam(userId, teamId));
+
+        viewCountService.increaseViewCount(teamId); // Redis에 +1
+
+        Long latestViewCount = viewCountService.getViewCount(teamId); // Redis의 최신 값
+
+        model.addAttribute("team", team);
+        model.addAttribute("viewCount", latestViewCount);
 
         return "team/teamDetail";
     }

@@ -23,6 +23,7 @@ import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.core.types.dsl.NumberTemplate;
 import com.querydsl.core.types.dsl.StringPath;
+import com.querydsl.jpa.JPQLQuery;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.time.LocalDate;
@@ -503,5 +504,32 @@ public class TeamRepositoryCustomImpl implements TeamRepositoryCustom {
     private static NumberTemplate<Double> getScore(StringPath target1, StringPath target2,  String keyword) {
         return Expressions.numberTemplate(Double.class, "function('match_against', {0}, {1}, {2})",
             target1, target2, keyword);
+    }
+
+    @Override
+    public Page<Team> findAllOrderByViewCountWithFullText(Pageable pageable, boolean includeCompleted, String keyword) {
+        QTeam team = QTeam.team;
+
+        BooleanBuilder where = new BooleanBuilder();
+        where.and(team.activated.isTrue());
+
+        if (!includeCompleted) {
+            where.and(team.status.ne(Status.COMPLETED));
+        }
+
+        if (StringUtils.hasText(keyword)) {
+            where.and(team.teamTitle.containsIgnoreCase(keyword)
+                    .or(team.restaurantName.containsIgnoreCase(keyword)));
+        }
+
+        JPQLQuery<Team> query = queryFactory.selectFrom(team)
+                .where(where)
+                .orderBy(team.viewCount.desc());
+
+        return PageableExecutionUtils.getPage(
+                query.offset(pageable.getOffset()).limit(pageable.getPageSize()).fetch(),
+                pageable,
+                query::fetchCount
+        );
     }
 }

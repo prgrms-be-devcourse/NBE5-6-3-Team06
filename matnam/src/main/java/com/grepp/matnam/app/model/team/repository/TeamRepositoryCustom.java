@@ -44,4 +44,6 @@ public interface TeamRepositoryCustom {
     Page<Team> findAllWithFullText(Pageable pageable, boolean includeCompleted, String keyword);
 
     Page<Team> findAllOrderByFavoriteCountWithFullText(Pageable pageable, boolean includeCompleted, String keyword);
+
+    Page<Team> findAllOrderByViewCountWithFullText(Pageable pageable, boolean includeCompleted, String keyword);
 }
