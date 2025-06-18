@@ -18,6 +18,7 @@ import com.grepp.matnam.app.model.team.code.Role;
 import com.grepp.matnam.app.model.team.code.Status;
 import com.grepp.matnam.app.model.team.dto.MonthlyMeetingStatsDto;
 import com.grepp.matnam.app.model.team.dto.ParticipantWithUserIdDto;
+import com.grepp.matnam.app.model.team.dto.TeamDto;
 import com.grepp.matnam.app.model.team.entity.Participant;
 import com.grepp.matnam.app.model.team.entity.Team;
 import com.grepp.matnam.app.model.team.repository.ParticipantRepository;
@@ -29,6 +30,7 @@ import com.grepp.matnam.app.model.user.repository.UserRepository;
 import com.grepp.matnam.infra.error.exceptions.CommonException;
 import com.grepp.matnam.infra.response.ResponseCode;
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -332,6 +334,15 @@ public class TeamService {
 //        return teamRepository.findAllOrderByFavoriteCount(pageable, includeCompleted, keyword);
         return teamRepository.findAllOrderByFavoriteCountWithFullText(pageable, includeCompleted, keyword);
     }
+
+    // 인기모임 탑 3
+    public List<Team> getTop3TeamsByFavoriteCount() {
+        Pageable pageable = PageRequest.of(0, 3);
+        Page<Team> topPage = teamRepository.findAllOrderByFavoriteCountWithFullText(pageable, true, "");
+        return topPage.getContent();
+    }
+
+
 
     // 모임 상세 조회, 팀 페이지 조회
     @Transactional
