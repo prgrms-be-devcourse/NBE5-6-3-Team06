@@ -36,15 +36,15 @@
 
 ## 4. 주요 기능 시퀀스 다이어그램
 ### 1. 구글 로그인
-![google-login.png](docs/sequence-diagram/google-login.png)
+![google-login.png](matnam/docs/sequence-diagram/google-login.png)
 ### 2. 모임
-![team.png](docs/sequence-diagram/team.png)
+![team.png](matnam/docs/sequence-diagram/team.png)
 ### 3. 추천
-![recommendation.png](docs/sequence-diagram/recommendation.png)
+![recommendation.png](matnam/docs/sequence-diagram/recommendation.png)
 ### 4. SSE 연결 요청
-![SSE-connection-request.png](docs/sequence-diagram/SSE-connection-request.png)
+![SSE-connection-request.png](matnam/docs/sequence-diagram/SSE-connection-request.png)
 ### 5. SSE 알림 예시 - 리뷰
-![SSE-notification-example.png](docs/sequence-diagram/SSE-notification-example.png)
+![SSE-notification-example.png](matnam/docs/sequence-diagram/SSE-notification-example.png)
 
 ## 5. API 명세서
 [맛남 API 명세서](docs/api/api)
