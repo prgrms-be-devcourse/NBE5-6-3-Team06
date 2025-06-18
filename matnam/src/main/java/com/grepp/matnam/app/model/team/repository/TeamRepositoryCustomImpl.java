@@ -453,7 +453,7 @@ public class TeamRepositoryCustomImpl implements TeamRepositoryCustom {
     public Page<Team> findAllOrderByFavoriteCountWithFullText(Pageable pageable, boolean includeCompleted, String keyword) {
         // note
         BooleanBuilder builder = new BooleanBuilder()
-            .and(team.activated.eq(true))
+            .and(team.activated.isTrue())
             .and(team.status.ne(Status.CANCELED));
         if (!includeCompleted) {
             builder.and(team.status.ne(Status.COMPLETED));
@@ -501,35 +501,42 @@ public class TeamRepositoryCustomImpl implements TeamRepositoryCustom {
         return new PageImpl<>(teams, pageable, total);
     }
 
-    private static NumberTemplate<Double> getScore(StringPath target1, StringPath target2,  String keyword) {
-        return Expressions.numberTemplate(Double.class, "function('match_against', {0}, {1}, {2})",
-            target1, target2, keyword);
-    }
-
     @Override
     public Page<Team> findAllOrderByViewCountWithFullText(Pageable pageable, boolean includeCompleted, String keyword) {
-        QTeam team = QTeam.team;
-
-        BooleanBuilder where = new BooleanBuilder();
-        where.and(team.activated.isTrue());
+        BooleanBuilder builder = new BooleanBuilder()
+            .and(team.activated.isTrue())
+            .and(team.status.ne(Status.CANCELED));;
 
         if (!includeCompleted) {
-            where.and(team.status.ne(Status.COMPLETED));
+            builder.and(team.status.ne(Status.COMPLETED));
         }
 
-        if (StringUtils.hasText(keyword)) {
-            where.and(team.teamTitle.containsIgnoreCase(keyword)
-                    .or(team.restaurantName.containsIgnoreCase(keyword)));
+        NumberTemplate<Double> score = null;
+        if (StringUtils.hasText(keyword) && keyword.length() >= 2) {
+            score = getScore(team.teamTitle, team.teamDetails, keyword);
+            builder.and(
+                score.gt(0)
+            );
         }
+
+        OrderSpecifier<?>[] combined = Stream.concat(
+            Stream.of(team.viewCount.desc()),
+            Arrays.stream(getScoreSort(score))
+        ).toArray(OrderSpecifier[]::new);
 
         JPQLQuery<Team> query = queryFactory.selectFrom(team)
-                .where(where)
-                .orderBy(team.viewCount.desc());
+                .where(builder)
+                .orderBy(combined);
 
         return PageableExecutionUtils.getPage(
                 query.offset(pageable.getOffset()).limit(pageable.getPageSize()).fetch(),
                 pageable,
                 query::fetchCount
         );
+    }
+
+    private static NumberTemplate<Double> getScore(StringPath target1, StringPath target2,  String keyword) {
+        return Expressions.numberTemplate(Double.class, "function('match_against', {0}, {1}, {2})",
+            target1, target2, keyword);
     }
 }
