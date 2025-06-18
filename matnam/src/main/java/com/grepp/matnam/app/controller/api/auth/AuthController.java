@@ -41,26 +41,14 @@ public class AuthController {
     private final KafkaProducerService kafkaProducerService;
 
     @PostMapping("/signup")
-    @Operation(summary = "회원가입 + 자동 로그인", description = "회원가입과 동시에 토큰을 발급합니다.")
+    @Operation(summary = "회원가입", description = "회원가입을 진행합니다.")
     public ResponseEntity<ApiResponse<SignupRequest>> signup(
             @Validated @RequestBody SignupRequest request,
             HttpServletResponse response
     ) {
         try {
-//            TokenDto dto = authService.signup(request.toEntity());
             authService.signup(request.toEntity());
             User user = userService.getUserById(request.getUserId());
-
-//            setAuthCookies(response, dto);
-
-            kafkaProducerService.sendSignupEvent(request, user.getEmailCode());
-
-//            TokenResponse tokenResponse = TokenResponse.builder()
-//                    .accessToken(dto.getAccessToken())
-//                    .refreshToken(dto.getRefreshToken())
-//                    .expiresIn(dto.getAtExpiresIn())
-//                    .grantType(dto.getGrantType())
-//                    .build();
 
             return ResponseEntity.ok(ApiResponse.success(request));
 
