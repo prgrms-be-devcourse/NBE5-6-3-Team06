@@ -67,6 +67,7 @@ public class TeamService {
     private final NotificationSender notificationSender;
 
     // 모임 생성
+    @Transactional
     public void saveTeam(Team team) {
         teamRepository.save(team);
         // 1. ChatRoom 생성
